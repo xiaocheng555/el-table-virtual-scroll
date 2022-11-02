@@ -23,6 +23,14 @@
         stripe
         row-key="id"
         height="500px">
+        <el-table-column width="60">
+          <template slot="header" slot-scope="{}">
+            <el-checkbox v-model="isCheckedAll" :indeterminate="isCheckedImn" @change="onCheckAllRows"></el-checkbox>
+          </template>
+          <template slot-scope="{ row }">
+            <el-checkbox v-model="row.checked" @change="onCheckRow"></el-checkbox>
+          </template>
+        </el-table-column>
         <el-table-column label="id" prop="id"></el-table-column>
         <el-table-column label="内容" width="260" prop="text"></el-table-column>
         <el-table-column label="内容省略" width="260" prop="text" show-overflow-tooltip></el-table-column>
@@ -149,7 +157,9 @@ export default {
       list: [],
       list2: [],
       virtualList1: [],
-      virtualList2: []
+      virtualList2: [],
+      isCheckedAll: false,
+      isCheckedImn: false
     }
   },
   methods: {
@@ -166,7 +176,8 @@ export default {
             id: i,
             show: false,
             text,
-            text2
+            text2,
+            checked: false
           })
         }
         this.loading = false
@@ -223,6 +234,24 @@ export default {
         }
         $state && $state.loaded()
       }, 1000)
+    },
+    onCheckAllRows (val) {
+      val = this.isCheckedImn ? true : val
+      this.list.forEach(row => row.checked = val)
+      this.isCheckedAll = val
+      this.isCheckedImn = false
+    },
+    onCheckRow () {
+      const checkedLen = this.list.filter(row => row.checked === true).length
+      if (checkedLen === 0) {
+        this.isCheckedAll = false
+        this.isCheckedImn = false
+      } else if (checkedLen === this.list.length) {
+        this.isCheckedAll = true
+        this.isCheckedImn = false
+      } else {
+        this.isCheckedImn = true
+      }
     }
   },
   watch: {

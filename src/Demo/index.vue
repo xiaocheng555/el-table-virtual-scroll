@@ -54,6 +54,18 @@ export default {
           name: 'CaseDemo'
         },
         {
+          label: '表格不固定高度',
+          name: 'HeightDemo'
+        },
+        {
+          label: '指定滚动容器',
+          name: 'ScrollerDemo'
+        },
+        {
+          label: '下拉加载',
+          name: 'LoadmoreDemo'
+        },
+        {
           label: '基础表格',
           name: 'BasicDemo'
         },
@@ -74,24 +86,12 @@ export default {
           name: 'SelectionDemo'
         },
         {
-          label: '下拉加载',
-          name: 'LoadmoreDemo'
-        },
-        {
           label: '扩展行',
           name: 'ExpandDemo'
         },
         {
           label: '排序',
           name: 'SortDemo'
-        },
-        {
-          label: '表格不固定高度',
-          name: 'HeightDemo'
-        },
-        {
-          label: '指定滚动容器',
-          name: 'ScrollerDemo'
         }
       ]
     }

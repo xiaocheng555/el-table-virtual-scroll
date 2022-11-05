@@ -62,7 +62,7 @@ Demo 在 `src/App.vue`，组件在 `src/el-table-virtual-scroll.vue`
 ### Methods
 | 方法名 | 说明 | 参数 |
 |---------- |-------- |---------- |
-| scrollTo | 滚动到第几行 | index |
+| scrollTo | 滚动到第几行【不太精确：因为滚动到第n行时，如果周围的表格行计算出真实高度后会更新高度，导致当前行坍塌或撑起】 | index |
 | update | 更新 | - |
 | reset | 重置 | - |
 
@@ -71,5 +71,23 @@ Demo 在 `src/App.vue`，组件在 `src/el-table-virtual-scroll.vue`
 | 事件名称 | 说明 | 回调参数 |
 |---------- |-------- |---------- |
 | change | 计算完成真实显示的表格行数 | (renderData, start, end)：renderData 真实渲染的数据，start和end指的是渲染的数据在总数据的开始到结束的区间范围 |
+
+## el-table-virtual-scroll 组件注意事项
+
+* 不支持 Element-UI Table 原有单选、多选，需要自行实现单选和多选功能，详见demo
+
+* 使用 Element-UI Table 的扩展行、排序时，需要做额外处理兼容虚拟滚动，详见demo
+
+## 更新内容
+
+### 2022-11-15
+
+* Prop `height` 废弃，改为使用 `item-size`，更具语义
+
+* Prop 增加 `scrollBox`，可以指定滚动容器
+
+* 修复data为空时，表格仍然撑起高度
+
+* 增加多个场景下的demo
 
 

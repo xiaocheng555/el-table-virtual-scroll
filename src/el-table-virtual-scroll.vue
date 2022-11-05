@@ -191,6 +191,7 @@ export default {
 
     // 获取某条数据的尺寸
     getSize (index) {
+      if (index <= -1) return 0
       const item = this.data[index]
       if (item) {
         const key = item[this.keyProp]

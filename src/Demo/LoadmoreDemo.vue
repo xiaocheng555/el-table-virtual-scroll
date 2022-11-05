@@ -7,9 +7,10 @@
       @change="(renderData) => virtualList2 = renderData">
       <el-table 
         class="loadmore-table" 
+        :class="loading ? 'no-empty' : ''"
         row-key="id" 
         stripe 
-        :data="virtualList2" 
+        :data="virtualList2"
         height="500px">
         <el-table-column label="id" prop="id"></el-table-column>
         <el-table-column label="内容" prop="text"></el-table-column>
@@ -48,6 +49,7 @@ import VirtualScroll from '../el-table-virtual-scroll'
 import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
+  inheritAttrs: false,
   components: {
     VirtualScroll,
     InfiniteLoading
@@ -55,8 +57,9 @@ export default {
   data () {
     return {
       count2: 0,
-      list2: [{}],
+      list2: [],
       virtualList2: [],
+      loading: true
     }
   },
   methods: {
@@ -81,6 +84,7 @@ export default {
           })
         }
         $state && $state.loaded()
+        this.loading = false
       }, 1000)
     },
     getRandomContent () {
@@ -105,4 +109,9 @@ export default {
 </script>
 
 <style lang='less' scoped>
+/deep/ .no-empty {
+  .el-table__empty-block {
+    display: none;
+  }
+}
 </style>

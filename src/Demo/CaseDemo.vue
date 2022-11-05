@@ -67,6 +67,7 @@
 import VirtualScroll from '../el-table-virtual-scroll'
 
 export default {
+  inheritAttrs: false,
   components: {
     VirtualScroll
   },

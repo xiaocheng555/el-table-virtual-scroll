@@ -3,12 +3,11 @@
     <VirtualScroll
       ref="virtualScroll"
       :data="mList"
-      :height="62"
+      :item-size="62"
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"
-        height="500"
         tooltip-effect="dark"
         style="width: 100%"
         @sort-change="onSortChange">

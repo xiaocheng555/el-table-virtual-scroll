@@ -1,15 +1,23 @@
 <template>
   <div>
+    <el-radio-group v-model="value">
+      <el-radio :label="undefined">表格不固定高（window滚动：自动查找父层滚动容器window）</el-radio>
+      <el-radio label="600px">表格高度600px（表格内滚动）</el-radio>
+      <el-radio label="100%">表格高度100%撑满屏幕</el-radio>
+    </el-radio-group>
+    <!-- :key="value" 为了value变化时刷新VirtualScroll组件 -->
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
+      :key="value"
       key-prop="id"
+      :style="{height: value === '100%' ? 'calc(100vh - 55px - 25px)' : ''}"
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"
         border
-        height="500px"
+        :height="value"
         style="width: 100%">
         <el-table-column
           fixed
@@ -22,6 +30,9 @@
           label="姓名"
           width="420">
         </el-table-column>
+        <el-table-column label="id" prop="id" width="180"></el-table-column>
+        <el-table-column label="日期" width="260" prop="date"></el-table-column>
+        <el-table-column label="内容省略" width="260" prop="text" show-overflow-tooltip></el-table-column>
         <el-table-column
           prop="province"
           label="省份"
@@ -38,12 +49,6 @@
           width="300">
         </el-table-column>
         <el-table-column
-          prop="zip"
-          label="邮编"
-          width="320">
-        </el-table-column>
-        <el-table-column
-          fixed="right"
           label="操作"
           width="100">
           <template slot-scope="scope">
@@ -68,6 +73,7 @@ export default {
   },
   data () {
     return {
+      value: undefined,
       tableData: []
     }
   },

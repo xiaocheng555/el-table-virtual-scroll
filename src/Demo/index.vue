@@ -22,7 +22,9 @@ import CaseDemo from './CaseDemo.vue'
 import ExpandDemo from './ExpandDemo.vue'
 import RadioDemo from './RadioDemo.vue'
 import SortDemo from './SortDemo.vue'
-
+import HeightDemo from './HeightDemo.vue'
+import ScrollerDemo from './ScrollerDemo.vue'
+    
 function genRandomVal (min, max) { 
   return Math.floor(Math.random() * (max - min)) + min 
 } 
@@ -38,7 +40,9 @@ export default {
     CaseDemo,
     ExpandDemo,
     RadioDemo,
-    SortDemo
+    SortDemo,
+    HeightDemo,
+    ScrollerDemo
   },
   data () {
     return {
@@ -80,6 +84,14 @@ export default {
         {
           label: '排序',
           name: 'SortDemo'
+        },
+        {
+          label: '表格不固定高度',
+          name: 'HeightDemo'
+        },
+        {
+          label: '指定滚动容器',
+          name: 'ScrollerDemo'
         }
       ]
     }

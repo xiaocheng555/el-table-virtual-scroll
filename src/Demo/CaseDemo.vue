@@ -8,7 +8,7 @@
       </el-select>
       &nbsp;
       <el-input style="width: 300px;" type="number" placeholder="滚动到第几行" v-model="jumpIndex">
-        <el-button slot="append" @click="scrollToRow(jumpIndex)">滚动</el-button>
+        <el-button slot="append" @click="scrollToRow(jumpIndex)">滚动{{jumpIndex}}</el-button>
       </el-input>
       &nbsp;
       数据总数量：<el-input style="width: 200px;" type="number" placeholder="数据条数" v-model="count"></el-input>
@@ -16,7 +16,7 @@
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
-      :height="62"
+      :item-size="62"
       key-prop="id"
       @change="onChange">
       <el-table

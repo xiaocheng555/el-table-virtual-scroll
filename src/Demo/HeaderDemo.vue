@@ -3,7 +3,7 @@
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
-      :height="62"
+      :item-size="62"
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">
       <el-table

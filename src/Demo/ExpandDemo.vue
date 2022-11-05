@@ -3,7 +3,7 @@
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
-      :height="62"
+      :item-size="62"
       key-prop="id"
       @change="onVirtualChange">
       <el-table
@@ -55,7 +55,6 @@
         </el-table-column>
       </el-table>
     </VirtualScroll>
-    <span @click="$refs.table.toggleRowExpansion(tableData[0], true)">click</span>
   </div>
 </template>
 

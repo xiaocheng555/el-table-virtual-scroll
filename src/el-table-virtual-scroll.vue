@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="el-table-virtual-scroll">
     <slot></slot>
   </div>
 </template>
@@ -7,25 +7,81 @@
 <script>
 import throttle from 'lodash/throttle'
 
+// 判断是否是滚动容器
+function isScroller (el) {
+  const style = window.getComputedStyle(el, null)
+  const scrollValues = ['auto', 'scroll']
+  return scrollValues.includes(style['overflow']) || scrollValues.includes(style['overflow-y'])
+}
+
+// 获取父层滚动容器
+function getParentScroller (el) {
+  let parent = el
+  while (parent) {
+    if ([window, document, document.documentElement].includes(parent)) {
+      return window
+    }
+    if (isScroller(parent)) {
+      return parent
+    }
+    parent = parent.parentNode
+  }
+
+  return parent || window
+}
+
+// 获取容器滚动位置
+function getScrollTop (el) {
+  return el === window ? window.pageYOffset : el.scrollTop
+}
+
+// 获取容器高度
+function getOffsetHeight (el) {
+  return el === window ? window.innerHeight : el.offsetHeight
+}
+
+// 滚动到某个位置
+function scrollToY (el, y) {
+  if (el === window) {
+    window.scroll(0, y)
+  } else {
+    el.scrollTop = y
+  }
+}
+
 export default {
   name: 'el-table-virtual-scroll',
   props: {
+    // 总数据
     data: {
       type: Array,
       required: true
     },
+    // 每一行的预估高度（height 废弃，改为使用itemSize，语义更好）
     height: {
       type: Number,
       default: 60
     },
+    // 每一行的预估高度
+    itemSize: {
+      type: Number,
+      default: 60
+    },
+    // 指定滚动容器
+    scrollBox: {
+      type: String
+    },
+    // 顶部和底部缓冲区域，值越大显示表格的行数越多
     buffer: {
       type: Number,
       default: 500
     },
+    // key值，data数据中的唯一id
     keyProp: {
       type: String,
       default: 'id'
     },
+    // 滚动事件的节流时间
     throttleTime: {
       type: Number,
       default: 100
@@ -64,7 +120,7 @@ export default {
       this.start = 0
       this.end = undefined
 
-      this.scroller = this.$el.querySelector('.el-table__body-wrapper')
+      this.scroller = this.getScroller()
 
       // 初次执行
       setTimeout(() => {
@@ -75,6 +131,23 @@ export default {
       this.onScroll = throttle(this.handleScroll, this.throttleTime)
       this.scroller.addEventListener('scroll', this.handleScroll)
       window.addEventListener('resize', this.onScroll)
+    },
+    
+    // 获取滚动元素
+    getScroller () {
+      let el
+      if (this.scrollBox) {
+        el = document.querySelector(this.scrollBox)
+        if (!el) throw new Error(` scrollBox prop: '${this.scrollBox}' is not a valid selector`)
+        if (!isScroller(el)) console.warn(`Warning! scrollBox prop: '${this.scrollBox}' is not a scroll element`)
+        return el
+      }
+      // 如果表格是固定高度，则获取表格内的滚动节点，否则获取父层滚动节点
+      if (this.$children[0] && this.$children[0].height) {
+        return this.$el.querySelector('.el-table__body-wrapper')
+      } else {
+        return getParentScroller(this.$el)
+      }
     },
 
     // 更新尺寸（高度）
@@ -121,18 +194,18 @@ export default {
       const item = this.data[index]
       if (item) {
         const key = item[this.keyProp]
-        return this.sizes[key] || this.height
+        return this.sizes[key] || this.itemSize || this.height
       }
-      return this.height
+      return this.itemSize || this.height 
     },
 
     // 计算只在视图上渲染的数据
     calcRenderData () {
       const { scroller, data, buffer } = this
       // 计算可视范围顶部、底部
-      const top = scroller.scrollTop - buffer
-      const bottom = scroller.scrollTop + scroller.offsetHeight + buffer
-
+      const top = getScrollTop(scroller) - buffer
+      const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer
+      
       // 二分法计算可视范围内的开始的第一个内容
       let l = 0
       let r = data.length - 1
@@ -164,7 +237,6 @@ export default {
       if (start % 2) {
         start = start - 1
       }
-      // console.log(start, end, 'start end')
 
       this.top = top
       this.bottom = bottom
@@ -209,7 +281,8 @@ export default {
       })
     },
 
-    // 空闲时更新位置
+    // 空闲时更新位置（触发时间：滚动停止后等待10ms执行）
+    // 滚动停止之后，偶尔表格的行发生高度变更，那么当前计算的渲染数据是不正确的；那么需要手动触发最后一次handleScroll来重新计算
     updatePosition () {
       this.timer && clearTimeout(this.timer)
       this.timer = setTimeout(() => {
@@ -226,6 +299,7 @@ export default {
     },
 
     // 【外部调用】滚动到第几行
+    // （不太精确：滚动到第n行时，如果周围的表格行计算出真实高度后会更新高度，导致内容坍塌或撑起）
     scrollTo (index, stop = false) {
       const item = this.data[index]
       if (item && this.scroller) {
@@ -234,7 +308,7 @@ export default {
 
         this.$nextTick(() => {
           const offsetTop = this.getOffsetTop(index)
-          this.scroller.scrollTop = offsetTop
+          scrollToY(this.scroller, offsetTop)
 
           // 调用两次scrollTo，第一次滚动时，如果表格行初次渲染高度发生变化时，会导致滚动位置有偏差，此时需要第二次执行滚动，确保滚动位置无误
           if (!stop) {

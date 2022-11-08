@@ -9,7 +9,7 @@
 ``` vue
 <VirtualScroll
   :data="list"
-  :height="62"
+  :item-size="62"
   key-prop="id"
   @change="(renderData) => virtualList = renderData">
   <el-table 

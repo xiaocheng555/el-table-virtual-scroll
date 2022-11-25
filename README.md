@@ -54,10 +54,9 @@ Demo 在 `src/App.vue`，组件在 `src/el-table-virtual-scroll.vue`
 | data    | 总数据 | Array | 必填 |  |
 | keyProp | key值，data数据中的唯一id【⚠️若keyProp未设置或keyProp值不唯一，可能导致表格空数据或者滚动时渲染的数据断层、不连贯】 | string | — | id |
 | itemSize | 每一行的预估高度 | number | — | 60 |
-| height | 每一行的预估高度（废弃，改为使用itemSize，语义更好） | number | — | 60 |
 | scrollBox | 指定滚动容器；在指定滚动容器时，如果表格设置了height高度，则滚动容器为表格内的滚动容器；如果表格为设置height高度，则自动获取父层以外的滚动容器，直至window容器为止 | string | — | - |
-| buffer | 顶部和底部缓冲区域，值越大显示表格的行数越多 | Number | — | 500 |
-| throttleTime | 滚动事件的节流时间 | number | — | 100 |
+| buffer | 顶部和底部缓冲区域，值越大显示表格的行数越多 | Number | — | 400 |
+| throttleTime | 滚动事件的节流时间 | number | — | 50 |
 
 ### Methods
 | 方法名 | 说明 | 参数 |

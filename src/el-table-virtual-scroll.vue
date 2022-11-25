@@ -74,7 +74,7 @@ export default {
     // 顶部和底部缓冲区域，值越大显示表格的行数越多
     buffer: {
       type: Number,
-      default: 500
+      default: 400
     },
     // key值，data数据中的唯一id
     keyProp: {
@@ -84,7 +84,7 @@ export default {
     // 滚动事件的节流时间
     throttleTime: {
       type: Number,
-      default: 100
+      default: 50
     }
   },
   data () {
@@ -94,7 +94,7 @@ export default {
   },
   computed: {
     // 计算出每个item（的key值）到滚动容器顶部的距离
-    offsetMap ({ keyProp, height, sizes, data }) {
+    offsetMap ({ keyProp, avgItemSize, sizes, data }) {
       const res = {}
       let total = 0
       for (let i = 0; i < data.length; i++) {
@@ -102,10 +102,13 @@ export default {
         res[key] = total
 
         const curSize = sizes[key]
-        const size = typeof curSize === 'number' ? curSize : height
+        const size = typeof curSize === 'number' ? curSize : avgItemSize
         total += size
       }
       return res
+    },
+    avgItemSize () {
+      return this.itemSize || this.height
     }
   },
   methods: {
@@ -129,7 +132,7 @@ export default {
 
       // 监听事件
       this.onScroll = throttle(this.handleScroll, this.throttleTime)
-      this.scroller.addEventListener('scroll', this.handleScroll)
+      this.scroller.addEventListener('scroll', this.onScroll)
       window.addEventListener('resize', this.onScroll)
     },
     
@@ -181,7 +184,7 @@ export default {
     },
 
     // 获取某条数据offsetTop
-    getOffsetTop (index) {
+    getItemOffsetTop (index) {
       const item = this.data[index]
       if (item) {
         return this.offsetMap[item[this.keyProp]] || 0
@@ -190,14 +193,14 @@ export default {
     },
 
     // 获取某条数据的尺寸
-    getSize (index) {
+    getItemSize (index) {
       if (index <= -1) return 0
       const item = this.data[index]
       if (item) {
         const key = item[this.keyProp]
-        return this.sizes[key] || this.itemSize || this.height
+        return this.sizes[key] || this.avgItemSize
       }
-      return this.itemSize || this.height 
+      return this.avgItemSize
     },
 
     // 计算只在视图上渲染的数据
@@ -213,9 +216,9 @@ export default {
       let mid = 0
       while (l <= r) {
         mid = Math.floor((l + r) / 2)
-        const midVal = this.getOffsetTop(mid)
+        const midVal = this.getItemOffsetTop(mid)
         if (midVal < top) {
-          const midNextVal = this.getOffsetTop(mid + 1)
+          const midNextVal = this.getItemOffsetTop(mid + 1)
           if (midNextVal > top) break
           l = mid + 1
         } else {
@@ -227,7 +230,7 @@ export default {
       let start = mid
       let end = data.length - 1
       for (let i = start + 1; i < data.length; i++) {
-        const offsetTop = this.getOffsetTop(i)
+        const offsetTop = this.getItemOffsetTop(i)
         if (offsetTop >= bottom) {
           end = i
           break
@@ -250,9 +253,9 @@ export default {
     calcPosition () {
       const last = this.data.length - 1
       // 计算内容总高度
-      const wrapHeight = this.getOffsetTop(last) + this.getSize(last)
+      const wrapHeight = this.getItemOffsetTop(last) + this.getItemSize(last)
       // 计算当前滚动位置需要撑起的高度
-      const offsetTop = this.getOffsetTop(this.start)
+      const offsetTop = this.getItemOffsetTop(this.start)
 
       // 设置dom位置
       const classNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper']
@@ -308,7 +311,7 @@ export default {
         this.calcRenderData()
 
         this.$nextTick(() => {
-          const offsetTop = this.getOffsetTop(index)
+          const offsetTop = this.getItemOffsetTop(index)
           scrollToY(this.scroller, offsetTop)
 
           // 调用两次scrollTo，第一次滚动时，如果表格行初次渲染高度发生变化时，会导致滚动位置有偏差，此时需要第二次执行滚动，确保滚动位置无误

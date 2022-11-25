@@ -1,18 +1,25 @@
 <template>
   <div class="code-preview">
-    <el-link>
+    <VueDragResize 
+      :w="76" 
+      :h="32" 
+      :x="x" 
+      :y="50" 
+      :z="999"
+      :isResizable="false" 
+      @dragging="onDragging">
       <el-tag 
         class="preview-button" 
-        @click.native="onPreview">
+        @pointerup.native="onPreview">
         demo源码
       </el-tag>
-    </el-link>
+    </VueDragResize>
     <el-dialog
       :title="curDemoTitle + ' - 源码'"
       :visible.sync="preview"
       width="100%">
-      <div class="code-box" ref="codeBox" :key="curDemoCode">
-        <pre><code>{{curDemoCode}}</code></pre>
+      <div class="code-box" ref="codeBox">
+        <pre><code class="hljs language-handlebars" v-html="curDemoCode"></code></pre>
       </div>
     </el-dialog>
   </div>
@@ -20,27 +27,35 @@
 
 <script>
 import hljs from 'highlight.js' 
-import 'highlight.js/styles/atom-one-dark.css'
+import 'highlight.js/styles/atom-one-light.css'
+import VueDragResize from 'vue-drag-resize'
 
 export default {
   name: 'code-preview',
+    components: {
+      VueDragResize
+    },
     data () {
     return {
       demoCodes: process.env.demoFiles,
       preview: false,
       curDemoCode: null,
-      curDemoTitle: ''
+      curDemoTitle: '',
+      isDraging: false,
+      x: window.innerWidth - 80
     }
   },
   methods: {
+    onDragging (e) {
+      console.log(e, 'drag')
+    },
     async onPreview () {
       this.preview = true
-      this.curDemoCode = this.demoCodes[window._tab]
+      const demoCode = this.demoCodes[window._tab]
+      this.curDemoCode = hljs.highlight(demoCode, {
+        language: 'html'
+      }).value
       this.curDemoTitle = window._tabLabel
-      
-      await this.$nextTick()
-      const block = this.$refs.codeBox.querySelector('pre code')
-      hljs.highlightBlock(block)
     }
   }
 }
@@ -63,14 +78,11 @@ export default {
   font-weight: 700;
 }
 .el-dialog__body {
-  padding: 25px 20px !important;
+  padding: 20px 15px 25px !important;
 }
 
 .preview-button {
-  position: fixed;
-  right: 0;
-  top: 45px;
-  z-index: 100;
+  cursor: pointer;
 }
 .code-box {
   padding: 0 5px;

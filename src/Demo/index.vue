@@ -145,6 +145,15 @@ export default {
       return content[i]
     }
   },
+  watch: {
+    curTab: {
+      immediate: true,
+      handler (val) {
+        window._tab = val
+        window._tabLabel = this.tabs.find(item => item.name === val)?.label
+      }
+    }
+  },
   created () {
     this.fetchData()
   }

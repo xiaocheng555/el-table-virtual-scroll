@@ -55,7 +55,7 @@
           </template>
         </el-table-column>
         <div slot="append">
-          <el-divider>到底了</el-divider>
+          <el-divider>到底了~</el-divider>
         </div>
       </el-table>
     </VirtualScroll>

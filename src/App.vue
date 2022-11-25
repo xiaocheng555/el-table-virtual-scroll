@@ -1,22 +1,21 @@
 <template>
   <div>
     <Demo></Demo>
+    <Preview></Preview>
   </div>
 </template>
 
 <script>
 import Demo from './Demo'
 
+const Preview = () => import('./Preview') 
+
 export default {
   name: 'App',
   components: {
-    Demo
-  },
-  data () {
-    return {
-    }
-  },
-  created () {}
+    Demo,
+    Preview
+  }
 }
 </script>
 

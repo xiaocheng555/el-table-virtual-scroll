@@ -12,6 +12,7 @@
   "dependencies": {
     "core-js": "^3.8.3",
     "element-ui": "^2.15.9",
+    "highlight.js": "^11.7.0",
     "lodash": "^4.17.21",
     "vue": "^2.6.14",
     "vue-infinite-loading": "^2.4.5",

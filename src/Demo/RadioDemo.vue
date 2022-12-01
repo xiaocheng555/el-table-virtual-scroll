@@ -10,6 +10,7 @@
       <el-table
         :data="tableData"
         height="500"
+        row-key="id"
         tooltip-effect="dark"
         style="width: 100%">
         <el-table-column width="160">

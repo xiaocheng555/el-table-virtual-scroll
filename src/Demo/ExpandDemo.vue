@@ -10,6 +10,7 @@
         ref="table"
         :data="tableData"
         height="600"
+        row-key="id"
         :class="isExpanding ? 'is-expanding' : ''"
         style="width: 100%"
         :row-class-name="rowClassName"

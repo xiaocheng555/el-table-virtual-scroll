@@ -10,6 +10,7 @@
         :data="tableData"
         tooltip-effect="dark"
         style="width: 100%"
+        row-key="id"
         @sort-change="onSortChange">
         <el-table-column
           label="随机数"

@@ -12,6 +12,7 @@
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"
+        row-key="id"
         border
         style="width: 100%">
         <el-table-column

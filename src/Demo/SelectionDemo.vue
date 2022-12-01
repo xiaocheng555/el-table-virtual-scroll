@@ -10,6 +10,7 @@
       <el-table
         :data="tableData"
         height="500"
+        row-key="id"
         tooltip-effect="dark"
         style="width: 100%">
         <!-- 多选 -->
@@ -87,6 +88,7 @@ export default {
         this.isCheckedAll = true
         this.isCheckedImn = false
       } else {
+        this.isCheckedAll = false
         this.isCheckedImn = true
       }
     }

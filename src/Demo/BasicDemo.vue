@@ -6,6 +6,7 @@
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
+      row-key="id"
       :item-size="62"
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">

@@ -9,6 +9,7 @@
       <el-table
         :data="tableData"
         height="500"
+        row-key="id"
         style="width: 100%">
         <el-table-column
           prop="date"

@@ -161,9 +161,13 @@ export default {
         const item = this.renderData[index]
         if (!item) return
 
-        const key = item[this.keyProp]
-        const offsetHeight = row.offsetHeight
+        // 计算表格行的高度
+        let offsetHeight = row.offsetHeight
+        if (row.classList.contains('expanded')) { // 兼容表格扩展行高度
+          offsetHeight += row.nextSibling.offsetHeight
+        }
 
+        const key = item[this.keyProp]
         if (this.sizes[key] !== offsetHeight) {
           this.$set(this.sizes, key, offsetHeight)
         }

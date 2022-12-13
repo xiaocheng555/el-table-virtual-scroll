@@ -155,7 +155,14 @@ export default {
 
     // 更新尺寸（高度）
     updateSizes () {
-      const rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')
+      let rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')
+      
+      // 处理树形表格
+      let isTree = false
+      if (rows[0] && rows[0].classList.contains('el-table__row--level-0')) {
+        isTree = true
+        rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0') 
+      }
 
       Array.from(rows).forEach((row, index) => {
         const item = this.renderData[index]
@@ -163,8 +170,17 @@ export default {
 
         // 计算表格行的高度
         let offsetHeight = row.offsetHeight
-        if (row.classList.contains('expanded')) { // 兼容表格扩展行高度
+        // 表格行如果有扩展行，需要加上扩展内容的高度
+        if (row.classList.contains('expanded')) { 
           offsetHeight += row.nextSibling.offsetHeight
+        }
+        // 表格行如果有子孙节点，需要加上子孙节点的高度
+        if (isTree) {
+          let next = row.nextSibling
+          while (next && next.tagName === 'TR' && !next.classList.contains('el-table__row--level-0')) {
+            offsetHeight += next.offsetHeight
+            next = next.nextSibling
+          }
         }
 
         const key = item[this.keyProp]

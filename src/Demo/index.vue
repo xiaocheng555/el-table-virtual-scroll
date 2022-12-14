@@ -25,6 +25,7 @@ import SortDemo from './SortDemo.vue'
 import HeightDemo from './HeightDemo.vue'
 import ScrollerDemo from './ScrollerDemo.vue'
 import TreeDemo from './TreeDemo.vue'
+import TreeDemo2 from './TreeDemo2.vue'
 
 function genRandomVal (min, max) { 
   return Math.floor(Math.random() * (max - min)) + min 
@@ -44,7 +45,8 @@ export default {
     SortDemo,
     HeightDemo,
     ScrollerDemo,
-    TreeDemo
+    TreeDemo,
+    TreeDemo2
   },
   data () {
     return {
@@ -98,6 +100,10 @@ export default {
         {
           label: '树结构懒加载',
           name: 'TreeDemo'
+        },
+        {
+          label: '模拟树结构懒加载',
+          name: 'TreeDemo2'
         }
       ]
     }

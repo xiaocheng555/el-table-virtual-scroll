@@ -73,6 +73,8 @@ Demo 在 `src/App.vue`，组件在 `src/el-table-virtual-scroll.vue`
 
 ## el-table-virtual-scroll 组件注意事项
 
+* <el-table> 组件最好写上 `row-key` 属性，能避免一些奇怪的问题。例：`<el-table row-key="id">`，其中id为数据中唯一key值。
+
 * 不支持 Element-UI Table 原有单选、多选，需要自行实现单选和多选功能，详见demo
 
 * 使用 Element-UI Table 的扩展行、排序时，需要做额外兼容，详见demo

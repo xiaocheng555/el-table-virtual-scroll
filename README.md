@@ -89,16 +89,6 @@ Demo 在 `src/App.vue`，组件在 `src/el-table-virtual-scroll.vue`
 
 * 增加多个场景下的demo
 
-### 2022-11-15
-
-* Prop `height` 废弃，改为使用 `item-size`，更具语义
-
-* Prop 增加 `scrollBox`，可以指定滚动容器
-
-* 修复data为空时，表格仍然撑起高度
-
-* 增加多个场景下的demo
-
 ### 2022-12-14
 
 * 支持树结构虚拟滚动

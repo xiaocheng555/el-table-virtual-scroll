@@ -3,7 +3,7 @@
     <el-alert type="warning" title="树结构虚拟滚动只计算一级节点渲染的数据，如果某个一级节点下的子孙节点超级多，仍然会卡顿。（可以只用一层结构模拟树结构）" show-icon></el-alert>
     <VirtualScroll
       ref="virtualScroll"
-      :data="list"
+      :data.sync="list"
       :item-size="62"
       key-prop="id"
       @change="virtualList => (tableData = virtualList)">
@@ -13,12 +13,8 @@
         height="500px"
         style="width: 100%"
         border
-        row-key="id"
-        lazy
-        :load="onload"
-        :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
-        @expand-change="updateVirtualScroll">
-        <el-table-column label="id" prop="id"></el-table-column>
+        row-key="id">
+        <virtual-column label="id" prop="id" type="tree" :load="onload"></virtual-column>
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
       </el-table>
@@ -28,11 +24,13 @@
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualColumn from '../el-table-virtual-column'
 
 export default {
   inheritAttrs: false,
   components: {
-    VirtualScroll
+    VirtualScroll,
+    VirtualColumn
   },
   data () {
     return {
@@ -77,8 +75,7 @@ export default {
       const i = Math.floor(Math.random() * 10)
       return content[i]
     },
-    onload (tree, treeNode, resolve) {
-      console.log(tree, treeNode, 'tree, treeNode')
+    onload (row, resolve) {
       if (!this.count) this.count = 3000
       setTimeout(() => {
         const data = []
@@ -88,15 +85,11 @@ export default {
             show: false,
             text: this.getRandomContent(),
             text2: this.getRandomContent(),
-            hasChildren: true
+            $hasChildren: true
           })
         }
         resolve(data)
       }, 1000)
-    },
-    // 由于树节点（已展开）突然收起时，会出现的当前渲染的表格行不能满屏情况，需要更新virtualList组件，重新计算需要渲染的数据
-    updateVirtualScroll () {
-      this.$refs.virtualScroll.update()
     }
   },
   created () {

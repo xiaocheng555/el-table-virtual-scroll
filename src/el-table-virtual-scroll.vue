@@ -1,5 +1,5 @@
 <template>
-  <div class="el-table-virtual-scroll">
+  <div class="el-table-virtual-scroll" :class="isExpanding ? 'is-expanding' : ''">
     <slot></slot>
   </div>
 </template>
@@ -87,9 +87,17 @@ export default {
       default: 50
     }
   },
+  provide () {
+    return {
+      virtualScroll: this
+    }
+  },
   data () {
     return {
-      sizes: {} // 尺寸映射（依赖响应式）
+      sizes: {}, // 尺寸映射（依赖响应式）
+      start: 0,
+      end: undefined,
+      isExpanding: false // 列是否正在展开
     }
   },
   computed: {
@@ -122,9 +130,14 @@ export default {
       // 截取页面可视范围内显示数据的开始和结尾索引
       this.start = 0
       this.end = undefined
-
+      
+      // 验证ElTable组件
+      this.elTable = this.$children[0]
+      if (!this.elTable || this.elTable.$options.name !== 'ElTable') {
+        throw new Error('el-table-virtual-column 组件插槽内必须是el-table')
+      }
+      
       this.scroller = this.getScroller()
-
       // 初次执行
       setTimeout(() => {
         this.handleScroll()
@@ -134,6 +147,7 @@ export default {
       this.onScroll = throttle(this.handleScroll, this.throttleTime)
       this.scroller.addEventListener('scroll', this.onScroll)
       window.addEventListener('resize', this.onScroll)
+      this.bindTableExpandEvent()
     },
     
     // 获取滚动元素
@@ -146,7 +160,7 @@ export default {
         return el
       }
       // 如果表格是固定高度，则获取表格内的滚动节点，否则获取父层滚动节点
-      if (this.$children[0] && this.$children[0].height) {
+      if (this.elTable && this.elTable.height) {
         return this.$el.querySelector('.el-table__body-wrapper')
       } else {
         return getParentScroller(this.$el)
@@ -201,6 +215,8 @@ export default {
       shouldUpdate && this.updatePosition()
       // 触发事件
       this.$emit('change', this.renderData, this.start, this.end)
+      // 设置表格行展开
+      this.setRowsExpanded()
     },
 
     // 获取某条数据offsetTop
@@ -348,6 +364,68 @@ export default {
     reset () {
       this.sizes = {}
       this.scrollTo(0, false)
+    },
+    
+    // 选中所有列
+    checkAll (val) {
+      this.data.forEach(row => this.$set(row, '$checked', val))
+      this.emitSelectionChange()
+    },
+    // 选中所一列
+    checkRow (row, val) {
+      this.$set(row, '$checked', val)
+      this.emitSelectionChange()
+    },
+    // 兼容表格selection-change事件
+    emitSelectionChange () {
+      const selection = this.data.filter(row => row.$checked)
+      this.$emit('selection-change', selection)
+    },
+    // 兼容表格clearSelection方法
+    clearSelection () {
+      this.checkAll(false)
+    },
+    // 兼容表格toggleRowSelection方法
+    toggleRowSelection (row, selected) {
+      const val = typeof selected === 'boolean' ? selected : !row.$checked
+      this.checkRow(row, val)
+    },
+    // 监听表格expand-change事件
+    bindTableExpandEvent () {
+      // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
+      if (!this.isExpandType) return 
+      
+      this.elTable.$on('expand-change', (row, expandedRows) => {
+        this.$set(row, '$expanded', expandedRows.includes(row))
+      })
+    },
+    // 设置表格行展开
+    setRowsExpanded () {
+      if (!this.isExpandType) return 
+      
+      this.$nextTick(() => {
+        const expandRows = this.renderData.filter(item => item.$expanded)
+        if (expandRows.length === 0) return
+        
+        expandRows.forEach(row => {
+          this.elTable.toggleRowExpansion(row, true)
+        })
+        // 手动设置列展开时，禁止展开动画
+        this.isExpanding = true
+        setTimeout(() => {
+          this.isExpanding = false
+        }, 10)
+      })
+    },
+    // 切换多个行的展开状态
+    toggleRowsExpansion (rows, expanded) {
+      rows.forEach(row => {
+        this.$set(row, '$expanded', expanded)
+      })
+      this.setRowsExpanded()
+    },
+    updateData (data) {
+      this.$emit('update:data', data)
     }
   },
   watch: {
@@ -370,4 +448,9 @@ export default {
 </script>
 
 <style lang='less' scoped>
+.is-expanding {
+  /deep/ .el-table__expand-icon {
+    transition: none;
+  }
+}
 </style>

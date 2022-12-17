@@ -1,26 +1,56 @@
 <template>
   <div>
-    <el-alert type="warning" title="树结构虚拟滚动只计算一级节点渲染的数据，如果某个一级节点下的子孙节点超级多，仍然会卡顿。（可以只用一层结构模拟树结构）" show-icon></el-alert>
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
       key-prop="id"
-      @change="virtualList => (tableData = virtualList)">
+      @change="onVirtualChange">
       <el-table
-        v-loading="loading"
+        ref="table"
         :data="tableData"
-        height="500px"
-        style="width: 100%"
-        border
+        height="600"
         row-key="id"
-        lazy
-        :load="onload"
-        :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
-        @expand-change="updateVirtualScroll">
-        <el-table-column label="id" prop="id"></el-table-column>
-        <el-table-column label="内容" prop="text"></el-table-column>
-        <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
+        style="width: 100%">
+        <virtual-column type="expand">
+          <template slot-scope="props">
+            <el-form label-position="left" inline class="demo-table-expand">
+              <el-form-item label="商品名称">
+                <span>{{ props.row.name }}</span>
+              </el-form-item>
+              <el-form-item label="所属店铺">
+                <span>{{ props.row.shop }}</span>
+              </el-form-item>
+              <el-form-item label="商品 ID">
+                <span>{{ props.row.id }}</span>
+              </el-form-item>
+              <el-form-item label="店铺 ID">
+                <span>{{ props.row.shopId }}</span>
+              </el-form-item>
+              <el-form-item label="商品分类">
+                <span>{{ props.row.category }}</span>
+              </el-form-item>
+              <el-form-item label="店铺地址">
+                <span>{{ props.row.address }}</span>
+              </el-form-item>
+              <el-form-item label="商品描述">
+                <span>{{ props.row.desc }}</span>
+              </el-form-item>
+            </el-form>
+          </template>
+        </virtual-column>
+        <el-table-column
+          label="商品 ID"
+          prop="id">
+        </el-table-column>
+        <el-table-column
+          label="商品名称"
+          prop="name">
+        </el-table-column>
+        <el-table-column
+          label="描述"
+          prop="desc">
+        </el-table-column>
       </el-table>
     </VirtualScroll>
   </div>
@@ -28,15 +58,16 @@
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualColumn from '../el-table-virtual-column'
 
 export default {
   inheritAttrs: false,
   components: {
-    VirtualScroll
+    VirtualScroll,
+    VirtualColumn
   },
   data () {
     return {
-      loading: false,
       list: [],
       tableData: []
     }
@@ -77,26 +108,8 @@ export default {
       const i = Math.floor(Math.random() * 10)
       return content[i]
     },
-    onload (tree, treeNode, resolve) {
-      console.log(tree, treeNode, 'tree, treeNode')
-      if (!this.count) this.count = 3000
-      setTimeout(() => {
-        const data = []
-        for (let i = 0; i < 10; i++) {
-          data.push({
-            id: this.count++,
-            show: false,
-            text: this.getRandomContent(),
-            text2: this.getRandomContent(),
-            hasChildren: true
-          })
-        }
-        resolve(data)
-      }, 1000)
-    },
-    // 由于树节点（已展开）突然收起时，会出现的当前渲染的表格行不能满屏情况，需要更新virtualList组件，重新计算需要渲染的数据
-    updateVirtualScroll () {
-      this.$refs.virtualScroll.update()
+    async onVirtualChange (virtualList) {
+      this.tableData = virtualList
     }
   },
   created () {
@@ -106,5 +119,16 @@ export default {
 </script>
 
 <style lang='less' scoped>
-
+.demo-table-expand {
+  font-size: 0;
+}
+.demo-table-expand label {
+  width: 90px;
+  color: #99a9bf;
+}
+.demo-table-expand .el-form-item {
+  margin-right: 0;
+  margin-bottom: 0;
+  width: 50%;
+}
 </style>

@@ -17,15 +17,18 @@ import BasicDemo from './BasicDemo.vue'
 import FixedDemo from './FixedDemo.vue'
 import HeaderDemo from './HeaderDemo.vue'
 import SelectionDemo from './SelectionDemo.vue'
+import SelectionDemo2 from './SelectionDemo2.vue'
 import LoadmoreDemo from './LoadmoreDemo.vue'
 import CaseDemo from './CaseDemo.vue'
 import ExpandDemo from './ExpandDemo.vue'
+import ExpandDemo2 from './ExpandDemo2.vue'
 import RadioDemo from './RadioDemo.vue'
 import SortDemo from './SortDemo.vue'
 import HeightDemo from './HeightDemo.vue'
 import ScrollerDemo from './ScrollerDemo.vue'
 import TreeDemo from './TreeDemo.vue'
 import TreeDemo2 from './TreeDemo2.vue'
+import TreeDemo3 from './TreeDemo3.vue'
 
 function genRandomVal (min, max) { 
   return Math.floor(Math.random() * (max - min)) + min 
@@ -41,12 +44,15 @@ export default {
     LoadmoreDemo,
     CaseDemo,
     ExpandDemo,
+    ExpandDemo2,
     RadioDemo,
     SortDemo,
     HeightDemo,
     ScrollerDemo,
     TreeDemo,
-    TreeDemo2
+    TreeDemo2,
+    TreeDemo3,
+    SelectionDemo2
   },
   data () {
     return {
@@ -90,8 +96,16 @@ export default {
           name: 'SelectionDemo'
         },
         {
+          label: '多选2',
+          name: 'SelectionDemo2'
+        },
+        {
           label: '扩展行',
           name: 'ExpandDemo'
+        },
+        {
+          label: '扩展行2',
+          name: 'ExpandDemo2'
         },
         {
           label: '排序',
@@ -104,6 +118,10 @@ export default {
         {
           label: '模拟树结构懒加载',
           name: 'TreeDemo2'
+        },
+        {
+          label: '树结构懒加载3',
+          name: 'TreeDemo3'
         }
       ]
     }

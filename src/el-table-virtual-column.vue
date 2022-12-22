@@ -22,7 +22,7 @@
     <template slot-scope="scope">
       <!-- v-tree类型 -->
       <template v-if="scope.column && scope.column.type === 'v-tree'">
-        <span class="el-table__indent" :style="{ paddingLeft: `${scope.row.$level * 16}px` }"></span>
+        <span class="el-table__indent" :style="{ paddingLeft: `${(scope.row.$level - 1) * indent}px` }"></span>
         <div 
           v-if="(scope.row.$hasChildren !== false)"
           class="el-table__expand-icon" 
@@ -34,12 +34,20 @@
         <span v-else class="el-table__placeholder"></span>
       </template>
       <slot v-bind="scope">
-        <!-- v-selection类型 -->
+        <!-- 多选类型 -->
         <el-checkbox 
           v-if="scope.column.type === 'v-selection'"
           :value="scope.row.$checked" 
           @change="onCheckRow(scope.row, !scope.row.$checked)">
         </el-checkbox>
+        <!-- 单选类型 -->
+        <el-radio 
+          v-if="scope.column.type === 'v-radio'" 
+          :label="true"
+          :value="virtualScroll.curRow === scope.row"
+          @change="onRadioChange(scope.row)">
+          <span></span>
+        </el-radio>
         <!-- v-index类型 -->
         <span v-else-if="scope.column.type === 'v-index'">
           {{getIndex(scope)}}
@@ -59,6 +67,10 @@ export default {
   props: {
     load: {
       type: Function
+    },
+    indent: {
+      type: Number,
+      default: 16
     }
   },
   data () {
@@ -91,6 +103,9 @@ export default {
         this.isCheckedAll = false
         this.isCheckedImn = true
       }
+    },
+    onRadioChange (row) {
+      this.virtualScroll.setCurrentRow(row)
     },
     // 获取索引值
     getIndex (scope) {
@@ -172,7 +187,7 @@ export default {
   },
   beforeCreate () {
     const { type } = this.$attrs
-    if (['index', 'selection', 'tree'].includes(type)) {
+    if (['index', 'selection', 'radio', 'tree'].includes(type)) {
       this.$attrs.type = 'v-' + type
     }
   },

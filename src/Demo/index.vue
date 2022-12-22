@@ -23,6 +23,7 @@ import CaseDemo from './CaseDemo.vue'
 import ExpandDemo from './ExpandDemo.vue'
 import ExpandDemo2 from './ExpandDemo2.vue'
 import RadioDemo from './RadioDemo.vue'
+import RadioDemo2 from './RadioDemo2.vue'
 import SortDemo from './SortDemo.vue'
 import HeightDemo from './HeightDemo.vue'
 import ScrollerDemo from './ScrollerDemo.vue'
@@ -46,6 +47,7 @@ export default {
     ExpandDemo,
     ExpandDemo2,
     RadioDemo,
+    RadioDemo2,
     SortDemo,
     HeightDemo,
     ScrollerDemo,
@@ -90,6 +92,10 @@ export default {
         {
           label: '单选',
           name: 'RadioDemo'
+        },
+        {
+          label: '单选2',
+          name: 'RadioDemo2'
         },
         {
           label: '多选',

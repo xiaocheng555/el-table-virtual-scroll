@@ -97,6 +97,7 @@ export default {
       sizes: {}, // 尺寸映射（依赖响应式）
       start: 0,
       end: undefined,
+      curRow: null, // 表格单选：选中的行
       isExpanding: false // 列是否正在展开
     }
   },
@@ -424,8 +425,13 @@ export default {
       })
       this.setRowsExpanded()
     },
+    // 更新数据
     updateData (data) {
       this.$emit('update:data', data)
+    },
+    // 单选：设置选中行
+    setCurrentRow (row) {
+      this.curRow = row
     }
   },
   watch: {

@@ -8,6 +8,7 @@
       @change="onVirtualChange">
       <el-table
         ref="table"
+        v-loading="loading"
         :data="tableData"
         height="600"
         row-key="id"
@@ -69,7 +70,8 @@ export default {
   data () {
     return {
       list: [],
-      tableData: []
+      tableData: [],
+      loading: false
     }
   },
   methods: {

@@ -1,20 +1,16 @@
 <template>
-  <div>
-    <Demo></Demo>
-    <Preview></Preview>
-  </div>
+  <layout>
+    <router-view></router-view>
+  </layout>
 </template>
 
 <script>
-import Demo from './Demo'
-
-const Preview = () => import('./Preview') 
+import Layout from './Layout.vue'
 
 export default {
   name: 'App',
   components: {
-    Demo,
-    Preview
+    Layout
   }
 }
 </script>
@@ -23,5 +19,8 @@ export default {
 * {
   margin: 0;
   padding: 0;
+}
+html, body {
+  height: 100%;
 }
 </style>

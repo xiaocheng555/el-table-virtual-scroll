@@ -27,7 +27,6 @@ import VirtualScroll from '../el-table-virtual-scroll'
 import VirtualColumn from '../el-table-virtual-column'
 
 export default {
-  inheritAttrs: false,
   components: {
     VirtualScroll,
     VirtualColumn

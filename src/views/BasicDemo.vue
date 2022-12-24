@@ -28,16 +28,15 @@
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
+import { mockData } from '@/utils'
 
 export default {
-  props: {
-    list: {}
-  },
   components: {
     VirtualScroll
   },
   data () {
     return {
+      list: mockData(0, 2000),
       tableData: [],
       stripe: false,
       border: false,

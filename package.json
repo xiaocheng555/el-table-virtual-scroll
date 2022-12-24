@@ -14,11 +14,13 @@
     "core-js": "^3.8.3",
     "element-ui": "^2.15.9",
     "highlight.js": "^11.7.0",
+    "install": "^0.13.0",
     "lodash": "^4.17.21",
     "vue": "^2.6.14",
     "vue-drag-resize": "^1.5.4",
     "vue-infinite-loading": "^2.4.5",
-    "vue-infinite-scroll": "^2.0.2"
+    "vue-infinite-scroll": "^2.0.2",
+    "vue-router": "^3.6.5"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
@@ -49,7 +51,8 @@
     },
     "rules": {
       "no-debugger": "off",
-      "no-console": "off"
+      "no-console": "off",
+      "vue/multi-word-component-names": "off"
     }
   },
   "browserslist": [

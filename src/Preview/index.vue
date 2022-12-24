@@ -1,19 +1,11 @@
 <template>
-  <div class="code-preview">
-    <VueDragResize 
-      :w="76" 
-      :h="32" 
-      :x="x" 
-      :y="50" 
-      :z="999"
-      :isResizable="false" 
-      @dragging="onDragging">
-      <el-tag 
-        class="preview-button" 
-        @pointerup.native="onPreview">
-        demo源码
-      </el-tag>
-    </VueDragResize>
+  <span class="code-preview">
+    <el-button 
+      type="text" 
+      class="preview-button" 
+      @pointerup.native="onPreview">
+      <i class="el-icon-warning"></i> {{ curDemoTitle }}Demo源码
+    </el-button>
     <el-dialog
       :title="curDemoTitle + ' - 源码'"
       :visible.sync="preview"
@@ -22,27 +14,30 @@
         <pre><code class="hljs language-handlebars" v-html="curDemoCode"></code></pre>
       </div>
     </el-dialog>
-  </div>
+  </span>
 </template>
 
 <script>
 import hljs from 'highlight.js' 
 import 'highlight.js/styles/atom-one-light.css'
-import VueDragResize from 'vue-drag-resize'
 
 export default {
   name: 'code-preview',
-    components: {
-      VueDragResize
-    },
-    data () {
+  data () {
     return {
       demoCodes: process.env.demoFiles,
       preview: false,
-      curDemoCode: null,
-      curDemoTitle: '',
       isDraging: false,
+      curDemoCode: null,
       x: window.innerWidth - 80
+    }
+  },
+  computed: {
+    curCode () {
+      return this.$route.query.code
+    },
+    curDemoTitle () {
+      return this.$route.query.codeTitle
     }
   },
   methods: {
@@ -51,17 +46,19 @@ export default {
     },
     async onPreview () {
       this.preview = true
-      const demoCode = this.demoCodes[window._tab]
+      const demoCode = this.demoCodes[this.curCode]
       this.curDemoCode = hljs.highlight(demoCode, {
         language: 'html'
       }).value
-      this.curDemoTitle = window._tabLabel
     }
   }
 }
 </script>
 
 <style lang='less'>
+.code-preview {
+  margin-right: 10px;
+}
 .el-dialog {
   max-width: 1100px;
 }

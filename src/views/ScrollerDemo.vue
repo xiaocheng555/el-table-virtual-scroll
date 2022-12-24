@@ -1,16 +1,19 @@
 <template>
-  <div>
+  <div class="scroller-box">
+    <h2>红色边框的是滚动容器</h2>
+    <p>一些内容</p>
+    <p>一些内容</p>
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
+      scroll-box=".scroller-box"
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"
-        border
         row-key="id"
-        height="500px"
+        border
         style="width: 100%">
         <el-table-column
           fixed
@@ -44,7 +47,6 @@
           width="320">
         </el-table-column>
         <el-table-column
-          fixed="right"
           label="操作"
           width="100">
           <template slot-scope="scope">
@@ -54,21 +56,23 @@
         </el-table-column>
       </el-table>
     </VirtualScroll>
+    <p>一些内容</p>
+    <p>一些内容</p>
   </div>
 </template>
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
+import { mockData } from '@/utils'
 
 export default {
-  props: {
-    list: {}
-  },
+  name: 'ScrollerDemo',
   components: {
     VirtualScroll
   },
   data () {
     return {
+      list: mockData(0, 2000),
       tableData: []
     }
   },
@@ -81,5 +85,9 @@ export default {
 </script>
 
 <style lang='less' scoped>
-
+.scroller-box {
+  height: 700px;
+  overflow: auto;
+  border: 1px solid red;
+}
 </style>

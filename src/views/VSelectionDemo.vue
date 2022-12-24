@@ -1,6 +1,5 @@
 <template>
   <div>
-    <el-alert type="warning" title="不支持 Element-UI 原有多选，需自行实现，详见Demo" show-icon></el-alert>
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
@@ -44,17 +43,16 @@
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
 import VirtualColumn from '../el-table-virtual-column'
+import { mockData } from '@/utils'
 
 export default {
-  props: {
-    list: {}
-  },
   components: {
     VirtualScroll,
     VirtualColumn
   },
   data () {
     return {
+      list: mockData(0, 2000),
       tableData: [],
       multipleSelection: []
     }

@@ -49,7 +49,6 @@ import VirtualScroll from '../el-table-virtual-scroll'
 import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
-  inheritAttrs: false,
   components: {
     VirtualScroll,
     InfiniteLoading

@@ -1,19 +1,23 @@
 <template>
   <div>
-    <el-alert type="warning" title="不支持 Element-UI 原有单选，需自行实现，详见Demo" show-icon></el-alert>
     <VirtualScroll
       ref="virtualScroll"
-      :data="list"
+      :data="mList"
       :item-size="62"
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"
-        height="500"
-        row-key="id"
         tooltip-effect="dark"
-        style="width: 100%">
-        <virtual-column width="160" type="radio"></virtual-column>
+        style="width: 100%"
+        row-key="id"
+        @sort-change="onSortChange">
+        <el-table-column
+          label="随机数"
+          prop="count"
+          width="300"
+          sortable="count">
+        </el-table-column>
         <el-table-column
           label="日期"
           width="120">
@@ -31,36 +35,44 @@
         </el-table-column>
       </el-table>
     </VirtualScroll>
-    <div style="margin-top: 20px">
-      <el-button @click="setCheckedRow(list[1])">选中第二行</el-button>
-      <el-button @click="setCheckedRow()">取消选择</el-button>
-    </div>
   </div>
 </template>
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
-import VirtualColumn from '../el-table-virtual-column'
+import { mockData } from '@/utils'
 
 export default {
-  name: 'RadioDemo2',
+  name: 'RadioDemo',
   components: {
-    VirtualScroll,
-    VirtualColumn
-  },
-  props: {
-    list: {}
+    VirtualScroll
   },
   data () {
     return {
-      tableData: [],
-      checkedRow: null
+      list: mockData(0, 2000),
+      mList: [...this.list],
+      originList: [],
+      tableData: []
     }
   },
   methods: {
-    setCheckedRow (row) {
-      this.$refs.virtualScroll.setCurrentRow(row)
+    onSortChange ({prop, order }) {
+      if (!order) {
+        this.mList = [...this.originList]
+        return
+      }
+      
+      this.mList.sort((a, b) => {
+        if (order === 'ascending') {
+          return a[prop] - b[prop]
+        } else if (order === 'descending') {
+          return b[prop] - a[prop] 
+        }
+      })
     }
+  },
+  created () {
+    this.originList = [...this.mList]
   }
 }
 </script>

@@ -1,6 +1,5 @@
 <template>
   <div>
-    <el-alert type="warning" title="不支持 Element-UI 原有单选，需自行实现，详见Demo" show-icon></el-alert>
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
@@ -13,14 +12,7 @@
         row-key="id"
         tooltip-effect="dark"
         style="width: 100%">
-        <el-table-column width="160">
-          <template slot-scope="{ row }">
-            <el-radio v-model="row.radioCheck" :label="true" @change="onCheckRow(row)">
-              <span></span>
-            </el-radio>
-          </template>
-        </el-table-column>
-        
+        <virtual-column width="160" type="radio"></virtual-column>
         <el-table-column
           label="日期"
           width="120">
@@ -47,38 +39,25 @@
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualColumn from '../el-table-virtual-column'
+import { mockData } from '@/utils'
 
 export default {
-  name: 'RadioDemo',
+  name: 'RadioDemo2',
   components: {
-    VirtualScroll
-  },
-  props: {
-    list: {}
+    VirtualScroll,
+    VirtualColumn
   },
   data () {
     return {
+      list: mockData(0, 2000),
       tableData: [],
       checkedRow: null
     }
   },
   methods: {
-    // 选择表格某行
-    onCheckRow (row) {
-      if (this.checkedRow) {
-        this.checkedRow.radioCheck = false 
-      }
-      this.checkedRow = row
-      
-    },
     setCheckedRow (row) {
-      if (this.checkedRow) {
-        this.checkedRow.radioCheck = false 
-      }
-      if (row) {
-        row.radioCheck = true
-      }
-      this.checkedRow = row
+      this.$refs.virtualScroll.setCurrentRow(row)
     }
   }
 }

@@ -25,20 +25,13 @@
         stripe
         row-key="id"
         height="600">
-        <el-table-column width="60">
-          <template slot="header" slot-scope="{}">
-            <el-checkbox v-model="isCheckedAll" :indeterminate="isCheckedImn" @change="onCheckAllRows"></el-checkbox>
-          </template>
-          <template slot-scope="{ row }">
-            <el-checkbox v-model="row.checked" @change="onCheckRow"></el-checkbox>
-          </template>
-        </el-table-column>
+        <virtual-column type="selection" width="60"></virtual-column>
         <el-table-column label="id" prop="id"></el-table-column>
         <el-table-column label="内容" width="260" prop="text"></el-table-column>
         <el-table-column label="内容省略" width="260" prop="text" show-overflow-tooltip></el-table-column>
         <el-table-column label="详情" min-width="260">
           <template slot-scope="{ row }">
-            <el-button type="text" @click="row.show = !row.show">{{ row.show ? '隐藏' : '显示' }}</el-button>
+            <el-button type="text" @click="row.show = !row.show;">{{ row.show ? '隐藏' : '显示' }}</el-button>
             <div v-if="row.show">{{ row.text2 }}</div>
           </template>
         </el-table-column>
@@ -65,11 +58,13 @@
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualColumn from '../el-table-virtual-column'
+import { mockData } from '@/utils'
 
 export default {
-  inheritAttrs: false,
   components: {
-    VirtualScroll
+    VirtualScroll,
+    VirtualColumn
   },
   data () {
     return {
@@ -89,19 +84,7 @@ export default {
       this.loading = true
       this.list = []
       setTimeout(() => {
-        this.list = []
-        this.$refs.virtualScroll.reset()
-        for (let i = 0; i < this.count; i++) {
-          const text = this.getRandomContent()
-          const text2 = this.getRandomContent()
-          this.list.push({
-            id: i,
-            show: false,
-            text,
-            text2,
-            checked: false
-          })
-        }
+        this.list = mockData(0, this.count)
         this.loading = false
       }, 1000)
     },
@@ -136,28 +119,11 @@ export default {
     },
     onEdit (row) {
       row.text =  row.text + '__编辑'
-    },
-    onCheckAllRows (val) {
-      val = this.isCheckedImn ? true : val
-      this.list.forEach(row => row.checked = val)
-      this.isCheckedAll = val
-      this.isCheckedImn = false
-    },
-    onCheckRow () {
-      const checkedLen = this.list.filter(row => row.checked === true).length
-      if (checkedLen === 0) {
-        this.isCheckedAll = false
-        this.isCheckedImn = false
-      } else if (checkedLen === this.list.length) {
-        this.isCheckedAll = true
-        this.isCheckedImn = false
-      } else {
-        this.isCheckedImn = true
-      }
     }
   },
   watch: {
     count () {
+      this.$refs.virtualScroll?.reset?.()
       this.fetchData()
     }
   },

@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const demoDir = path.resolve(__dirname, '../src/Demo')
+const demoDir = path.resolve(__dirname, '../src/views')
 
 function buildDemoFiles () {
   const files = fs.readdirSync(demoDir)

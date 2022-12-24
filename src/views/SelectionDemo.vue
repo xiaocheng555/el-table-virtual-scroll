@@ -1,6 +1,5 @@
 <template>
   <div>
-    <el-alert type="warning" title="不支持 Element-UI 原有多选，需自行实现，详见Demo" show-icon></el-alert>
     <VirtualScroll
       ref="virtualScroll"
       :data="list"

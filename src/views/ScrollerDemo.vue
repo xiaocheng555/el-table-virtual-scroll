@@ -66,7 +66,6 @@ import VirtualScroll from '../el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {
-  name: 'ScrollerDemo',
   components: {
     VirtualScroll
   },

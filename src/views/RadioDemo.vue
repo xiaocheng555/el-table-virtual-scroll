@@ -1,6 +1,5 @@
 <template>
   <div>
-    <el-alert type="warning" title="不支持 Element-UI 原有单选，需自行实现，详见Demo" show-icon></el-alert>
     <VirtualScroll
       ref="virtualScroll"
       :data="list"
@@ -50,7 +49,6 @@ import VirtualScroll from '../el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {
-  name: 'RadioDemo',
   components: {
     VirtualScroll
   },

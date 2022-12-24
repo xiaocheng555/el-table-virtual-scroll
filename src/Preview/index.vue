@@ -7,10 +7,12 @@
       <i class="el-icon-warning"></i> {{ curDemoTitle }}Demo源码
     </el-button>
     <el-dialog
+      append-to-body
       :title="curDemoTitle + ' - 源码'"
       :visible.sync="preview"
       width="100%">
       <div class="code-box" ref="codeBox">
+        1122
         <pre><code class="hljs language-handlebars" v-html="curDemoCode"></code></pre>
       </div>
     </el-dialog>

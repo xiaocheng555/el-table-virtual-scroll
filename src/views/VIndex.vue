@@ -10,9 +10,8 @@
         :data="tableData"
         height="500"
         row-key="id"
-        tooltip-effect="dark"
         style="width: 100%">
-        <virtual-column width="160" type="radio"></virtual-column>
+        <virtual-column label="索引" width="160" type="index"></virtual-column>
         <el-table-column
           label="日期"
           width="120">
@@ -30,10 +29,6 @@
         </el-table-column>
       </el-table>
     </VirtualScroll>
-    <div style="margin-top: 20px">
-      <el-button @click="setCheckedRow(list[1])">选中第二行</el-button>
-      <el-button @click="setCheckedRow()">取消选择</el-button>
-    </div>
   </div>
 </template>
 
@@ -50,13 +45,7 @@ export default {
   data () {
     return {
       list: mockData(0, 2000),
-      tableData: [],
-      checkedRow: null
-    }
-  },
-  methods: {
-    setCheckedRow (row) {
-      this.$refs.virtualScroll.setCurrentRow(row)
+      tableData: []
     }
   }
 }

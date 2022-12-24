@@ -20,6 +20,7 @@
     "vue-drag-resize": "^1.5.4",
     "vue-infinite-loading": "^2.4.5",
     "vue-infinite-scroll": "^2.0.2",
+    "vue-response-size": "^1.0.0",
     "vue-router": "^3.6.5"
   },
   "devDependencies": {

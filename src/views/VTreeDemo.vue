@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -31,7 +31,7 @@
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
   </div>
 </template>
 

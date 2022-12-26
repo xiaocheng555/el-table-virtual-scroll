@@ -3,7 +3,7 @@
     <h2>红色边框的是滚动容器</h2>
     <p>一些内容</p>
     <p>一些内容</p>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -49,13 +49,13 @@
         <el-table-column
           label="操作"
           width="100">
-          <template slot-scope="scope">
-            <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
+          <template slot-scope="">
+            <el-button type="text" size="small">查看</el-button>
             <el-button type="text" size="small">编辑</el-button>
           </template>
         </el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
     <p>一些内容</p>
     <p>一些内容</p>
   </div>

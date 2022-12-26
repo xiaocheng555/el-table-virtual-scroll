@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-alert type="warning" title="树结构虚拟滚动只计算一级节点渲染的数据，如果某个一级节点下的子孙节点超级多，仍然会卡顿。（可以只用一层结构模拟树结构）" show-icon></el-alert>
-    <VirtualScroll
+    <el-alert type="warning" title="树结构虚拟滚动只计算一级节点渲染的数据，如果某个一级节点下的子孙节点超级多，仍然会卡顿。（可以模拟树结构懒加载）" show-icon></el-alert>
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -22,7 +22,7 @@
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
   </div>
 </template>
 

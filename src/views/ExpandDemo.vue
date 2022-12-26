@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -55,7 +55,7 @@
           prop="desc">
         </el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
   </div>
 </template>
 
@@ -120,7 +120,7 @@ export default {
   margin-bottom: 0;
   width: 50%;
 }
-/deep/ .is-expanding {
+:deep(.is-expanding) {
   .el-table__expand-icon {
     transition: none;
   }

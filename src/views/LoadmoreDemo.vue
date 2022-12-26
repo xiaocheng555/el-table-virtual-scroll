@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VirtualScroll
+    <virtual-scroll
       :data="list2"
       :item-size="62"
       key-prop="id"
@@ -39,7 +39,7 @@
           </InfiniteLoading>
         </div>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
     <b>行数: {{ virtualList2.length }}</b>
   </div>
 </template>
@@ -108,7 +108,7 @@ export default {
 </script>
 
 <style lang='less' scoped>
-/deep/ .no-empty {
+:deep(.no-empty) {
   .el-table__empty-block {
     display: none;
   }

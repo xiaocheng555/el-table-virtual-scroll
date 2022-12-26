@@ -3,7 +3,7 @@
     带边框：<el-switch v-model="border"></el-switch> /
     带状态表格：<el-switch v-model="status"></el-switch> /
     带条纹：<el-switch v-model="stripe"></el-switch>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       row-key="id"
@@ -22,7 +22,7 @@
         <el-table-column label="内容省略" width="260" prop="text" show-overflow-tooltip></el-table-column>
         <el-table-column label="内容" prop="text"></el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
   </div>
 </template>
 
@@ -59,11 +59,11 @@ export default {
 </script>
 
 <style lang='less' scoped>
-/deep/ .el-table .warning-row {
+:deep(.el-table .warning-row) {
   background: oldlace;
 }
 
-/deep/  .el-table .success-row {
+:deep(.el-table .success-row) {
   background: #f0f9eb;
 }
 </style>

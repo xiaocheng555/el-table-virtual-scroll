@@ -240,7 +240,7 @@ export default {
   padding-left: 10px;
   border-right: 1px solid #eee;
   background-color: #fff;
-  /deep/ .el-menu {
+  :deep(.el-menu) {
     border-right: none;
   }
 }
@@ -254,7 +254,7 @@ export default {
   padding: 20px 13px 3px;
   font-weight: 600;
 }
-/deep/ .el-menu-item {
+:deep(.el-menu-item) {
   height: 42px;
   &:hover {
     color: #409EFF;

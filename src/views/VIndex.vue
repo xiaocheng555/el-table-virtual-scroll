@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -12,6 +12,7 @@
         row-key="id"
         style="width: 100%">
         <virtual-column label="索引" width="160" type="index"></virtual-column>
+        <virtual-column label="#" width="60" type="index" :index="(index) => index * 2"></virtual-column>
         <el-table-column
           label="日期"
           width="120">
@@ -28,7 +29,7 @@
           show-overflow-tooltip>
         </el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
   </div>
 </template>
 

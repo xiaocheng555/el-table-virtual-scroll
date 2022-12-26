@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -15,7 +15,6 @@
         style="width: 100%">
         <!-- 多选 -->
         <virtual-column width="60" type="selection"></virtual-column>
-        <virtual-column label="#" width="60" type="index" :index="(index) => index * 2"></virtual-column>
         <el-table-column
           label="日期"
           width="120">
@@ -32,7 +31,7 @@
           show-overflow-tooltip>
         </el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
     <div style="margin-top: 20px">
       <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
       <el-button @click="toggleSelection()">取消选择</el-button>

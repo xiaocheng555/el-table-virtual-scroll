@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -38,7 +38,7 @@
           show-overflow-tooltip>
         </el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
     <div style="margin-top: 20px">
       <el-button @click="setCurrent(list[1])">选中第二行</el-button>
       <el-button @click="setCurrent()">取消选择</el-button>

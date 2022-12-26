@@ -13,7 +13,7 @@
       &nbsp;
       数据总数量：<el-input style="width: 200px;" type="number" placeholder="数据条数" v-model="count"></el-input>
     </div>
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -51,7 +51,7 @@
           <el-divider>到底了~</el-divider>
         </div>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
     <b>行数: {{ virtualList1.length }}</b>
   </div>
 </template>

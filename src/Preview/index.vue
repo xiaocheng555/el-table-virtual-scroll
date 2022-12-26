@@ -12,7 +12,6 @@
       :visible.sync="preview"
       width="100%">
       <div class="code-box" ref="codeBox">
-        1122
         <pre><code class="hljs language-handlebars" v-html="curDemoCode"></code></pre>
       </div>
     </el-dialog>
@@ -81,6 +80,7 @@ export default {
 }
 
 .preview-button {
+  font-size: 16px;
   cursor: pointer;
 }
 .code-box {

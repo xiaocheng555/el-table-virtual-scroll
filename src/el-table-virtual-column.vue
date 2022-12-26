@@ -24,11 +24,11 @@
       <template v-if="scope.column && scope.column.type === 'v-tree'">
         <span class="el-table__indent" :style="{ paddingLeft: `${(scope.row.$level - 1) * indent}px` }"></span>
         <div 
-          v-if="(scope.row.$hasChildren !== false)"
+          v-if="(scope.row.$v_hasChildren !== false)"
           class="el-table__expand-icon" 
-          :class="scope.row.$expanded ? 'el-table__expand-icon--expanded' : ''"
+          :class="scope.row.$v_expanded ? 'el-table__expand-icon--expanded' : ''"
           @click="onTreeNodeExpand(scope.row)">
-          <i class="el-icon-loading" v-if="scope.row.$loading"></i>
+          <i class="el-icon-loading" v-if="scope.row.$v_loading"></i>
           <i class="el-icon-arrow-right" v-else></i>
         </div> 
         <span v-else class="el-table__placeholder"></span>
@@ -37,8 +37,8 @@
         <!-- 多选类型 -->
         <el-checkbox 
           v-if="scope.column.type === 'v-selection'"
-          :value="scope.row.$checked" 
-          @change="onCheckRow(scope.row, !scope.row.$checked)">
+          :value="scope.row.$v_checked" 
+          @change="onCheckRow(scope.row, !scope.row.$v_checked)">
         </el-checkbox>
         <!-- 单选类型 -->
         <el-radio 
@@ -92,7 +92,7 @@ export default {
     onCheckRow (row, val) {
       this.virtualScroll.checkRow(row, val)
       const list = this.virtualScroll.data
-      const checkedLen = list.filter(row => row.$checked === true).length
+      const checkedLen = list.filter(row => row.$v_checked === true).length
       if (checkedLen === 0) {
         this.isCheckedAll = false
         this.isCheckedImn = false
@@ -117,8 +117,8 @@ export default {
     },
     // 展开收起事件
     onTreeNodeExpand (row) {
-      this.$set(row, '$expanded', !row.$expanded)
-      if (row.$expanded) {
+      this.$set(row, '$v_expanded', !row.$v_expanded)
+      if (row.$v_expanded) {
         this.loadChildNodes(row)
       } else {
         this.hideChildNodes(row)
@@ -127,13 +127,13 @@ export default {
     // 加载子节点
     loadChildNodes (row) {
       // 如果已经加载，则显示隐藏的字节点
-      if (row.$loaded) {
+      if (row.$v_loaded) {
         const list = this.virtualScroll.data
         const index = list.findIndex(item => item === row)
         if (index > -1) {
           this.virtualScroll.updateData([
             ...list.slice(0, index + 1),
-            ...row.$hideNodes,
+            ...row.$v_hideNodes,
             ...list.slice(index + 1),
           ])
         }
@@ -141,15 +141,15 @@ export default {
       }
       
       // 获取子节点数据并显示
-      this.$set(row, '$loading', true)
+      this.$set(row, '$v_loading', true)
       this.load && this.load(row, resolve.bind(this))
       
       function resolve (data) {
         if (Array.isArray(!data)) data = []
         
-        this.$set(row, '$loading', false)
-        this.$set(row, '$loaded', true)
-        this.$set(row, '$hasChildren', data.length)
+        this.$set(row, '$v_loading', false)
+        this.$set(row, '$v_loaded', true)
+        this.$set(row, '$v_hasChildren', data.length)
         data.forEach(item => {
           item.$level = typeof row.$level === 'number' ? row.$level + 1 : 2
         })
@@ -178,7 +178,7 @@ export default {
         if ((curRow.$level || 1) <= (row.$level || 1)) break
         hideNodes.push(curRow)
       }
-      this.$set(row, '$hideNodes', hideNodes)
+      this.$set(row, '$v_hideNodes', hideNodes)
       // 隐藏所有子孙节点
       const newList = list.filter(item => !hideNodes.includes(item))
       this.virtualScroll.updateData(newList)

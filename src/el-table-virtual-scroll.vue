@@ -369,17 +369,17 @@ export default {
     
     // 选中所有列
     checkAll (val) {
-      this.data.forEach(row => this.$set(row, '$checked', val))
+      this.data.forEach(row => this.$set(row, '$v_checked', val))
       this.emitSelectionChange()
     },
-    // 选中所一列
+    // 选中某一列
     checkRow (row, val) {
-      this.$set(row, '$checked', val)
+      this.$set(row, '$v_checked', val)
       this.emitSelectionChange()
     },
     // 兼容表格selection-change事件
     emitSelectionChange () {
-      const selection = this.data.filter(row => row.$checked)
+      const selection = this.data.filter(row => row.$v_checked)
       this.$emit('selection-change', selection)
     },
     // 兼容表格clearSelection方法
@@ -388,7 +388,7 @@ export default {
     },
     // 兼容表格toggleRowSelection方法
     toggleRowSelection (row, selected) {
-      const val = typeof selected === 'boolean' ? selected : !row.$checked
+      const val = typeof selected === 'boolean' ? selected : !row.$v_checked
       this.checkRow(row, val)
     },
     // 监听表格expand-change事件
@@ -397,7 +397,7 @@ export default {
       if (!this.isExpandType) return 
       
       this.elTable.$on('expand-change', (row, expandedRows) => {
-        this.$set(row, '$expanded', expandedRows.includes(row))
+        this.$set(row, '$v_expanded', expandedRows.includes(row))
       })
     },
     // 设置表格行展开
@@ -405,7 +405,7 @@ export default {
       if (!this.isExpandType) return 
       
       this.$nextTick(() => {
-        const expandRows = this.renderData.filter(item => item.$expanded)
+        const expandRows = this.renderData.filter(item => item.$v_expanded)
         if (expandRows.length === 0) return
         
         expandRows.forEach(row => {
@@ -421,7 +421,7 @@ export default {
     // 切换多个行的展开状态
     toggleRowsExpansion (rows, expanded) {
       rows.forEach(row => {
-        this.$set(row, '$expanded', expanded)
+        this.$set(row, '$v_expanded', expanded)
       })
       this.setRowsExpanded()
     },
@@ -455,7 +455,7 @@ export default {
 
 <style lang='less' scoped>
 .is-expanding {
-  /deep/ .el-table__expand-icon {
+  :deep(.el-table__expand-icon) {
     transition: none;
   }
 }

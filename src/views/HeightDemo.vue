@@ -6,7 +6,7 @@
       <el-radio label="100%">表格高度100%撑满屏幕</el-radio>
     </el-radio-group>
     <!-- :key="value" 为了value变化时刷新VirtualScroll组件 -->
-    <VirtualScroll
+    <virtual-scroll
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -58,7 +58,7 @@
           </template>
         </el-table-column>
       </el-table>
-    </VirtualScroll>
+    </virtual-scroll>
   </div>
 </template>
 

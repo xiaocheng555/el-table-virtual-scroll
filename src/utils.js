@@ -5,6 +5,7 @@ export function mockData (start, end) {
     const text2 = getContent()
     list.push({
       id: start++,
+      index: i,
       text,
       text2,
       show: false,

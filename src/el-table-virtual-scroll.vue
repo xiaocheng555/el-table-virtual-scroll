@@ -74,7 +74,7 @@ export default {
     // 顶部和底部缓冲区域，值越大显示表格的行数越多
     buffer: {
       type: Number,
-      default: 400
+      default: 200
     },
     // key值，data数据中的唯一id
     keyProp: {
@@ -177,6 +177,14 @@ export default {
       if (rows[0] && rows[0].classList.contains('el-table__row--level-0')) {
         isTree = true
         rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0') 
+      }
+      
+      // 移除多个hover-row
+      const hoverRows =  this.$el.querySelectorAll('.el-table__row.hover-row')
+      if (hoverRows.length > 1) {
+        Array.from(hoverRows).forEach((row) => {
+          row.classList.remove('hover-row')
+        })
       }
 
       Array.from(rows).forEach((row, index) => {
@@ -335,7 +343,7 @@ export default {
 
     // 【外部调用】更新
     update () {
-      console.log('update')
+      // console.log('update')
       this.handleScroll()
     },
 

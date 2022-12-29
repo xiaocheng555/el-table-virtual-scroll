@@ -17,6 +17,10 @@ function getRoutes () {
 Vue.use(Router)
 
 const routes = [
+  {
+    path: '/',
+    redirect: '/CaseDemo'
+  },
   ...getRoutes()
 ]
 const router = new Router({

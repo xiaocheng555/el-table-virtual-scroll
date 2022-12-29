@@ -10,7 +10,7 @@
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"
-        height="500px"
+        height="500"
         style="width: 100%">
         <el-table-column label="id" prop="id" width="180"></el-table-column>
         <el-table-column label="日期" width="260" prop="date"></el-table-column>

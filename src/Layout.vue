@@ -130,23 +130,23 @@ export default {
           path: '/VTreeDemo'
         },
         
-        '其他写法',
-        {
-          title: '单选',
-          path: '/RadioDemo'
-        },
-        {
-          title: '多选',
-          path: '/SelectionDemo'
-        },
-        {
-          title: '扩展行',
-          path: '/ExpandDemo'
-        },
-        {
-          title: '模拟树结构懒加载',
-          path: '/TreeDemo2'
-        },
+        '其他',
+        // {
+        //   title: '单选',
+        //   path: '/RadioDemo'
+        // },
+        // {
+        //   title: '多选',
+        //   path: '/SelectionDemo'
+        // },
+        // {
+        //   title: '扩展行',
+        //   path: '/ExpandDemo'
+        // },
+        // {
+        //   title: '模拟树结构懒加载',
+        //   path: '/TreeDemo2'
+        // },
         {
           title: '排序',
           path: '/SortDemo'

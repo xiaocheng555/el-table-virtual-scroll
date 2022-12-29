@@ -21,7 +21,6 @@
         :height="value"
         style="width: 100%">
         <el-table-column
-          fixed
           prop="date"
           label="日期"
           width="150">

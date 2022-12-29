@@ -149,7 +149,7 @@ export default {
         
         this.$set(row, '$v_loading', false)
         this.$set(row, '$v_loaded', true)
-        this.$set(row, '$v_hasChildren', data.length)
+        this.$set(row, '$v_hasChildren', !!data.length)
         data.forEach(item => {
           item.$level = typeof row.$level === 'number' ? row.$level + 1 : 2
         })

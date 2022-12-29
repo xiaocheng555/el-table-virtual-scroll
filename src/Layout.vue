@@ -84,6 +84,10 @@ export default {
           path: '/LoadmoreDemo'
         },
         {
+          title: '下拉加载2',
+          path: '/LoadmoreDemo2'
+        },
+        {
           title: '固定行高',
           path: '/UndynamicDemo'
         },
@@ -166,9 +170,6 @@ export default {
     }
   },
   watch: {
-    isMenuDrawer () {
-      console.log('change')
-    },
     '$route.path': {
       immediate: true,
       handler (val) {

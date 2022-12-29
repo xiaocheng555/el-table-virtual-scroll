@@ -1,6 +1,5 @@
 <template>
   <div>
-    <el-alert type="warning" title="树结构虚拟滚动只计算一级节点渲染的数据，如果某个一级节点下的子孙节点超级多，仍然会卡顿。（可以只用一层结构模拟树结构）" show-icon></el-alert>
     <virtual-scroll
       ref="virtualScroll"
       :data.sync="list"
@@ -77,14 +76,17 @@ export default {
     onload (row, resolve) {
       if (!this.count) this.count = 3000
       setTimeout(() => {
+        if (Math.random() > 0.5) {
+          resolve([])
+          return 
+        }
         const data = []
         for (let i = 0; i < 10; i++) {
           data.push({
             id: this.count++,
             show: false,
             text: this.getRandomContent(),
-            text2: this.getRandomContent(),
-            $hasChildren: true
+            text2: this.getRandomContent()
           })
         }
         resolve(data)

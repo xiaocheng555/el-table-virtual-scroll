@@ -19,12 +19,16 @@ export function mockData (start, end) {
       category: '江浙小吃、小吃零食',
       desc: '荷兰优质淡奶，奶香浓而不腻',
       shop: '王小虎夫妻店',
-      shopId: '10333'
-      // count: genRandomVal(0, 1000)
+      shopId: '10333',
+      count: genRandomVal(0, 1000)
     })
   }
   return list
 }
+
+function genRandomVal (min, max) { 
+  return Math.floor(Math.random() * (max - min)) + min 
+} 
     
 function getContent () {
   const content = [

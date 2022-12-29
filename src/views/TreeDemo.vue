@@ -77,9 +77,13 @@ export default {
       return content[i]
     },
     onload (tree, treeNode, resolve) {
-      console.log(tree, treeNode, 'tree, treeNode')
       if (!this.count) this.count = 3000
       setTimeout(() => {
+        if (Math.random() > 0.5) {
+          resolve([])
+          return 
+        }
+        
         const data = []
         for (let i = 0; i < 10; i++) {
           data.push({

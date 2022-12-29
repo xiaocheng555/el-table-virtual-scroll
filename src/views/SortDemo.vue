@@ -48,9 +48,10 @@ export default {
     VirtualScroll
   },
   data () {
+    const list = mockData(0, 2000)
     return {
-      list: mockData(0, 2000),
-      mList: [...this.list],
+      list: list,
+      mList: [...list],
       originList: [],
       tableData: []
     }

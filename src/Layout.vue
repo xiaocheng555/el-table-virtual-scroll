@@ -84,6 +84,10 @@ export default {
           path: '/LoadmoreDemo'
         },
         {
+          title: '固定行高',
+          path: '/UndynamicDemo'
+        },
+        {
           title: '基础表格',
           path: '/BasicDemo'
         },

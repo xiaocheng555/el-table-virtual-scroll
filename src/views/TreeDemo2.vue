@@ -1,9 +1,8 @@
 <template>
   <div>
-    <el-alert type="warning" title="树结构虚拟滚动只计算一级节点渲染的数据，如果某个一级节点下的子孙节点超级多，仍然会卡顿。（可以只用一层结构模拟树结构）" show-icon></el-alert>
     <virtual-scroll
       ref="virtualScroll"
-      :data.sync="list"
+      :data="list"
       :item-size="62"
       key-prop="id"
       @change="virtualList => (tableData = virtualList)">
@@ -14,7 +13,21 @@
         style="width: 100%"
         border
         row-key="id">
-        <virtual-column label="id" prop="id" type="tree" :load="onload"></virtual-column>
+        <el-table-column label="id" prop="id" class-name="el-table__row--level">
+          <template slot-scope="{row}">
+            <span class="el-table__indent" :style="{ paddingLeft: `${row.level * 16}px` }"></span>
+            <div 
+              v-if="row.hasChildren"
+              class="el-table__expand-icon" 
+              :class="row.expanded ? 'el-table__expand-icon--expanded' : ''"
+              @click="onExpand(row)">
+              <i class="el-icon-loading" v-if="row.loading"></i>
+              <i class="el-icon-arrow-right" v-else></i>
+            </div> 
+            <span v-else class="el-table__placeholder"></span>
+            {{row.id}}
+          </template>
+        </el-table-column>
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
       </el-table>
@@ -24,18 +37,17 @@
 
 <script>
 import VirtualScroll from '../el-table-virtual-scroll'
-import VirtualColumn from '../el-table-virtual-column'
 
 export default {
   components: {
-    VirtualScroll,
-    VirtualColumn
+    VirtualScroll
   },
   data () {
     return {
       loading: false,
       list: [],
-      tableData: []
+      tableData: [],
+      count: 3000
     }
   },
   methods: {
@@ -49,10 +61,15 @@ export default {
           const text2 = this.getRandomContent()
           this.list.push({
             id: i,
-            show: false,
             text,
             text2,
-            hasChildren: true
+            // 以下字段用来模拟树结构加载
+            hasChildren: true, // 是否有子节点
+            expanded: false, // 节点是否展开
+            loading: false, // 节点loading状态
+            loaded: false, // 节点是否已经加载完成
+            level: 1, // 当前节点的树层级
+            hideNodes: [] // 隐藏的子孙节点，用于节点收起
           })
         }
         this.loading = false
@@ -74,9 +91,32 @@ export default {
       const i = Math.floor(Math.random() * 10)
       return content[i]
     },
-    onload (row, resolve) {
-      if (!this.count) this.count = 3000
+    // 展开收起事件
+    onExpand (row) {
+      row.expanded = !row.expanded
+      if (row.expanded) {
+        this.loadChildNodes(row)
+      } else {
+        this.hideChildNodes(row)
+      }
+    },
+    // 加载子节点
+    loadChildNodes (row) {
+      // 如果已经加载，则显示隐藏的字节点
+      if (row.loaded) {
+        const index = this.list.findIndex(item => item === row)
+        if (index > -1) {
+          this.list.splice(index + 1, 0, ...row.hideNodes)
+        }
+        return
+      }
+      
+      // 获取子节点数据并显示
+      row.loading = true
       setTimeout(() => {
+        row.loading = false
+        row.loaded = true
+        
         const data = []
         for (let i = 0; i < 10; i++) {
           data.push({
@@ -84,11 +124,40 @@ export default {
             show: false,
             text: this.getRandomContent(),
             text2: this.getRandomContent(),
-            $hasChildren: true
+            hasChildren: row.level > 3 ? false : true,
+            expanded: false,
+            loading: false,
+            level: row.level + 1,
+            hideNodes: []
           })
         }
-        resolve(data)
+        
+        // 所有子节点插入到当前同级节点下
+        const index = this.list.findIndex(item => item === row)
+        if (index > -1) {
+          this.list.splice(index + 1, 0, ...data)
+        }
       }, 1000)
+    },
+    // 隐藏子节点
+    hideChildNodes (row) {
+      const index = this.list.findIndex(item => item === row)
+      if (index === -1) return
+      
+      // 查找当前节点的所有子孙节点
+      const hideNodes = []
+      for (let i = index + 1; i < this.list.length; i++) {
+        const curRow = this.list[i]
+        if (curRow.level <= row.level) break
+        hideNodes.push(curRow)
+      }
+      row.hideNodes = hideNodes
+      // 隐藏所有子孙节点
+      this.list = this.list.filter(item => !hideNodes.includes(item))
+    },
+    // 由于树节点（已展开）突然收起时，会出现的当前渲染的表格行不能满屏情况，需要更新virtualList组件，重新计算需要渲染的数据
+    updateVirtualScroll () {
+      this.$refs.virtualScroll.update()
     }
   },
   created () {

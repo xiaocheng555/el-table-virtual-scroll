@@ -57,11 +57,6 @@ export default {
       type: Array,
       required: true
     },
-    // 每一行的预估高度（height 废弃，改为使用itemSize，语义更好）
-    height: {
-      type: Number,
-      default: 60
-    },
     // 每一行的预估高度
     itemSize: {
       type: Number,
@@ -84,7 +79,12 @@ export default {
     // 滚动事件的节流时间
     throttleTime: {
       type: Number,
-      default: 50
+      default: 10
+    },
+    // 是否获取表格行动态高度
+    dynamic: {
+      type: Boolean,
+      default: true
     }
   },
   provide () {
@@ -103,7 +103,9 @@ export default {
   },
   computed: {
     // 计算出每个item（的key值）到滚动容器顶部的距离
-    offsetMap ({ keyProp, avgItemSize, sizes, data }) {
+    offsetMap ({ keyProp, itemSize, sizes, data }) {
+      if (!this.dynamic) return {}
+      
       const res = {}
       let total = 0
       for (let i = 0; i < data.length; i++) {
@@ -111,13 +113,10 @@ export default {
         res[key] = total
 
         const curSize = sizes[key]
-        const size = typeof curSize === 'number' ? curSize : avgItemSize
+        const size = typeof curSize === 'number' ? curSize : itemSize
         total += size
       }
       return res
-    },
-    avgItemSize () {
-      return this.itemSize || this.height
     }
   },
   methods: {
@@ -145,7 +144,7 @@ export default {
       }, 100)
 
       // 监听事件
-      this.onScroll = throttle(this.handleScroll, this.throttleTime)
+      this.onScroll = !this.throttleTime ? this.handleScroll : throttle(this.handleScroll, this.throttleTime)
       this.scroller.addEventListener('scroll', this.onScroll)
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
@@ -170,6 +169,7 @@ export default {
 
     // 更新尺寸（高度）
     updateSizes () {
+      if (!this.dynamic) return
       let rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')
       
       // 处理树形表格
@@ -230,6 +230,10 @@ export default {
 
     // 获取某条数据offsetTop
     getItemOffsetTop (index) {
+      if (!this.dynamic) {
+        return this.itemSize * index
+      }
+      
       const item = this.data[index]
       if (item) {
         return this.offsetMap[item[this.keyProp]] || 0
@@ -243,9 +247,9 @@ export default {
       const item = this.data[index]
       if (item) {
         const key = item[this.keyProp]
-        return this.sizes[key] || this.avgItemSize
+        return this.sizes[key] || this.itemSize
       }
-      return this.avgItemSize
+      return this.itemSize
     },
 
     // 计算只在视图上渲染的数据
@@ -255,33 +259,40 @@ export default {
       const top = getScrollTop(scroller) - buffer
       const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer
       
-      // 二分法计算可视范围内的开始的第一个内容
-      let l = 0
-      let r = data.length - 1
-      let mid = 0
-      while (l <= r) {
-        mid = Math.floor((l + r) / 2)
-        const midVal = this.getItemOffsetTop(mid)
-        if (midVal < top) {
-          const midNextVal = this.getItemOffsetTop(mid + 1)
-          if (midNextVal > top) break
-          l = mid + 1
-        } else {
-          r = mid - 1
+      let start 
+      let end
+      if (!this.dynamic) {
+        start = top <= 0 ? 0 : Math.floor(top / this.itemSize)
+        end = bottom <= 0 ? 0 : Math.ceil(bottom / this.itemSize)
+      } else {
+        // 二分法计算可视范围内的开始的第一个内容
+        let l = 0
+        let r = data.length - 1
+        let mid = 0
+        while (l <= r) {
+          mid = Math.floor((l + r) / 2)
+          const midVal = this.getItemOffsetTop(mid)
+          if (midVal < top) {
+            const midNextVal = this.getItemOffsetTop(mid + 1)
+            if (midNextVal > top) break
+            l = mid + 1
+          } else {
+            r = mid - 1
+          }
+        }
+  
+        // 计算渲染内容的开始、结束索引
+        start = mid
+        end = data.length - 1
+        for (let i = start + 1; i < data.length; i++) {
+          const offsetTop = this.getItemOffsetTop(i)
+          if (offsetTop >= bottom) {
+            end = i
+            break
+          }
         }
       }
-
-      // 计算渲染内容的开始、结束索引
-      let start = mid
-      let end = data.length - 1
-      for (let i = start + 1; i < data.length; i++) {
-        const offsetTop = this.getItemOffsetTop(i)
-        if (offsetTop >= bottom) {
-          end = i
-          break
-        }
-      }
-
+      
       // 开始索引始终保持偶数，如果为奇数，则加1使其保持偶数【确保表格行的偶数数一致，不会导致斑马纹乱序显示】
       if (start % 2) {
         start = start - 1

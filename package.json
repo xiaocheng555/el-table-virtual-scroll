@@ -1,65 +1,50 @@
 {
   "name": "el-table-virtual-scroll",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "基于Element-UI的Table 组件开发的虚拟滚动组件，支持动态高度，解决数据量大时滚动卡顿的问题。",
+  "main": "dist/el-table-virtual-scroll.umd.js",
+  "module": "dist/el-table-virtual-scroll.es.js",
+  "unpkg": "dist/el-table-virtual-scroll.min.js",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "dev": "npm run serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "deploy": "gh-pages -d dist",
-    "publish": "npm run build && npm run deploy"
+    "build:umd": "rollup --config ./build/rollup.config.umd.js",
+    "build:browser": "rollup --config ./build/rollup.config.browser.js",
+    "build:es": "rollup --config ./build/rollup.config.es.js",
+    "build": "npm run build:umd && npm run build:browser && npm run build:es"
   },
-  "dependencies": {
-    "core-js": "^3.8.3",
-    "el-table-infinite-scroll": "^2.0.0",
-    "element-ui": "^2.15.9",
-    "highlight.js": "^11.7.0",
-    "install": "^0.13.0",
-    "lodash": "^4.17.21",
-    "vue": "^2.6.14",
-    "vue-drag-resize": "^1.5.4",
-    "vue-infinite-loading": "^2.4.5",
-    "vue-infinite-scroll": "^2.0.2",
-    "vue-response-size": "^1.0.0",
-    "vue-router": "^3.6.5"
-  },
+  "keywords": [
+    "vue",
+    "el-table-virtual-scroll",
+    "virtual",
+    "scroll",
+    "el-table",
+    "ElementUI"
+  ],
+  "author": "xiaocheng555",
+  "license": "ISC",
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/eslint-parser": "^7.12.16",
-    "@vue/cli-plugin-babel": "~5.0.0",
-    "@vue/cli-plugin-eslint": "~5.0.0",
-    "@vue/cli-service": "~5.0.0",
-    "babel-plugin-import": "^1.13.5",
-    "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3",
-    "fs-extra": "^10.1.0",
-    "gh-pages": "^4.0.0",
-    "less": "^4.1.3",
-    "less-loader": "^11.0.0",
-    "vue-template-compiler": "^2.6.14"
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "autoprefixer": "^8.0.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-html": "^6.0.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "eslint-plugin-vue": "^7.4.1",
+    "rollup": "^2.36.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-vue": "^5.0.1",
+    "vue": "^2.6.10",
+    "vue-template-compiler": "^2.6.10"
   },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {
-      "no-debugger": "off",
-      "no-console": "off",
-      "vue/multi-word-component-names": "off"
-    }
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+  "peerDependencies": {
+    "lodash": "^4.17.21"
+  }
 }

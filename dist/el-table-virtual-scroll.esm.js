@@ -6,7 +6,7 @@ import throttle from 'lodash/throttle';
 function isScroller(el) {
   var style = window.getComputedStyle(el, null);
   var scrollValues = ['auto', 'scroll'];
-  return scrollValues.includes(style['overflow']) || scrollValues.includes(style['overflow-y']);
+  return scrollValues.includes(style.overflow) || scrollValues.includes(style['overflow-y']);
 }
 
 // 获取父层滚动容器
@@ -618,11 +618,11 @@ __vue_render__$1._withStripped = true;
   /* style */
   const __vue_inject_styles__$1 = function (inject) {
     if (!inject) return
-    inject("data-v-6d82d562_0", { source: ".is-expanding[data-v-6d82d562] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n", map: {"version":3,"sources":["el-table-virtual-scroll.vue"],"names":[],"mappings":"AAAA;EACE,gBAAgB;AAClB","file":"el-table-virtual-scroll.vue","sourcesContent":[".is-expanding :deep(.el-table__expand-icon) {\n  transition: none;\n}\n"]}, media: undefined });
+    inject("data-v-2f1f8c5e_0", { source: ".is-expanding[data-v-2f1f8c5e] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n", map: {"version":3,"sources":["el-table-virtual-scroll.vue"],"names":[],"mappings":"AAAA;EACE,gBAAgB;AAClB","file":"el-table-virtual-scroll.vue","sourcesContent":[".is-expanding :deep(.el-table__expand-icon) {\n  transition: none;\n}\n"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1 = "data-v-6d82d562";
+  const __vue_scope_id__$1 = "data-v-2f1f8c5e";
   /* module identifier */
   const __vue_module_identifier__$1 = undefined;
   /* functional template */
@@ -1049,7 +1049,7 @@ __vue_render__._withStripped = true;
   /* style */
   const __vue_inject_styles__ = undefined;
   /* scoped */
-  const __vue_scope_id__ = "data-v-79972d50";
+  const __vue_scope_id__ = "data-v-eb5ecc50";
   /* module identifier */
   const __vue_module_identifier__ = undefined;
   /* functional template */
@@ -1075,4 +1075,4 @@ __vue_render__._withStripped = true;
     undefined
   );
 
-export { __vue_component__ as ElTableVirtualColumn, __vue_component__$1 as ElTableVirtualScroll, __vue_component__$1 as default };
+export { __vue_component__ as VirtualColumn, __vue_component__$1 as VirtualScroll, __vue_component__$1 as default };

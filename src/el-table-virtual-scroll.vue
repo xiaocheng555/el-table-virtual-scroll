@@ -11,7 +11,7 @@ import throttle from 'lodash/throttle'
 function isScroller (el) {
   const style = window.getComputedStyle(el, null)
   const scrollValues = ['auto', 'scroll']
-  return scrollValues.includes(style['overflow']) || scrollValues.includes(style['overflow-y'])
+  return scrollValues.includes(style.overflow) || scrollValues.includes(style['overflow-y'])
 }
 
 // 获取父层滚动容器
@@ -105,7 +105,7 @@ export default {
     // 计算出每个item（的key值）到滚动容器顶部的距离
     offsetMap ({ keyProp, itemSize, sizes, data }) {
       if (!this.dynamic) return {}
-      
+
       const res = {}
       let total = 0
       for (let i = 0; i < data.length; i++) {
@@ -130,13 +130,13 @@ export default {
       // 截取页面可视范围内显示数据的开始和结尾索引
       this.start = 0
       this.end = undefined
-      
+
       // 验证ElTable组件
       this.elTable = this.$children[0]
       if (!this.elTable || this.elTable.$options.name !== 'ElTable') {
         throw new Error('el-table-virtual-column 组件插槽内必须是el-table')
       }
-      
+
       this.scroller = this.getScroller()
       // 初次执行
       setTimeout(() => {
@@ -149,7 +149,7 @@ export default {
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
     },
-    
+
     // 获取滚动元素
     getScroller () {
       let el
@@ -171,16 +171,16 @@ export default {
     updateSizes () {
       if (!this.dynamic) return
       let rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')
-      
+
       // 处理树形表格
       let isTree = false
       if (rows[0] && rows[0].classList.contains('el-table__row--level-0')) {
         isTree = true
-        rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0') 
+        rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0')
       }
-      
+
       // 移除多个hover-row
-      const hoverRows =  this.$el.querySelectorAll('.el-table__row.hover-row')
+      const hoverRows = this.$el.querySelectorAll('.el-table__row.hover-row')
       if (hoverRows.length > 1) {
         Array.from(hoverRows).forEach((row) => {
           row.classList.remove('hover-row')
@@ -194,7 +194,7 @@ export default {
         // 计算表格行的高度
         let offsetHeight = row.offsetHeight
         // 表格行如果有扩展行，需要加上扩展内容的高度
-        if (row.classList.contains('expanded')) { 
+        if (row.classList.contains('expanded')) {
           offsetHeight += row.nextSibling.offsetHeight
         }
         // 表格行如果有子孙节点，需要加上子孙节点的高度
@@ -233,7 +233,7 @@ export default {
       if (!this.dynamic) {
         return this.itemSize * index
       }
-      
+
       const item = this.data[index]
       if (item) {
         return this.offsetMap[item[this.keyProp]] || 0
@@ -258,8 +258,8 @@ export default {
       // 计算可视范围顶部、底部
       const top = getScrollTop(scroller) - buffer
       const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer
-      
-      let start 
+
+      let start
       let end
       if (!this.dynamic) {
         start = top <= 0 ? 0 : Math.floor(top / this.itemSize)
@@ -280,7 +280,7 @@ export default {
             r = mid - 1
           }
         }
-  
+
         // 计算渲染内容的开始、结束索引
         start = mid
         end = data.length - 1
@@ -292,7 +292,7 @@ export default {
           }
         }
       }
-      
+
       // 开始索引始终保持偶数，如果为奇数，则加1使其保持偶数【确保表格行的偶数数一致，不会导致斑马纹乱序显示】
       if (start % 2) {
         start = start - 1
@@ -385,7 +385,7 @@ export default {
       this.sizes = {}
       this.scrollTo(0, false)
     },
-    
+
     // 选中所有列
     checkAll (val) {
       this.data.forEach(row => this.$set(row, '$v_checked', val))
@@ -413,20 +413,20 @@ export default {
     // 监听表格expand-change事件
     bindTableExpandEvent () {
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
-      if (!this.isExpandType) return 
-      
+      if (!this.isExpandType) return
+
       this.elTable.$on('expand-change', (row, expandedRows) => {
         this.$set(row, '$v_expanded', expandedRows.includes(row))
       })
     },
     // 设置表格行展开
     setRowsExpanded () {
-      if (!this.isExpandType) return 
-      
+      if (!this.isExpandType) return
+
       this.$nextTick(() => {
         const expandRows = this.renderData.filter(item => item.$v_expanded)
         if (expandRows.length === 0) return
-        
+
         expandRows.forEach(row => {
           this.elTable.toggleRowExpansion(row, true)
         })

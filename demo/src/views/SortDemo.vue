@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {
@@ -62,12 +62,12 @@ export default {
         this.mList = [...this.originList]
         return
       }
-      
+
       this.mList.sort((a, b) => {
         if (order === 'ascending') {
           return a[prop] - b[prop]
         } else if (order === 'descending') {
-          return b[prop] - a[prop] 
+          return b[prop] - a[prop]
         }
       })
     }

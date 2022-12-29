@@ -21,7 +21,7 @@
             <el-checkbox v-model="row.checked" @change="onCheckRow"></el-checkbox>
           </template>
         </el-table-column>
-        
+
         <el-table-column
           label="日期"
           width="120">
@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {

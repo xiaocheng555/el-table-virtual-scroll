@@ -1,7 +1,7 @@
+const path = require('path')
 const buildDemoFiles = require('./build/buildDemoFiles.js')
 
 const isProduction = process.env.NODE_ENV === 'production'
-
 const demoFiles = buildDemoFiles()
 
 module.exports = {
@@ -12,8 +12,14 @@ module.exports = {
       .plugin('define')
       .tap(args => {
         args[0]['process.env']['demoFiles'] = demoFiles
-        // args[0]['process.env']['num'] = String('`123`')
         return args
       })
+  },
+  configureWebpack: {
+    resolve: {
+      alias: {
+        'el-table-virtual-scroll': path.resolve('../src/index')
+      }
+    }
   }
 }

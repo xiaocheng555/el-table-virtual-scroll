@@ -16,14 +16,14 @@
         <el-table-column label="id" prop="id" class-name="el-table__row--level">
           <template slot-scope="{row}">
             <span class="el-table__indent" :style="{ paddingLeft: `${row.level * 16}px` }"></span>
-            <div 
+            <div
               v-if="row.hasChildren"
-              class="el-table__expand-icon" 
+              class="el-table__expand-icon"
               :class="row.expanded ? 'el-table__expand-icon--expanded' : ''"
               @click="onExpand(row)">
               <i class="el-icon-loading" v-if="row.loading"></i>
               <i class="el-icon-arrow-right" v-else></i>
-            </div> 
+            </div>
             <span v-else class="el-table__placeholder"></span>
             {{row.id}}
           </template>
@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 
 export default {
   components: {
@@ -110,13 +110,13 @@ export default {
         }
         return
       }
-      
+
       // 获取子节点数据并显示
       row.loading = true
       setTimeout(() => {
         row.loading = false
         row.loaded = true
-        
+
         const data = []
         for (let i = 0; i < 10; i++) {
           data.push({
@@ -131,7 +131,7 @@ export default {
             hideNodes: []
           })
         }
-        
+
         // 所有子节点插入到当前同级节点下
         const index = this.list.findIndex(item => item === row)
         if (index > -1) {
@@ -143,7 +143,7 @@ export default {
     hideChildNodes (row) {
       const index = this.list.findIndex(item => item === row)
       if (index === -1) return
-      
+
       // 查找当前节点的所有子孙节点
       const hideNodes = []
       for (let i = index + 1; i < this.list.length; i++) {

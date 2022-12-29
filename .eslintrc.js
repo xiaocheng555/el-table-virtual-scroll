@@ -10,6 +10,6 @@ module.exports = {
     'standard'
   ],
   env: {
-    browser: true,
+    browser: true
   }
 }

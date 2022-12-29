@@ -1,8 +1,8 @@
-import ElTableVirtualScroll from './el-table-virtual-scroll.vue'
-import ElTableVirtualColumn from './el-table-virtual-column.vue'
+import VirtualScroll from './el-table-virtual-scroll.vue'
+import VirtualColumn from './el-table-virtual-column.vue'
 
-export default ElTableVirtualScroll
+export default VirtualScroll
 export {
-  ElTableVirtualScroll,
-  ElTableVirtualColumn
+  VirtualScroll,
+  VirtualColumn
 }

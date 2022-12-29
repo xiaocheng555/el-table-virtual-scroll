@@ -58,8 +58,8 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
-import VirtualColumn from '../el-table-virtual-column'
+import VirtualScroll from 'el-table-virtual-scroll'
+import { VirtualColumn } from 'el-table-virtual-scroll'
 
 export default {
   components: {

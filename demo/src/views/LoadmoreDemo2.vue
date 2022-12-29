@@ -5,11 +5,11 @@
       :item-size="62"
       key-prop="id"
       @change="(renderData) => virtualList2 = renderData">
-      <el-table 
+      <el-table
         v-el-table-infinite-scroll="loadMore"
         :class="loading ? 'no-empty' : ''"
-        row-key="id" 
-        stripe 
+        row-key="id"
+        stripe
         :data="virtualList2"
         height="500px">
         <el-table-column label="id" prop="id"></el-table-column>
@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 import ElTableInfiniteScroll from 'el-table-infinite-scroll'
 
 export default {

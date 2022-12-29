@@ -60,7 +60,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {

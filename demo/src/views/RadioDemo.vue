@@ -19,7 +19,7 @@
             </el-radio>
           </template>
         </el-table-column>
-        
+
         <el-table-column
           label="日期"
           width="120">
@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {
@@ -63,14 +63,14 @@ export default {
     // 选择表格某行
     onCheckRow (row) {
       if (this.checkedRow) {
-        this.checkedRow.radioCheck = false 
+        this.checkedRow.radioCheck = false
       }
       this.checkedRow = row
-      
+
     },
     setCheckedRow (row) {
       if (this.checkedRow) {
-        this.checkedRow.radioCheck = false 
+        this.checkedRow.radioCheck = false
       }
       if (row) {
         row.radioCheck = true

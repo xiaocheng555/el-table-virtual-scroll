@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {
@@ -46,7 +46,7 @@ export default {
   methods: {
     tableRowClassName ({row}) {
       if (!this.status) return
-      
+
       if (row.index === 1) {
         return 'warning-row'
       } else if (row.index === 3) {

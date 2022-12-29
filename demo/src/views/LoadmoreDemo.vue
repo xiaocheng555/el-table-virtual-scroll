@@ -5,11 +5,11 @@
       :item-size="62"
       key-prop="id"
       @change="(renderData) => virtualList2 = renderData">
-      <el-table 
-        class="loadmore-table" 
+      <el-table
+        class="loadmore-table"
         :class="loading ? 'no-empty' : ''"
-        row-key="id" 
-        stripe 
+        row-key="id"
+        stripe
         :data="virtualList2"
         height="500px">
         <el-table-column label="id" prop="id"></el-table-column>
@@ -33,8 +33,8 @@
           </template>
         </el-table-column>
         <div slot="append">
-          <InfiniteLoading 
-            forceUseInfiniteWrapper=".loadmore-table .el-table__body-wrapper" 
+          <InfiniteLoading
+            forceUseInfiniteWrapper=".loadmore-table .el-table__body-wrapper"
             @infinite="loadMore">
           </InfiniteLoading>
         </div>
@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
+import VirtualScroll from 'el-table-virtual-scroll'
 import InfiniteLoading from 'vue-infinite-loading'
 
 export default {

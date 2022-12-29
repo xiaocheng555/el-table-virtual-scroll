@@ -22,8 +22,8 @@
 </template>
 
 <script>
-import VirtualScroll from '../el-table-virtual-scroll'
-import VirtualColumn from '../el-table-virtual-column'
+import VirtualScroll from 'el-table-virtual-scroll'
+import { VirtualColumn } from 'el-table-virtual-scroll'
 
 export default {
   components: {
@@ -78,7 +78,7 @@ export default {
       setTimeout(() => {
         if (Math.random() > 0.5) {
           resolve([])
-          return 
+          return
         }
         const data = []
         for (let i = 0; i < 10; i++) {

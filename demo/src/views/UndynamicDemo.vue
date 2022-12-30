@@ -7,6 +7,7 @@
       :item-size="48"
       key-prop="id"
       :dynamic="false"
+      :throttleTime="0"
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"

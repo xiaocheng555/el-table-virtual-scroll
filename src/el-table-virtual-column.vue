@@ -91,6 +91,10 @@ export default {
     // 选择表格某行
     onCheckRow (row, val) {
       this.virtualScroll.checkRow(row, val)
+      this.syncCheckStatus()
+    },
+    // 同步全选、半选框状态
+    syncCheckStatus () {
       const list = this.virtualScroll.data
       const checkedLen = list.filter(row => row.$v_checked === true).length
       if (checkedLen === 0) {
@@ -192,12 +196,17 @@ export default {
     }
   },
   created () {
+    this.virtualScroll.addColumn(this)
+
     const { type } = this.$attrs
     if (type === 'expand') {
       this.virtualScroll.isExpandType = true
     } else if (type === 'v-tree') {
       this.isTree = true
     }
+  },
+  beforeDestroy () {
+    this.virtualScroll.removeColumn(this)
   }
 }
 </script>

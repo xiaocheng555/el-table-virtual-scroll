@@ -98,7 +98,8 @@ export default {
       start: 0,
       end: undefined,
       curRow: null, // 表格单选：选中的行
-      isExpanding: false // 列是否正在展开
+      isExpanding: false, // 列是否正在展开
+      columnVms: [] // virtual-column 组件实例
     }
   },
   computed: {
@@ -379,38 +380,47 @@ export default {
         })
       }
     },
-
     // 【外部调用】重置
     reset () {
       this.sizes = {}
       this.scrollTo(0, false)
     },
 
-    // 选中所有列
+    // 添加virtual-column实例
+    addColumn (vm) {
+      this.columnVms.push(vm)
+    },
+    // 移除virtual-column实例
+    removeColumn (vm) {
+      this.columnVms = this.columnVms.filter(item => item !== vm)
+    },
+    // 多选：选中所有列
     checkAll (val) {
       this.data.forEach(row => this.$set(row, '$v_checked', val))
       this.emitSelectionChange()
     },
-    // 选中某一列
+    // 多选：选中某一列
     checkRow (row, val) {
       this.$set(row, '$v_checked', val)
       this.emitSelectionChange()
     },
-    // 兼容表格selection-change事件
+    // 多选：兼容表格selection-change事件
     emitSelectionChange () {
       const selection = this.data.filter(row => row.$v_checked)
       this.$emit('selection-change', selection)
     },
-    // 兼容表格clearSelection方法
+    // 多选：兼容表格clearSelection方法
     clearSelection () {
       this.checkAll(false)
+      this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
-    // 兼容表格toggleRowSelection方法
+    // 多选：兼容表格toggleRowSelection方法
     toggleRowSelection (row, selected) {
       const val = typeof selected === 'boolean' ? selected : !row.$v_checked
       this.checkRow(row, val)
+      this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
-    // 监听表格expand-change事件
+    // 展开行：监听表格expand-change事件
     bindTableExpandEvent () {
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
       if (!this.isExpandType) return
@@ -419,7 +429,7 @@ export default {
         this.$set(row, '$v_expanded', expandedRows.includes(row))
       })
     },
-    // 设置表格行展开
+    // 展开行：设置表格行展开
     setRowsExpanded () {
       if (!this.isExpandType) return
 
@@ -437,20 +447,22 @@ export default {
         }, 10)
       })
     },
-    // 切换多个行的展开状态
-    toggleRowsExpansion (rows, expanded) {
-      rows.forEach(row => {
-        this.$set(row, '$v_expanded', expanded)
-      })
-      this.setRowsExpanded()
-    },
-    // 更新数据
-    updateData (data) {
-      this.$emit('update:data', data)
+    // 展开行：切换某一行的展开状态
+    toggleRowExpansion (row, expanded) {
+      const hasVal = typeof expanded === 'boolean'
+      this.$set(row, '$v_expanded', hasVal ? expanded : !row.$v_expanded)
+      if (this.renderData.includes(row)) {
+        this.elTable.toggleRowExpansion(row, expanded)
+      }
     },
     // 单选：设置选中行
     setCurrentRow (row) {
       this.curRow = row
+      this.$emit('current-change', row)
+    },
+    // 更新数据
+    updateData (data) {
+      this.$emit('update:data', data)
     }
   },
   watch: {

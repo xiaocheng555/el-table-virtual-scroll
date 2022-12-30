@@ -54,6 +54,10 @@
         </el-table-column>
       </el-table>
     </virtual-scroll>
+    <div style="margin-top: 20px">
+      <el-button @click="toggleExpand([list[1], list[2]])">切换第二、第三行的展开收起状态</el-button>
+      <el-button @click="toggleExpand(list, false)">全部收起</el-button>
+    </div>
   </div>
 </template>
 
@@ -86,8 +90,7 @@ export default {
             id: i,
             show: false,
             text,
-            text2,
-            hasChildren: true
+            text2
           })
         }
         this.loading = false
@@ -111,6 +114,12 @@ export default {
     },
     async onVirtualChange (virtualList) {
       this.tableData = virtualList
+    },
+    toggleExpand (rows, expanded) {
+      rows.forEach(row => {
+        this.$refs.virtualScroll.toggleRowExpansion(row, expanded)
+      })
+      this.$refs.virtualScroll.update()
     }
   },
   created () {

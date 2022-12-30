@@ -58,7 +58,6 @@ export default {
   },
   methods: {
     toggleSelection (rows) {
-      console.log(rows, 'rows')
       if (rows) {
         rows.forEach(row => {
           this.$refs.virtualScroll.toggleRowSelection(row)

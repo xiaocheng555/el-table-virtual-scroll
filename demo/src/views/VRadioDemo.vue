@@ -5,7 +5,8 @@
       :data="list"
       :item-size="62"
       key-prop="id"
-      @change="(virtualList) => tableData = virtualList">
+      @change="(virtualList) => tableData = virtualList"
+      @current-change="onRadioChange">
       <el-table
         :data="tableData"
         height="500"
@@ -57,6 +58,9 @@ export default {
   methods: {
     setCheckedRow (row) {
       this.$refs.virtualScroll.setCurrentRow(row)
+    },
+    onRadioChange (row) {
+      console.log(row, 'onRadioChange')
     }
   }
 }

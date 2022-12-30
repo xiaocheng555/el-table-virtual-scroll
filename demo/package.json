@@ -13,6 +13,7 @@
   "dependencies": {
     "core-js": "^3.8.3",
     "el-table-infinite-scroll": "^2.0.0",
+    "el-table-virtual-scroll": "^1.0.2",
     "element-ui": "^2.15.9",
     "highlight.js": "^11.7.0",
     "install": "^0.13.0",

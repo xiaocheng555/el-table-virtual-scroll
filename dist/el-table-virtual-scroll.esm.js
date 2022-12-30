@@ -93,7 +93,9 @@ var script$1 = {
       end: undefined,
       curRow: null,
       // 表格单选：选中的行
-      isExpanding: false // 列是否正在展开
+      isExpanding: false,
+      // 列是否正在展开
+      columnVms: [] // virtual-column 组件实例
     };
   },
 
@@ -373,7 +375,17 @@ var script$1 = {
       this.sizes = {};
       this.scrollTo(0, false);
     },
-    // 选中所有列
+    // 添加virtual-column实例
+    addColumn: function addColumn(vm) {
+      this.columnVms.push(vm);
+    },
+    // 移除virtual-column实例
+    removeColumn: function removeColumn(vm) {
+      this.columnVms = this.columnVms.filter(function (item) {
+        return item !== vm;
+      });
+    },
+    // 多选：选中所有列
     checkAll: function checkAll(val) {
       var _this6 = this;
       this.data.forEach(function (row) {
@@ -381,28 +393,34 @@ var script$1 = {
       });
       this.emitSelectionChange();
     },
-    // 选中某一列
+    // 多选：选中某一列
     checkRow: function checkRow(row, val) {
       this.$set(row, '$v_checked', val);
       this.emitSelectionChange();
     },
-    // 兼容表格selection-change事件
+    // 多选：兼容表格selection-change事件
     emitSelectionChange: function emitSelectionChange() {
       var selection = this.data.filter(function (row) {
         return row.$v_checked;
       });
       this.$emit('selection-change', selection);
     },
-    // 兼容表格clearSelection方法
+    // 多选：兼容表格clearSelection方法
     clearSelection: function clearSelection() {
       this.checkAll(false);
+      this.columnVms.forEach(function (vm) {
+        return vm.syncCheckStatus();
+      });
     },
-    // 兼容表格toggleRowSelection方法
+    // 多选：兼容表格toggleRowSelection方法
     toggleRowSelection: function toggleRowSelection(row, selected) {
       var val = typeof selected === 'boolean' ? selected : !row.$v_checked;
       this.checkRow(row, val);
+      this.columnVms.forEach(function (vm) {
+        return vm.syncCheckStatus();
+      });
     },
-    // 监听表格expand-change事件
+    // 展开行：监听表格expand-change事件
     bindTableExpandEvent: function bindTableExpandEvent() {
       var _this7 = this;
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
@@ -411,7 +429,7 @@ var script$1 = {
         _this7.$set(row, '$v_expanded', expandedRows.includes(row));
       });
     },
-    // 设置表格行展开
+    // 展开行：设置表格行展开
     setRowsExpanded: function setRowsExpanded() {
       var _this8 = this;
       if (!this.isExpandType) return;
@@ -430,21 +448,22 @@ var script$1 = {
         }, 10);
       });
     },
-    // 切换多个行的展开状态
-    toggleRowsExpansion: function toggleRowsExpansion(rows, expanded) {
-      var _this9 = this;
-      rows.forEach(function (row) {
-        _this9.$set(row, '$v_expanded', expanded);
-      });
-      this.setRowsExpanded();
-    },
-    // 更新数据
-    updateData: function updateData(data) {
-      this.$emit('update:data', data);
+    // 展开行：切换某一行的展开状态
+    toggleRowExpansion: function toggleRowExpansion(row, expanded) {
+      var hasVal = typeof expanded === 'boolean';
+      this.$set(row, '$v_expanded', hasVal ? expanded : !row.$v_expanded);
+      if (this.renderData.includes(row)) {
+        this.elTable.toggleRowExpansion(row, expanded);
+      }
     },
     // 单选：设置选中行
     setCurrentRow: function setCurrentRow(row) {
       this.curRow = row;
+      this.$emit('current-change', row);
+    },
+    // 更新数据
+    updateData: function updateData(data) {
+      this.$emit('update:data', data);
     }
   },
   watch: {
@@ -453,9 +472,9 @@ var script$1 = {
     }
   },
   created: function created() {
-    var _this10 = this;
+    var _this9 = this;
     this.$nextTick(function () {
-      _this10.initData();
+      _this9.initData();
     });
   },
   beforeDestroy: function beforeDestroy() {
@@ -618,11 +637,11 @@ __vue_render__$1._withStripped = true;
   /* style */
   const __vue_inject_styles__$1 = function (inject) {
     if (!inject) return
-    inject("data-v-2f1f8c5e_0", { source: ".is-expanding[data-v-2f1f8c5e] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n", map: {"version":3,"sources":["el-table-virtual-scroll.vue"],"names":[],"mappings":"AAAA;EACE,gBAAgB;AAClB","file":"el-table-virtual-scroll.vue","sourcesContent":[".is-expanding :deep(.el-table__expand-icon) {\n  transition: none;\n}\n"]}, media: undefined });
+    inject("data-v-68733e74_0", { source: ".is-expanding[data-v-68733e74] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n", map: {"version":3,"sources":["el-table-virtual-scroll.vue"],"names":[],"mappings":"AAAA;EACE,gBAAgB;AAClB","file":"el-table-virtual-scroll.vue","sourcesContent":[".is-expanding :deep(.el-table__expand-icon) {\n  transition: none;\n}\n"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1 = "data-v-2f1f8c5e";
+  const __vue_scope_id__$1 = "data-v-68733e74";
   /* module identifier */
   const __vue_module_identifier__$1 = undefined;
   /* functional template */
@@ -767,6 +786,10 @@ var script = {
     // 选择表格某行
     onCheckRow: function onCheckRow(row, val) {
       this.virtualScroll.checkRow(row, val);
+      this.syncCheckStatus();
+    },
+    // 同步全选、半选框状态
+    syncCheckStatus: function syncCheckStatus() {
       var list = this.virtualScroll.data;
       var checkedLen = list.filter(function (row) {
         return row.$v_checked === true;
@@ -868,12 +891,16 @@ var script = {
     }
   },
   created: function created() {
+    this.virtualScroll.addColumn(this);
     var type = this.$attrs.type;
     if (type === 'expand') {
       this.virtualScroll.isExpandType = true;
     } else if (type === 'v-tree') {
       this.isTree = true;
     }
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.virtualScroll.removeColumn(this);
   }
 };
 
@@ -1049,7 +1076,7 @@ __vue_render__._withStripped = true;
   /* style */
   const __vue_inject_styles__ = undefined;
   /* scoped */
-  const __vue_scope_id__ = "data-v-eb5ecc50";
+  const __vue_scope_id__ = "data-v-5805af30";
   /* module identifier */
   const __vue_module_identifier__ = undefined;
   /* functional template */

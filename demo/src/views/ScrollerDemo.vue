@@ -1,8 +1,11 @@
 <template>
   <div class="scroller-box">
     <h2>红色边框的是滚动容器</h2>
-    <p>一些内容</p>
-    <p>一些内容</p>
+    <p
+      :style="{height: largeHeight ? '600px' : '200px', background: 'pink'}"
+      @click="onHeightChange">
+      点击改变高度
+    </p>
     <virtual-scroll
       ref="virtualScroll"
       :data="list"
@@ -71,13 +74,18 @@ export default {
   data () {
     return {
       list: mockData(0, 2000),
-      tableData: []
+      tableData: [],
+      largeHeight: false
     }
   },
   methods: {
-
-  },
-  created () {
+    onHeightChange () {
+      this.largeHeight = !this.largeHeight
+      // 当滚动容器顶部内容高度变化很大时，需要更新虚拟滚动组件，避免出现表格出现一段空白内容
+      this.$nextTick(() => {
+        this.$refs.virtualScroll.update()
+      })
+    }
   }
 }
 </script>

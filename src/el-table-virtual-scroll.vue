@@ -139,6 +139,8 @@ export default {
       }
 
       this.scroller = this.getScroller()
+      this.toTop = this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top
+
       // 初次执行
       setTimeout(() => {
         this.handleScroll()
@@ -257,8 +259,8 @@ export default {
     calcRenderData () {
       const { scroller, data, buffer } = this
       // 计算可视范围顶部、底部
-      const top = getScrollTop(scroller) - buffer
-      const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer
+      const top = getScrollTop(scroller) - buffer - this.toTop
+      const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer - this.toTop
 
       let start
       let end
@@ -356,6 +358,7 @@ export default {
     // 【外部调用】更新
     update () {
       // console.log('update')
+      this.toTop = this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top
       this.handleScroll()
     },
 

@@ -1,5 +1,7 @@
 <template>
-  <div class="el-table-virtual-scroll" :class="isExpanding ? 'is-expanding' : ''">
+  <div
+    class="el-table-virtual-scroll"
+    :class="[isExpanding ? 'is-expanding' : '', isHideAppend ? 'hide-append' : '']">
     <slot></slot>
   </div>
 </template>
@@ -107,7 +109,8 @@ export default {
       end: undefined,
       curRow: null, // 表格单选：选中的行
       isExpanding: false, // 列是否正在展开
-      columnVms: [] // virtual-column 组件实例
+      columnVms: [], // virtual-column 组件实例
+      isHideAppend: false
     }
   },
   computed: {
@@ -507,14 +510,18 @@ export default {
     updateData (data) {
       this.$emit('update:data', data)
     },
-    // 执行update方法更新虚拟滚动，且每次nextTick只能执行一次
+    // 执行update方法更新虚拟滚动，且每次nextTick只能执行一次【在数据大于100条开启虚拟滚动时，由于监听了data、virtualized会连续触发两次update方法：第一次update时，（updateSize）计算尺寸里的渲染数据（renderData）与表格行的dom是一一对应，之后会改变渲染数据（renderData）的值；而第二次执行update时，renderData改变了，而表格行dom未改变，导致renderData与dom不一一对应，从而位置计算错误，最终渲染的数据对应不上。因此使用每次nextTick只能执行一次来避免bug发生】
     doUpdate () {
-      if (this.hasDoUpdate) return
+      if (this.hasDoUpdate) return // nextTick内已经执行过一次就不执行
+      if (!this.scroller) return // scroller不存在说明未初始化完成，不执行
 
+      // 启动虚拟滚动的瞬间，需要暂时隐藏el-table__append-wrapper里的内容，不然会导致滚动位置一直到append的内容处
+      this.isHideAppend = true
       this.update()
       this.hasDoUpdate = true
       this.$nextTick(() => {
         this.hasDoUpdate = false
+        this.isHideAppend = false
       })
     }
   },
@@ -531,8 +538,8 @@ export default {
       handler (val) {
         if (!val) {
           this.renderAllData()
-        } else if (this.scroller) {
-          this.scroller && this.doUpdate()
+        } {
+          this.doUpdate()
         }
       }
     }
@@ -555,6 +562,11 @@ export default {
 .is-expanding {
   :deep(.el-table__expand-icon) {
     transition: none;
+  }
+}
+.hide-append {
+  :deep(.el-table__append-wrapper) {
+    display: none;
   }
 }
 </style>

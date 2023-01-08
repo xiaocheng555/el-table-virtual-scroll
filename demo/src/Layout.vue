@@ -9,7 +9,7 @@
         </a>
       </div>
     </el-header>
-    
+
     <el-container class="layout-main">
       <el-drawer
         v-if="isMenuDrawer"
@@ -21,9 +21,9 @@
         <el-menu :default-active="activePath" router>
           <template v-for="menu in menus">
             <div class="menu-group-title" v-if="(typeof menu === 'string')" :key="menu">{{menu}}</div>
-            <el-menu-item 
+            <el-menu-item
               v-else
-              :index="menu.path" 
+              :index="menu.path"
               :key="menu.path">
               {{menu.title}}
             </el-menu-item>
@@ -32,14 +32,14 @@
       </el-drawer>
       <el-aside
         v-show="!isMenuDrawer"
-        width="260px" 
+        width="260px"
         class="layout-aside">
         <el-menu :default-active="activePath" router>
           <template v-for="menu in menus">
             <div class="menu-group-title" v-if="(typeof menu === 'string')" :key="menu">{{menu}}</div>
-            <el-menu-item 
+            <el-menu-item
               v-else
-              :index="menu.path" 
+              :index="menu.path"
               :key="menu.path">
               {{menu.title}}
             </el-menu-item>
@@ -50,13 +50,13 @@
         <slot></slot>
       </el-main>
     </el-container>
-    
+
     <Preview class="code-preview" v-if="!isMenuDrawer"></Preview>
   </el-container>
 </template>
 
 <script>
-const Preview = () => import('./Preview') 
+const Preview = () => import('./Preview')
 
 export default {
   components: {
@@ -67,8 +67,8 @@ export default {
       asideOpened: true,
       menus: [
         '基础',
-        { 
-          path: '/CaseDemo',  
+        {
+          path: '/CaseDemo',
           title: '案例'
         },
         {
@@ -86,6 +86,10 @@ export default {
         {
           title: '下拉加载2',
           path: '/LoadmoreDemo2'
+        },
+        {
+          title: '动态开启虚拟滚动',
+          path: '/virtualizedDemo'
         },
         {
           title: '固定行高',
@@ -107,7 +111,7 @@ export default {
           title: '树结构懒加载',
           path: '/TreeDemo'
         },
-        
+
         '兼容',
         {
           title: '单选',
@@ -129,7 +133,7 @@ export default {
           title: '模拟树结构懒加载',
           path: '/VTreeDemo'
         },
-        
+
         '其他',
         // {
         //   title: '单选',
@@ -211,7 +215,7 @@ export default {
 
 <style lang='less' scoped>
 .layout-container {
-  height: 100%; 
+  height: 100%;
   border: 1px solid #eee
 }
 .layout-header {

@@ -49,6 +49,9 @@ function scrollToY (el, y) {
   }
 }
 
+// 表格body class名称
+const TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper']
+
 export default {
   name: 'el-table-virtual-scroll',
   props: {
@@ -83,6 +86,11 @@ export default {
     },
     // 是否获取表格行动态高度
     dynamic: {
+      type: Boolean,
+      default: true
+    },
+    // 是否开启虚拟滚动
+    virtualized: {
       type: Boolean,
       default: true
     }
@@ -131,6 +139,10 @@ export default {
       // 截取页面可视范围内显示数据的开始和结尾索引
       this.start = 0
       this.end = undefined
+      // 是否是表格内部滚动
+      this.isInnerScroll = false
+      // 设置表格到滚动容器的距离
+      this.toTop = 0
 
       // 验证ElTable组件
       this.elTable = this.$children[0]
@@ -139,8 +151,7 @@ export default {
       }
 
       this.scroller = this.getScroller()
-      this.toTop = this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top
-
+      this.setToTop()
       // 初次执行
       setTimeout(() => {
         this.handleScroll()
@@ -164,11 +175,18 @@ export default {
       }
       // 如果表格是固定高度，则获取表格内的滚动节点，否则获取父层滚动节点
       if (this.elTable && this.elTable.height) {
+        this.isInnerScroll = true
         return this.$el.querySelector('.el-table__body-wrapper')
       } else {
         return getParentScroller(this.$el)
       }
     },
+
+    // 设置表格到滚动容器的距离
+    setToTop () {
+      this.toTop = this.isInnerScroll ? 0 : this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top
+    },
+
 
     // 更新尺寸（高度）
     updateSizes () {
@@ -218,6 +236,8 @@ export default {
 
     // 处理滚动事件
     handleScroll (shouldUpdate = true) {
+      if (!this.virtualized) return
+
       // 更新当前尺寸（高度）
       this.updateSizes()
       // 计算renderData
@@ -317,8 +337,7 @@ export default {
       const offsetTop = this.getItemOffsetTop(this.start)
 
       // 设置dom位置
-      const classNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper']
-      classNames.forEach(className => {
+      TableBodyClassNames.forEach(className => {
         const el = this.$el.querySelector(className)
         if (!el) return
 
@@ -355,10 +374,31 @@ export default {
       }, this.throttleTime + 10)
     },
 
+    // 渲染全部数据
+    renderAllData () {
+      this.renderData = this.data
+      this.$emit('change', this.data, 0, this.data.length - 1)
+
+      this.$nextTick(() => {
+        // 清除撑起的高度和位置
+        TableBodyClassNames.forEach(className => {
+          const el = this.$el.querySelector(className)
+          if (!el) return
+
+          if (el.wrapEl) {
+            // 设置高度
+            el.wrapEl.style.height = 'auto'
+            // 设置transform撑起高度
+            el.innerEl.style.transform = `translateY(${0}px)`
+          }
+        })
+      })
+    },
+
     // 【外部调用】更新
     update () {
       // console.log('update')
-      this.toTop = this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top
+      this.setToTop()
       this.handleScroll()
     },
 
@@ -466,11 +506,35 @@ export default {
     // 更新数据
     updateData (data) {
       this.$emit('update:data', data)
+    },
+    // 执行update方法更新虚拟滚动，且每次nextTick只能执行一次
+    doUpdate () {
+      if (this.hasDoUpdate) return
+
+      this.update()
+      this.hasDoUpdate = true
+      this.$nextTick(() => {
+        this.hasDoUpdate = false
+      })
     }
   },
   watch: {
     data () {
-      this.update()
+      if (!this.virtualized) {
+        this.renderAllData()
+      } else {
+        this.doUpdate()
+      }
+    },
+    virtualized: {
+      immediate: true,
+      handler (val) {
+        if (!val) {
+          this.renderAllData()
+        } else if (this.scroller) {
+          this.scroller && this.doUpdate()
+        }
+      }
     }
   },
   created () {

@@ -2,6 +2,8 @@
 
 基于Element-UI的Table 组件开发的虚拟滚动组件，支持动态高度，解决数据量大时滚动卡顿的问题。
 
+⚠️仅支持vue2。
+
 demo & 源码：https://xiaocheng555.github.io/el-table-virtual-scroll/
 
 ## 安装

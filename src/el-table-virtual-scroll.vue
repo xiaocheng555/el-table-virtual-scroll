@@ -190,6 +190,33 @@ export default {
       this.toTop = this.isInnerScroll ? 0 : this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top
     },
 
+    // 处理滚动事件
+    handleScroll (shouldUpdate = true) {
+      if (!this.virtualized) return
+
+      this.removeHoverRows()
+      // 更新当前尺寸（高度）
+      this.updateSizes()
+      // 计算renderData
+      this.calcRenderData()
+      // 计算位置
+      this.calcPosition()
+      shouldUpdate && this.updatePosition()
+      // 触发事件
+      this.$emit('change', this.renderData, this.start, this.end)
+      // 设置表格行展开
+      this.setRowsExpanded()
+    },
+
+    // 移除多个hover-row
+    removeHoverRows () {
+      const hoverRows = this.$el.querySelectorAll('.el-table__row.hover-row')
+      if (hoverRows.length > 1) {
+        Array.from(hoverRows).forEach((row) => {
+          row.classList.remove('hover-row')
+        })
+      }
+    },
 
     // 更新尺寸（高度）
     updateSizes () {
@@ -201,14 +228,6 @@ export default {
       if (rows[0] && rows[0].classList.contains('el-table__row--level-0')) {
         isTree = true
         rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0')
-      }
-
-      // 移除多个hover-row
-      const hoverRows = this.$el.querySelectorAll('.el-table__row.hover-row')
-      if (hoverRows.length > 1) {
-        Array.from(hoverRows).forEach((row) => {
-          row.classList.remove('hover-row')
-        })
       }
 
       Array.from(rows).forEach((row, index) => {
@@ -235,23 +254,6 @@ export default {
           this.$set(this.sizes, key, offsetHeight)
         }
       })
-    },
-
-    // 处理滚动事件
-    handleScroll (shouldUpdate = true) {
-      if (!this.virtualized) return
-
-      // 更新当前尺寸（高度）
-      this.updateSizes()
-      // 计算renderData
-      this.calcRenderData()
-      // 计算位置
-      this.calcPosition()
-      shouldUpdate && this.updatePosition()
-      // 触发事件
-      this.$emit('change', this.renderData, this.start, this.end)
-      // 设置表格行展开
-      this.setRowsExpanded()
     },
 
     // 获取某条数据offsetTop

@@ -62,7 +62,7 @@ export default {
 | buffer | 顶部和底部缓冲区域，值越大显示表格的行数越多 | Number | — | 200 |
 | throttleTime | 滚动事件的节流时间 | number | — | 10 |
 | dynamic | 动态获取表格行高度，默认开启。设置为false时，则以itemSize为表格行的真实高度，能大大减少虚拟滚动计算量，减少滚动白屏；如果itemSize与表格行的真实高度不一致，可能导致滚动时表格数据错乱 | boolean | — | true |
-| virtualized | 是否开启虚拟滚动 | boolean | — | true |
+| virtualized | 是否开启虚拟滚动（1.0.3之后版本支持） | boolean | — | true |
 
 
 ### Methods
@@ -140,6 +140,12 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 完善demo和api
 
 * npm 发包
+
+### 2023-1-9
+
+* 增加virtualized prop 来控制是否开启虚拟滚动
+
+* npm 1.0.3 版本发包
 
 
 

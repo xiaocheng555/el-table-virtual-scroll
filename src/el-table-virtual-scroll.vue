@@ -540,7 +540,7 @@ export default {
       handler (val) {
         if (!val) {
           this.renderAllData()
-        } {
+        } else {
           this.doUpdate()
         }
       }

@@ -4,6 +4,8 @@
 
 demo & 源码：https://xiaocheng555.github.io/el-table-virtual-scroll/
 
+⚠️仅支持vue2
+
 ## 安装
 
 ``` bash

@@ -53,6 +53,8 @@
 
   // 表格body class名称
   var TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper'];
+  var checkOrder = 0; // 多选：记录多选选项改变的顺序
+
   var script$1 = {
     name: 'el-table-virtual-scroll',
     props: {
@@ -438,19 +440,25 @@
       checkAll: function checkAll(val) {
         var _this7 = this;
         this.data.forEach(function (row) {
-          return _this7.$set(row, '$v_checked', val);
+          return _this7.checkRow(row, val, false);
         });
         this.emitSelectionChange();
+        if (val === false) checkOrder = 0; // 取消全选，则重置checkOrder
       },
       // 多选：选中某一列
       checkRow: function checkRow(row, val) {
+        var emit = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+        if (row.$v_checked === val) return;
         this.$set(row, '$v_checked', val);
-        this.emitSelectionChange();
+        this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined);
+        emit && this.emitSelectionChange();
       },
       // 多选：兼容表格selection-change事件
       emitSelectionChange: function emitSelectionChange() {
         var selection = this.data.filter(function (row) {
           return row.$v_checked;
+        }).sort(function (a, b) {
+          return a.$v_checkedOrder - b.$v_checkedOrder;
         });
         this.$emit('selection-change', selection);
       },
@@ -718,11 +726,11 @@
     /* style */
     const __vue_inject_styles__$1 = function (inject) {
       if (!inject) return
-      inject("data-v-3c14de62_0", { source: ".is-expanding[data-v-3c14de62] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-3c14de62] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n", map: {"version":3,"sources":["el-table-virtual-scroll.vue"],"names":[],"mappings":"AAAA;EACE,gBAAgB;AAClB;AACA;EACE,aAAa;AACf","file":"el-table-virtual-scroll.vue","sourcesContent":[".is-expanding :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append :deep(.el-table__append-wrapper) {\n  display: none;\n}\n"]}, media: undefined });
+      inject("data-v-7c1d5a96_0", { source: ".is-expanding[data-v-7c1d5a96] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-7c1d5a96] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n", map: {"version":3,"sources":["el-table-virtual-scroll.vue"],"names":[],"mappings":"AAAA;EACE,gBAAgB;AAClB;AACA;EACE,aAAa;AACf","file":"el-table-virtual-scroll.vue","sourcesContent":[".is-expanding :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append :deep(.el-table__append-wrapper) {\n  display: none;\n}\n"]}, media: undefined });
 
     };
     /* scoped */
-    const __vue_scope_id__$1 = "data-v-3c14de62";
+    const __vue_scope_id__$1 = "data-v-7c1d5a96";
     /* module identifier */
     const __vue_module_identifier__$1 = undefined;
     /* functional template */

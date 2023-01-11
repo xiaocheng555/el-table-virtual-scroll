@@ -154,7 +154,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * 修复表格多选 `selection-change` 事件中返回的数据没有按顺序排序
 
-* npm 1.0.4 版本发包
+* npm 1.0.5 版本发包
 
 
 

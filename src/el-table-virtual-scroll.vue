@@ -54,6 +54,8 @@ function scrollToY (el, y) {
 // 表格body class名称
 const TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper']
 
+let checkOrder = 0 // 多选：记录多选选项改变的顺序
+
 export default {
   name: 'el-table-virtual-scroll',
   props: {
@@ -444,17 +446,22 @@ export default {
     },
     // 多选：选中所有列
     checkAll (val) {
-      this.data.forEach(row => this.$set(row, '$v_checked', val))
+      this.data.forEach(row => this.checkRow(row, val, false))
       this.emitSelectionChange()
+
+      if (val === false) checkOrder = 0 // 取消全选，则重置checkOrder
     },
     // 多选：选中某一列
-    checkRow (row, val) {
+    checkRow (row, val, emit = true) {
+      if (row.$v_checked === val) return
+
       this.$set(row, '$v_checked', val)
-      this.emitSelectionChange()
+      this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
+      emit && this.emitSelectionChange()
     },
     // 多选：兼容表格selection-change事件
     emitSelectionChange () {
-      const selection = this.data.filter(row => row.$v_checked)
+      const selection = this.data.filter(row => row.$v_checked).sort((a, b) => a.$v_checkedOrder - b.$v_checkedOrder)
       this.$emit('selection-change', selection)
     },
     // 多选：兼容表格clearSelection方法

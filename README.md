@@ -6,6 +6,8 @@
 
 demo & 源码：https://xiaocheng555.github.io/el-table-virtual-scroll/
 
+⚠️仅支持vue2
+
 ## 安装
 
 ``` bash
@@ -26,7 +28,6 @@ $ npm i el-table-virtual-scroll -S
     height="500px">
   </el-table>
 </virtual-scroll>
-
 ...
 
 import VirtualScroll from 'el-table-virtual-scroll'
@@ -70,7 +71,7 @@ export default {
 ### Methods
 | 方法名 | 说明 | 参数 |
 |---------- |-------- |---------- |
-| scrollTo | 滚动到第几行【不太精确：因为滚动到第n行时，如果周围的表格行计算出真实高度后会更新高度，导致当前行坍塌或撑起】 | index |
+| scrollTo | 滚动到第几行 | index |
 | update | 更新 | - |
 | reset | 重置 | - |
 | clearSelection | 用于多选 `<virtual-column type="selection">`，清空用户的选择 | - |
@@ -88,7 +89,7 @@ export default {
 
 ## virtual-column 组件
 
-使用 <el-table-virtual-scroll> 做表格虚拟滚动，是不支持 `ElementUI` 表格的原有的索引、单选、多选、扩展行等功能，需要使用 `<virtual-column>` 来兼容。`<virtual-column>` 组件内封装了 `<el-table-column>`，支持传入<el-table-column> 组件的props属性。
+使用 `<el-table-virtual-scroll>` 做表格虚拟滚动，是不支持 `ElementUI` 表格的原有的索引、单选、多选、扩展行等功能，需要使用 `<virtual-column>` 来兼容。`<virtual-column>` 组件内封装了 `<el-table-column>`，支持传入 `<el-table-column>` 组件的props属性。
 其中 `<virtual-column>` 会在表格row数据上扩展 `$v_checked`、`$v_expanded` ... 等属性，请悉知。 
 
 更多demo & 源码查看：https://xiaocheng555.github.io/el-table-virtual-scroll/
@@ -113,7 +114,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 ## el-table-virtual-scroll 组件注意事项
 
-* <el-table> 组件最好写上 `row-key` 属性，能避免一些奇怪的问题。例：`<el-table row-key="id">`，其中id为数据中唯一key值。
+* `<el-table>` 组件最好写上 `row-key` 属性，能避免一些奇怪的问题。例：`<el-table row-key="id">`，其中id为数据中唯一key值。
 
 * 不支持 Element-UI Table 原有单选、多选、扩展行、索引，请使用 `<virtual-column>` 做兼容，详见demo。
 
@@ -148,6 +149,12 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 增加virtualized prop 来控制是否开启虚拟滚动
 
 * npm 1.0.3 版本发包
+
+### 2023-1-11
+
+* 修复表格多选 `selection-change` 事件中返回的数据没有按顺序排序
+
+* npm 1.0.4 版本发包
 
 
 

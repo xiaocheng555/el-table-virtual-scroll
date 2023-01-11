@@ -70,7 +70,7 @@ export default {
 ### Methods
 | 方法名 | 说明 | 参数 |
 |---------- |-------- |---------- |
-| scrollTo | 滚动到第几行【不太精确：因为滚动到第n行时，如果周围的表格行计算出真实高度后会更新高度，导致当前行坍塌或撑起】 | index |
+| scrollTo | 滚动到第几行 | index |
 | update | 更新 | - |
 | reset | 重置 | - |
 | clearSelection | 用于多选 `<virtual-column type="selection">`，清空用户的选择 | - |

@@ -70,7 +70,7 @@ export default {
 | 方法名 | 说明 | 参数 |
 |---------- |-------- |---------- |
 | scrollTo | 滚动到第几行 | index |
-| update | 更新 | - |
+| update | 更新，会重新计算实际渲染数据和位置 | - |
 | reset | 重置 | - |
 | clearSelection | 用于多选 `<virtual-column type="selection">`，清空用户的选择 | - |
 | toggleRowSelection | 用于多选 `<virtual-column type="selection">`, 切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中） | row, selected |

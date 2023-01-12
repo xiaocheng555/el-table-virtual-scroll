@@ -21,6 +21,10 @@
   ],
   "author": "xiaocheng555",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaocheng555/el-table-virtual-scroll.git"
+  },
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",

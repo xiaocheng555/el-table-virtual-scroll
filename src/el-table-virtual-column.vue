@@ -61,8 +61,17 @@
 </template>
 
 <script>
+import ElTableColumn from 'element-ui/packages/table-column'
+import ElCheckbox from 'element-ui/packages/checkbox'
+import ElRadio from 'element-ui/packages/radio'
+
 export default {
   name: 'el-table-virtual-column',
+  components: {
+    ElTableColumn,
+    ElCheckbox,
+    ElRadio
+  },
   inject: ['virtualScroll'],
   props: {
     load: {

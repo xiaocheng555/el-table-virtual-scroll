@@ -1,6 +1,6 @@
 {
   "name": "el-table-virtual-scroll",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "The virtual scrolling component developed based on the Table component of Element-UI supports dynamic height and solves the problem of scrolling stuck when the amount of data is large.",
   "main": "dist/el-table-virtual-scroll.umd.js",
   "module": "dist/el-table-virtual-scroll.es.js",
@@ -45,6 +45,6 @@
     "vue-template-compiler": "^2.6.10"
   },
   "peerDependencies": {
-    "lodash": "^4.17.21"
+    "element-ui": "^2.13.0"
   }
 }

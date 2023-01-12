@@ -6,8 +6,6 @@
 
 demo & 源码：https://xiaocheng555.github.io/el-table-virtual-scroll/
 
-⚠️仅支持vue2
-
 ## 安装
 
 ``` bash
@@ -114,6 +112,8 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 ## el-table-virtual-scroll 组件注意事项
 
+* 使用组件前，请确保项目中有引入 `element-ui` 组件库。
+
 * `<el-table>` 组件最好写上 `row-key` 属性，能避免一些奇怪的问题。例：`<el-table row-key="id">`，其中id为数据中唯一key值。
 
 * 不支持 Element-UI Table 原有单选、多选、扩展行、索引，请使用 `<virtual-column>` 做兼容，详见demo。
@@ -155,6 +155,12 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复表格多选 `selection-change` 事件中返回的数据没有按顺序排序
 
 * npm 1.0.5 版本发包
+
+### 2023-1-12
+
+* 用到的element-ui组件局部引入，无需安装loadsh
+
+* npm 1.0.6 版本发包
 
 
 

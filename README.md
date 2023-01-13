@@ -168,8 +168,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * npm 1.0.7 版本发包
 
-2023-1-13
+### 2023-1-13
 
 * 修复滚动容器设置为window时报错
 
 * 修复指定滚动容器，特殊情况滚动时表头会一直在
+
+* npm 1.0.8 版本发包

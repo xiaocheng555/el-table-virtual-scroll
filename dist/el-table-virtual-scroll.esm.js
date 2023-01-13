@@ -747,6 +747,7 @@ var script$1 = {
     getScroller: function getScroller() {
       var el;
       if (this.scrollBox) {
+        if (this.scrollBox === 'window' || this.scrollBox === window) return window;
         el = document.querySelector(this.scrollBox);
         if (!el) throw new Error(" scrollBox prop: '".concat(this.scrollBox, "' is not a valid selector"));
         if (!isScroller(el)) console.warn("Warning! scrollBox prop: '".concat(this.scrollBox, "' is not a scroll element"));
@@ -762,7 +763,11 @@ var script$1 = {
     },
     // 设置表格到滚动容器的距离
     setToTop: function setToTop() {
-      this.toTop = this.isInnerScroll ? 0 : this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top;
+      if (this.isInnerScroll) {
+        this.toTop = 0;
+      } else {
+        this.toTop = this.$el.getBoundingClientRect().top - (this.scroller === window ? 0 : this.scroller.getBoundingClientRect().top) + getScrollTop(this.scroller);
+      }
     },
     // 处理滚动事件
     handleScroll: function handleScroll() {
@@ -1288,8 +1293,8 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-7c1d5a96_0", {
-    source: ".is-expanding[data-v-7c1d5a96] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-7c1d5a96] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  inject("data-v-6937c067_0", {
+    source: ".is-expanding[data-v-6937c067] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-6937c067] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -1302,7 +1307,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-7c1d5a96";
+var __vue_scope_id__$1 = "data-v-6937c067";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */

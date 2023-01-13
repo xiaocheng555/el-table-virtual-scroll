@@ -254,7 +254,7 @@ export default {
   }
 }
 .layout-main {
-  overflow: auto;
+  // overflow: auto;
 }
 .menu-group-title {
   font-size: 16px;

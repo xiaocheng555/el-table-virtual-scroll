@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-radio-group v-model="value">
-      <el-radio :label="undefined">表格不固定高（window滚动：自动查找父层滚动容器window）</el-radio>
+      <el-radio :label="undefined">表格不固定高（自动查找父层滚动容器）</el-radio>
       <el-radio label="600px">表格高度600px（表格内滚动）</el-radio>
       <el-radio label="100%">表格高度100%撑满屏幕</el-radio>
     </el-radio-group>

@@ -173,6 +173,8 @@ export default {
     getScroller () {
       let el
       if (this.scrollBox) {
+        if (this.scrollBox === 'window' || this.scrollBox === window) return window
+
         el = document.querySelector(this.scrollBox)
         if (!el) throw new Error(` scrollBox prop: '${this.scrollBox}' is not a valid selector`)
         if (!isScroller(el)) console.warn(`Warning! scrollBox prop: '${this.scrollBox}' is not a scroll element`)
@@ -189,7 +191,11 @@ export default {
 
     // 设置表格到滚动容器的距离
     setToTop () {
-      this.toTop = this.isInnerScroll ? 0 : this.$el.getBoundingClientRect().top - this.scroller.getBoundingClientRect().top
+      if (this.isInnerScroll) {
+        this.toTop = 0
+      } else {
+        this.toTop = this.$el.getBoundingClientRect().top - (this.scroller === window ? 0 : this.scroller.getBoundingClientRect().top) + getScrollTop(this.scroller)
+      }
     },
 
     // 处理滚动事件

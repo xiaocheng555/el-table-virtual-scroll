@@ -59,7 +59,7 @@ export default {
 | data    | 总数据 | Array | 必填 |  |
 | keyProp | key值，data数据中的唯一id【⚠️若keyProp未设置或keyProp值不唯一，可能导致表格空数据或者滚动时渲染的数据断层、不连贯】 | string | — | id |
 | itemSize | 每一行的预估高度 | number | — | 60 |
-| scrollBox | 指定滚动容器；在指定滚动容器时，如果表格设置了height高度，则滚动容器为表格内的滚动容器；如果表格为设置height高度，则自动获取父层以外的滚动容器，直至window容器为止 | string | — | - |
+| scrollBox | 指定滚动容器；在指定滚动容器时，如果表格设置了height高度，则滚动容器为表格内的滚动容器；如果表格为设置height高度，则自动获取父层以外的滚动容器，直至window容器为止 | string | 'window'、css选择器 | - |
 | buffer | 顶部和底部缓冲区域，值越大显示表格的行数越多 | Number | — | 200 |
 | throttleTime | 滚动事件的节流时间 | number | — | 10 |
 | dynamic | 动态获取表格行高度，默认开启。设置为false时，则以itemSize为表格行的真实高度，能大大减少虚拟滚动计算量，减少滚动白屏；如果itemSize与表格行的真实高度不一致，可能导致滚动时表格数据错乱 | boolean | — | true |
@@ -162,5 +162,14 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * npm 1.0.6 版本发包
 
+### 2023-1-13
 
+* 修复element-ui组件局部引入方式不正确
 
+* npm 1.0.7 版本发包
+
+2023-1-13
+
+* 修复滚动容器设置为window时报错
+
+* 修复指定滚动容器，特殊情况滚动时表头会一直在

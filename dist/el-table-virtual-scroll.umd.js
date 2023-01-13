@@ -1,14 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('element-ui/packages/table-column'), require('element-ui/packages/checkbox'), require('element-ui/packages/radio')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'element-ui/packages/table-column', 'element-ui/packages/checkbox', 'element-ui/packages/radio'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["el-table-virtual-scroll"] = {}, global.ElTableColumn, global.ElCheckbox, global.ElRadio));
-})(this, (function (exports, ElTableColumn, ElCheckbox, ElRadio) { 'use strict';
-
-  function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-  var ElTableColumn__default = /*#__PURE__*/_interopDefaultLegacy(ElTableColumn);
-  var ElCheckbox__default = /*#__PURE__*/_interopDefaultLegacy(ElCheckbox);
-  var ElRadio__default = /*#__PURE__*/_interopDefaultLegacy(ElRadio);
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('element-ui')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'element-ui'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["el-table-virtual-scroll"] = {}, global.elementUi));
+})(this, (function (exports, elementUi) { 'use strict';
 
   /**
    * Checks if `value` is the
@@ -1355,9 +1349,9 @@
   var script = {
     name: 'el-table-virtual-column',
     components: {
-      ElTableColumn: ElTableColumn__default["default"],
-      ElCheckbox: ElCheckbox__default["default"],
-      ElRadio: ElRadio__default["default"]
+      ElTableColumn: elementUi.TableColumn,
+      ElCheckbox: elementUi.Checkbox,
+      ElRadio: elementUi.Radio
     },
     inject: ['virtualScroll'],
     props: {
@@ -1594,7 +1588,7 @@
   /* style */
   var __vue_inject_styles__ = undefined;
   /* scoped */
-  var __vue_scope_id__ = "data-v-2a7f12e8";
+  var __vue_scope_id__ = "data-v-ccbeee04";
   /* module identifier */
   var __vue_module_identifier__ = undefined;
   /* functional template */

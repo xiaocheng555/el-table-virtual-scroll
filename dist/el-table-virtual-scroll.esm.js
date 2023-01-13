@@ -1,6 +1,4 @@
-import ElTableColumn from 'element-ui/packages/table-column';
-import ElCheckbox from 'element-ui/packages/checkbox';
-import ElRadio from 'element-ui/packages/radio';
+import { TableColumn, Checkbox, Radio } from 'element-ui';
 
 /**
  * Checks if `value` is the
@@ -1347,9 +1345,9 @@ function _nonIterableSpread() {
 var script = {
   name: 'el-table-virtual-column',
   components: {
-    ElTableColumn: ElTableColumn,
-    ElCheckbox: ElCheckbox,
-    ElRadio: ElRadio
+    ElTableColumn: TableColumn,
+    ElCheckbox: Checkbox,
+    ElRadio: Radio
   },
   inject: ['virtualScroll'],
   props: {
@@ -1586,7 +1584,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = undefined;
 /* scoped */
-var __vue_scope_id__ = "data-v-2a7f12e8";
+var __vue_scope_id__ = "data-v-ccbeee04";
 /* module identifier */
 var __vue_module_identifier__ = undefined;
 /* functional template */

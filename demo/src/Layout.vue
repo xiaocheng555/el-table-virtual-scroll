@@ -111,6 +111,10 @@ export default {
           title: '树结构懒加载',
           path: '/TreeDemo'
         },
+        {
+          title: 'keep-alive',
+          path: '/KeepAliveDemo'
+        },
 
         '兼容',
         {

@@ -1,7 +1,9 @@
 <template>
   <div id="app">
     <layout>
-      <router-view></router-view>
+      <keep-alive :include="['KeepAliveDemo']">
+        <router-view></router-view>
+      </keep-alive>
     </layout>
     <Preview class="code-preview" v-if="false"></Preview>
   </div>
@@ -10,7 +12,7 @@
 <script>
 import Layout from './Layout.vue'
 
-const Preview = () => import('./Preview') 
+const Preview = () => import('./Preview')
 
 export default {
   name: 'App',

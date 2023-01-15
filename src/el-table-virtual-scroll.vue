@@ -148,6 +148,10 @@ export default {
       this.isInnerScroll = false
       // 设置表格到滚动容器的距离
       this.toTop = 0
+      // 滚动容器滚动位置
+      this.scrollTop = 0
+      // 组件是否deactivated状态
+      this.isDeactivated = false
 
       // 验证ElTable组件
       this.elTable = this.$children[0]
@@ -200,7 +204,12 @@ export default {
 
     // 处理滚动事件
     handleScroll (shouldUpdate = true) {
-      if (!this.virtualized) return
+      // 如果组件失活，则不再执行handleScroll；否则外部容器滚动情况下记录的scrollTop会是0
+      if (this.isDeactivated) return
+      if (!this.virtualized) {
+        this.scrollTop = getScrollTop(this.scroller) // 记录scrollTop
+        return
+      }
 
       this.removeHoverRows()
       // 更新当前尺寸（高度）
@@ -292,8 +301,9 @@ export default {
     calcRenderData () {
       const { scroller, data, buffer } = this
       // 计算可视范围顶部、底部
-      const top = getScrollTop(scroller) - buffer - this.toTop
-      const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer - this.toTop
+      this.scrollTop = getScrollTop(scroller) // 记录scrollTop
+      const top = this.scrollTop - buffer - this.toTop
+      const bottom = this.scrollTop + getOffsetHeight(scroller) + buffer - this.toTop
 
       let start
       let end
@@ -538,6 +548,16 @@ export default {
         this.hasDoUpdate = false
         this.isHideAppend = false
       })
+    },
+    // 恢复y轴滚动位置
+    restoreScrollY () {
+      if (!this.scroller) return
+
+      const setScrollTop = () => {
+        this.scroller.scrollTop = this.scrollTop
+      }
+      // 表格内部滚动需要等待50ms才执行恢复滚动位置，是因为表格需要等待一段时间才设置滚动容器高度，此时设置scrollTop才会生效
+      this.isInnerScroll ? setTimeout(setScrollTop, 50) : setScrollTop()
     }
   },
   watch: {
@@ -569,6 +589,13 @@ export default {
       this.scroller.removeEventListener('scroll', this.onScroll)
       window.removeEventListener('resize', this.onScroll)
     }
+  },
+  activated () {
+    this.isDeactivated = false
+    this.restoreScrollY()
+  },
+  deactivated () {
+    this.isDeactivated = true
   }
 }
 </script>

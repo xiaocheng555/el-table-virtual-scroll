@@ -37,6 +37,21 @@ function getScrollTop (el) {
   return el === window ? window.pageYOffset : el.scrollTop
 }
 
+// 获取容器滚动位置
+function getScrollLeft (el) {
+  return el === window ? window.pageXOffset : el.scrollLeft
+}
+
+// 设置容器滚动位置
+function setScrollTop (el, pos) {
+  return el === window ? window.scroll(window.pageXOffset, pos) : (el.scrollTop = pos)
+}
+
+// 设置容器滚动位置
+function setScrollLeft (el, pos) {
+  return el === window ? window.scroll(pos, window.pageYOffset) : (el.scrollLeft = pos)
+}
+
 // 获取容器高度
 function getOffsetHeight (el) {
   return el === window ? window.innerHeight : el.offsetHeight
@@ -52,7 +67,7 @@ function scrollToY (el, y) {
 }
 
 // 表格body class名称
-const TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper']
+const TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper']
 
 let checkOrder = 0 // 多选：记录多选选项改变的顺序
 
@@ -148,10 +163,10 @@ export default {
       this.isInnerScroll = false
       // 设置表格到滚动容器的距离
       this.toTop = 0
-      // 滚动容器滚动位置
-      this.scrollTop = 0
       // 组件是否deactivated状态
       this.isDeactivated = false
+      // 滚动容器滚动位置【0-滚动容器top；1-滚动容器left；2-表格滚动容器top；3-表格滚动容器left】
+      this.scrollPos = [0, 0, 0, 0]
 
       // 验证ElTable组件
       this.elTable = this.$children[0]
@@ -161,6 +176,8 @@ export default {
 
       this.scroller = this.getScroller()
       this.setToTop()
+      this.recordTablePos()
+
       // 初次执行
       setTimeout(() => {
         this.handleScroll()
@@ -168,7 +185,7 @@ export default {
 
       // 监听事件
       this.onScroll = !this.throttleTime ? this.handleScroll : throttle(this.handleScroll, this.throttleTime)
-      this.scroller.addEventListener('scroll', this.onScroll)
+      this.scroller.addEventListener('scroll', this.onScroll, { passive: true })
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
     },
@@ -206,10 +223,11 @@ export default {
     handleScroll (shouldUpdate = true) {
       // 如果组件失活，则不再执行handleScroll；否则外部容器滚动情况下记录的scrollTop会是0
       if (this.isDeactivated) return
-      if (!this.virtualized) {
-        this.scrollTop = getScrollTop(this.scroller) // 记录scrollTop
-        return
-      }
+      // 记录scrollPos
+      this.scrollPos[0] = getScrollTop(this.scroller)
+      this.scrollPos[1] = getScrollLeft(this.scroller)
+
+      if (!this.virtualized) return
 
       this.removeHoverRows()
       // 更新当前尺寸（高度）
@@ -301,9 +319,8 @@ export default {
     calcRenderData () {
       const { scroller, data, buffer } = this
       // 计算可视范围顶部、底部
-      this.scrollTop = getScrollTop(scroller) // 记录scrollTop
-      const top = this.scrollTop - buffer - this.toTop
-      const bottom = this.scrollTop + getOffsetHeight(scroller) + buffer - this.toTop
+      const top = this.scrollPos[0] - buffer - this.toTop
+      const bottom = this.scrollPos[0] + getOffsetHeight(scroller) + buffer - this.toTop
 
       let start
       let end
@@ -549,15 +566,44 @@ export default {
         this.isHideAppend = false
       })
     },
-    // 恢复y轴滚动位置
+
+    // 记录表格x、y轴滚动位置
+    recordTablePos () {
+      if (this.isInnerScroll || this.isDeactivated) return
+
+      this.tableBodyEl = this.$el.querySelector('.el-table__body-wrapper')
+      this.onTableScroll = throttle(() => {
+        this.scrollPos[2] = getScrollTop(this.tableBodyEl)
+        this.scrollPos[3] = getScrollLeft(this.tableBodyEl)
+      }, 100)
+      this.tableBodyEl.addEventListener('scroll', this.onTableScroll, { passive: true })
+    },
+
+    // 恢复y轴滚动位置（仅支持表格内部滚动）
     restoreScrollY () {
       if (!this.scroller) return
 
-      const setScrollTop = () => {
-        this.scroller.scrollTop = this.scrollTop
+      // 恢复滚动容器滚动位置
+      const [top, left, top2, left2] = this.scrollPos
+
+      if (this.isInnerScroll) {
+        // 表格内部滚动需要等待一段时间才执行恢复滚动位置，是因为表格需要等待一段时间才设置滚动容器高度，此时设置scrollTop才会生效
+        setTimeout(() => {
+          setScrollTop(this.scroller, top)
+          setScrollLeft(this.scroller, left)
+          // 内部滚动且固定列，则固定列也需要恢复y轴滚动位置
+          const leftScroller = document.querySelector(TableBodyClassNames[1])
+          const rightScroller = document.querySelector(TableBodyClassNames[2])
+          if (leftScroller) setScrollTop(leftScroller, top)
+          if (rightScroller) setScrollTop(rightScroller, top)
+        }, 50)
+      } else {
+        setScrollTop(this.scroller, top)
+        setScrollLeft(this.scroller, left)
+        // 恢复表格内滚动位置
+        setScrollTop(this.tableBodyEl, top2)
+        setScrollLeft(this.tableBodyEl, left2)
       }
-      // 表格内部滚动需要等待50ms才执行恢复滚动位置，是因为表格需要等待一段时间才设置滚动容器高度，此时设置scrollTop才会生效
-      this.isInnerScroll ? setTimeout(setScrollTop, 50) : setScrollTop()
     }
   },
   watch: {

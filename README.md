@@ -175,3 +175,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复指定滚动容器，特殊情况滚动时表头会一直在
 
 * npm 1.0.8 版本发包
+
+
+### 2023-2-22
+
+* 修复 `<virtual-column>` 组件在低版本 `vue-template-compiler` 时会显示 `undefined`
+
+* npm 1.0.9 版本发包

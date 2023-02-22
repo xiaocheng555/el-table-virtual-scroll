@@ -1517,23 +1517,21 @@ var __vue_render__ = function __vue_render__() {
     scopedSlots: _vm._u([{
       key: "header",
       fn: function fn(scope) {
-        return [_vm._t("header", function () {
-          return [scope.column.type === "v-selection" ? _c("el-checkbox", {
-            attrs: {
-              indeterminate: _vm.isCheckedImn
+        return [_vm.$scopedSlots["header"] ? _vm._t("header", null, null, scope) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
+          attrs: {
+            indeterminate: _vm.isCheckedImn
+          },
+          on: {
+            change: _vm.onCheckAllRows
+          },
+          model: {
+            value: _vm.isCheckedAll,
+            callback: function callback($$v) {
+              _vm.isCheckedAll = $$v;
             },
-            on: {
-              change: _vm.onCheckAllRows
-            },
-            model: {
-              value: _vm.isCheckedAll,
-              callback: function callback($$v) {
-                _vm.isCheckedAll = $$v;
-              },
-              expression: "isCheckedAll"
-            }
-          }) : [_vm._v("\n        " + _vm._s(scope.column.label) + "\n      ")]];
-        }, null, scope)];
+            expression: "isCheckedAll"
+          }
+        }) : [_vm._v("\n        " + _vm._s(scope.column.label) + "\n      ")]]];
       }
     }, {
       key: "default",
@@ -1557,28 +1555,26 @@ var __vue_render__ = function __vue_render__() {
           staticClass: "el-icon-arrow-right"
         })]) : _c("span", {
           staticClass: "el-table__placeholder"
-        })] : _vm._e(), _vm._v(" "), _vm._t("default", function () {
-          return [scope.column.type === "v-selection" ? _c("el-checkbox", {
-            attrs: {
-              value: scope.row.$v_checked
-            },
-            on: {
-              change: function change($event) {
-                return _vm.onCheckRow(scope.row, !scope.row.$v_checked);
-              }
+        })] : _vm._e(), _vm._v(" "), _vm.$scopedSlots["default"] ? _vm._t("default", null, null, scope) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
+          attrs: {
+            value: scope.row.$v_checked
+          },
+          on: {
+            change: function change($event) {
+              return _vm.onCheckRow(scope.row, !scope.row.$v_checked);
             }
-          }) : _vm._e(), _vm._v(" "), scope.column.type === "v-radio" ? _c("el-radio", {
-            attrs: {
-              label: true,
-              value: _vm.virtualScroll.curRow === scope.row
-            },
-            on: {
-              change: function change($event) {
-                return _vm.onRadioChange(scope.row);
-              }
+          }
+        }) : _vm._e(), _vm._v(" "), scope.column.type === "v-radio" ? _c("el-radio", {
+          attrs: {
+            label: true,
+            value: _vm.virtualScroll.curRow === scope.row
+          },
+          on: {
+            change: function change($event) {
+              return _vm.onRadioChange(scope.row);
             }
-          }, [_c("span")]) : scope.column.type === "v-index" ? _c("span", [_vm._v("\n        " + _vm._s(_vm.getIndex(scope)) + "\n      ")]) : [_vm._v("\n        " + _vm._s(scope.row[scope.column.property]) + "\n      ")]];
-        }, null, scope)];
+          }
+        }, [_c("span")]) : scope.column.type === "v-index" ? _c("span", [_vm._v("\n        " + _vm._s(_vm.getIndex(scope)) + "\n      ")]) : [_vm._v("\n        " + _vm._s(scope.row[scope.column.property]) + "\n      ")]]];
       }
     }], null, true)
   }, "el-table-column", _vm.$attrs, false), _vm.$listeners));
@@ -1589,7 +1585,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = undefined;
 /* scoped */
-var __vue_scope_id__ = "data-v-ccbeee04";
+var __vue_scope_id__ = "data-v-17266016";
 /* module identifier */
 var __vue_module_identifier__ = undefined;
 /* functional template */

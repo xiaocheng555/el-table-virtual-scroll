@@ -5,7 +5,8 @@
     :class-name="isTree ? 'el-table__row--level' : ''">
     <!-- 列头部 -->
     <template slot="header" slot-scope="scope">
-      <slot name="header" v-bind="scope">
+      <slot v-if="$scopedSlots['header']" name="header" v-bind="scope"></slot>
+      <template v-else>
         <!-- 多选类型-全选 -->
         <el-checkbox
           v-if="scope.column.type === 'v-selection'"
@@ -16,7 +17,7 @@
         <template v-else>
           {{scope.column.label}}
         </template>
-      </slot>
+      </template>
     </template>
     <!-- 列内容 -->
     <template slot-scope="scope">
@@ -33,7 +34,8 @@
         </div>
         <span v-else class="el-table__placeholder"></span>
       </template>
-      <slot v-bind="scope">
+      <slot v-if="$scopedSlots['default']" v-bind="scope"></slot>
+      <template v-else>
         <!-- 多选类型 -->
         <el-checkbox
           v-if="scope.column.type === 'v-selection'"
@@ -55,7 +57,7 @@
         <template v-else>
           {{scope.row[scope.column.property]}}
         </template>
-      </slot>
+      </template>
     </template>
   </el-table-column>
 </template>

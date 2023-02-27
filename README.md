@@ -182,3 +182,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复 `<virtual-column>` 组件在低版本 `vue-template-compiler` 时会显示 `undefined`
 
 * npm 1.0.9 版本发包
+
+
+### 2023-2-27
+
+* 修复分页时全选框没有重置状态
+
+* npm 1.0.10 版本发包

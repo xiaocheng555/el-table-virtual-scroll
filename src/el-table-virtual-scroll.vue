@@ -547,6 +547,7 @@ export default {
       } else {
         this.doUpdate()
       }
+      this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
     virtualized: {
       immediate: true,

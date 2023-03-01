@@ -108,6 +108,10 @@ export default {
           path: '/HeaderDemo'
         },
         {
+          title: '树结构',
+          path: '/TreeDemoDef'
+        },
+        {
           title: '树结构懒加载',
           path: '/TreeDemo'
         },

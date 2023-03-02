@@ -6,7 +6,10 @@ const config = Object.assign({}, base, {
     format: 'iife',
     file: './dist/el-table-virtual-scroll.min.js',
     name: 'ElTableVirtualScroll',
-    sourcemap: false
+    sourcemap: false,
+    globals: {
+      'element-ui': 'ELEMENT'
+    }
   }
 })
 

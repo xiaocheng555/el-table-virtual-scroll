@@ -1120,6 +1120,9 @@ var script$1 = {
       } else {
         this.doUpdate();
       }
+      this.columnVms.forEach(function (vm) {
+        return vm.syncCheckStatus();
+      });
     },
     virtualized: {
       immediate: true,
@@ -1293,8 +1296,8 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-6937c067_0", {
-    source: ".is-expanding[data-v-6937c067] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-6937c067] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  inject("data-v-342c5096_0", {
+    source: ".is-expanding[data-v-342c5096] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-342c5096] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -1307,7 +1310,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-6937c067";
+var __vue_scope_id__$1 = "data-v-342c5096";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */

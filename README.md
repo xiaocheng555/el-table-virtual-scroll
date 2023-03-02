@@ -189,3 +189,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复分页时全选框没有重置状态
 
 * npm 1.0.10 版本发包
+
+
+### 2023-3-2
+
+* 修复浏览器外链引入时，全局 ElemnetUI 引入错误
+
+* npm 1.0.11 版本发包

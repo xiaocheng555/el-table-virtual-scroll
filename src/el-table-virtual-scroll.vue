@@ -452,8 +452,12 @@ export default {
     },
     // 多选：选中所有列
     checkAll (val) {
-      this.data.forEach(row => this.checkRow(row, val, false))
-      this.emitSelectionChange()
+      const removedRows = []
+      this.data.forEach(row => {
+        if (row.$v_checked) removedRows.push(row)
+        this.checkRow(row, val, false)
+      })
+      this.emitSelectionChange(removedRows)
 
       if (val === false) checkOrder = 0 // 取消全选，则重置checkOrder
     },
@@ -463,12 +467,12 @@ export default {
 
       this.$set(row, '$v_checked', val)
       this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
-      emit && this.emitSelectionChange()
+      emit && this.emitSelectionChange(val ? [] : [row])
     },
     // 多选：兼容表格selection-change事件
-    emitSelectionChange () {
+    emitSelectionChange (removedRows) {
       const selection = this.data.filter(row => row.$v_checked).sort((a, b) => a.$v_checkedOrder - b.$v_checkedOrder)
-      this.$emit('selection-change', selection)
+      this.$emit('selection-change', selection, removedRows)
     },
     // 多选：兼容表格clearSelection方法
     clearSelection () {

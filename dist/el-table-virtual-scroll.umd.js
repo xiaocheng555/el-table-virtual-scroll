@@ -1018,10 +1018,12 @@
       // 多选：选中所有列
       checkAll: function checkAll(val) {
         var _this7 = this;
+        var removedRows = [];
         this.data.forEach(function (row) {
-          return _this7.checkRow(row, val, false);
+          if (row.$v_checked) removedRows.push(row);
+          _this7.checkRow(row, val, false);
         });
-        this.emitSelectionChange();
+        this.emitSelectionChange(removedRows);
         if (val === false) checkOrder = 0; // 取消全选，则重置checkOrder
       },
       // 多选：选中某一列
@@ -1030,16 +1032,16 @@
         if (row.$v_checked === val) return;
         this.$set(row, '$v_checked', val);
         this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined);
-        emit && this.emitSelectionChange();
+        emit && this.emitSelectionChange(val ? [] : [row]);
       },
       // 多选：兼容表格selection-change事件
-      emitSelectionChange: function emitSelectionChange() {
+      emitSelectionChange: function emitSelectionChange(removedRows) {
         var selection = this.data.filter(function (row) {
           return row.$v_checked;
         }).sort(function (a, b) {
           return a.$v_checkedOrder - b.$v_checkedOrder;
         });
-        this.$emit('selection-change', selection);
+        this.$emit('selection-change', selection, removedRows);
       },
       // 多选：兼容表格clearSelection方法
       clearSelection: function clearSelection() {
@@ -1300,8 +1302,8 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-342c5096_0", {
-      source: ".is-expanding[data-v-342c5096] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-342c5096] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    inject("data-v-6a550ac5_0", {
+      source: ".is-expanding[data-v-6a550ac5] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-6a550ac5] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -1314,7 +1316,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-342c5096";
+  var __vue_scope_id__$1 = "data-v-6a550ac5";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */

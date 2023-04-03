@@ -196,3 +196,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复浏览器外链引入时，全局 ElemnetUI 引入错误
 
 * npm 1.0.11 版本发包
+
+
+### 2023-4-3
+
+* 修复pageckage.json中module文件引入不正确
+
+* npm 1.0.12 版本发包

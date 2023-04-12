@@ -9,6 +9,7 @@
       @change="(virtualList) => tableData = virtualList">
       <el-table
         :data="tableData"
+        ref="table"
         border
         row-key="id"
         height="600px"
@@ -104,6 +105,7 @@ export default {
       if (index > -1) {
         this.list.splice(index, 1)
         this.handleListRowSpan() // 重新计算合并行
+        this.$refs.table.doLayout()
       }
     }
   },

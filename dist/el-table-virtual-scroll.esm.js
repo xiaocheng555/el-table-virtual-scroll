@@ -1,5 +1,67 @@
 import { TableColumn, Checkbox, Radio } from 'element-ui';
 
+function _iterableToArrayLimit(arr, i) {
+  var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
+  if (null != _i) {
+    var _s,
+      _e,
+      _x,
+      _r,
+      _arr = [],
+      _n = !0,
+      _d = !1;
+    try {
+      if (_x = (_i = _i.call(arr)).next, 0 === i) {
+        if (Object(_i) !== _i) return;
+        _n = !1;
+      } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0);
+    } catch (err) {
+      _d = !0, _e = err;
+    } finally {
+      try {
+        if (!_n && null != _i.return && (_r = _i.return(), Object(_r) !== _r)) return;
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+    return _arr;
+  }
+}
+function _slicedToArray(arr, i) {
+  return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+}
+function _toConsumableArray(arr) {
+  return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
+}
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) return _arrayLikeToArray(arr);
+}
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
+}
+function _iterableToArray(iter) {
+  if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
+}
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+}
+function _arrayLikeToArray(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+  for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+  return arr2;
+}
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -578,8 +640,6 @@ function throttle(func, wait, options) {
 
 var throttle_1 = throttle;
 
-//
-
 // 判断是否是滚动容器
 function isScroller(el) {
   var style = window.getComputedStyle(el, null);
@@ -619,6 +679,11 @@ function scrollToY(el, y) {
   } else {
     el.scrollTop = y;
   }
+}
+
+// 是否为空 undefine or null
+function isEmpty(val) {
+  return typeof val === 'undefined' || val === null;
 }
 
 // 表格body class名称
@@ -666,6 +731,10 @@ var script$1 = {
     virtualized: {
       type: Boolean,
       "default": true
+    },
+    // 表格行合并时，合并在一起的行返回相同的key值
+    rowSpanKey: {
+      type: Function
     }
   },
   provide: function provide() {
@@ -898,11 +967,57 @@ var script$1 = {
       if (start % 2) {
         start = start - 1;
       }
+
+      // 计算包含合并行的开始结束区间
+      var _this$calcRenderSpanD = this.calcRenderSpanData(start, end),
+        _this$calcRenderSpanD2 = _slicedToArray(_this$calcRenderSpanD, 2),
+        newStart = _this$calcRenderSpanD2[0],
+        newEnd = _this$calcRenderSpanD2[1];
       this.top = top;
       this.bottom = bottom;
-      this.start = start;
-      this.end = end;
-      this.renderData = data.slice(start, end + 1);
+      this.start = newStart;
+      this.end = newEnd;
+      this.renderData = data.slice(newStart, newEnd + 1);
+    },
+    // 如果存在合并行的情况，渲染的数据范围扩大到包含合并行
+    calcRenderSpanData: function calcRenderSpanData(start, end) {
+      if (typeof this.rowSpanKey !== 'function') return [start, end];
+
+      // 从开始节点向上查找是否有合并行
+      var prevKey;
+      while (start > 0) {
+        var curRow = this.data[start];
+        var curkey = this.rowSpanKey(curRow, start);
+        // 如果不存在key，说明当前行不属于合并行
+        if (isEmpty(curkey)) break;
+
+        // 如果当前行与后面一行的key不相同，说明则当前行不属于合并行，从后一行开始截断
+        if (!isEmpty(prevKey) && prevKey !== curkey) {
+          start++;
+          break;
+        }
+        prevKey = curkey;
+        start--;
+      }
+
+      // 从末端节点向下查找是否有合并行
+      var len = this.data.length;
+      prevKey = undefined;
+      while (end < len) {
+        var _curRow = this.data[end];
+        var _curkey = this.rowSpanKey(_curRow, end);
+        // 如果不存在key，说明当前行不属于合并行
+        if (!_curkey) break;
+
+        // 如果当前行与前面一行的key不相同，说明则当前行不属于合并行，从前一行开始截断
+        if (prevKey && prevKey !== _curkey) {
+          end--;
+          break;
+        }
+        prevKey = _curkey;
+        end++;
+      }
+      return [start, end];
     },
     // 计算位置
     calcPosition: function calcPosition() {
@@ -1298,8 +1413,8 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-6a550ac5_0", {
-    source: ".is-expanding[data-v-6a550ac5] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-6a550ac5] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  inject("data-v-200c2e98_0", {
+    source: ".is-expanding[data-v-200c2e98] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-200c2e98] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -1312,7 +1427,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-6a550ac5";
+var __vue_scope_id__$1 = "data-v-200c2e98";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */
@@ -1325,32 +1440,6 @@ var __vue_component__$1 = /*#__PURE__*/normalizeComponent({
   render: __vue_render__$1,
   staticRenderFns: __vue_staticRenderFns__$1
 }, __vue_inject_styles__$1, __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, false, createInjector, undefined, undefined);
-
-function _toConsumableArray(arr) {
-  return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
-}
-function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) return _arrayLikeToArray(arr);
-}
-function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
-}
-function _unsupportedIterableToArray(o, minLen) {
-  if (!o) return;
-  if (typeof o === "string") return _arrayLikeToArray(o, minLen);
-  var n = Object.prototype.toString.call(o).slice(8, -1);
-  if (n === "Object" && o.constructor) n = o.constructor.name;
-  if (n === "Map" || n === "Set") return Array.from(o);
-  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
-}
-function _arrayLikeToArray(arr, len) {
-  if (len == null || len > arr.length) len = arr.length;
-  for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-  return arr2;
-}
-function _nonIterableSpread() {
-  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
 
 var script = {
   name: 'el-table-virtual-column',

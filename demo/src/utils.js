@@ -1,8 +1,12 @@
+
 export function mockData (start, end) {
+  let cate = 1 // 类别
   const list = []
   for (let i = 0; i < end; i++) {
     const text = getContent()
     const text2 = getContent()
+    if (Math.random() > 0.6) cate++
+
     list.push({
       id: start++,
       index: i,
@@ -20,16 +24,17 @@ export function mockData (start, end) {
       desc: '荷兰优质淡奶，奶香浓而不腻',
       shop: '王小虎夫妻店',
       shopId: '10333',
-      count: genRandomVal(0, 1000)
+      count: genRandomVal(0, 1000),
+      cate
     })
   }
   return list
 }
 
-function genRandomVal (min, max) { 
-  return Math.floor(Math.random() * (max - min)) + min 
-} 
-    
+function genRandomVal (min, max) {
+  return Math.floor(Math.random() * (max - min)) + min
+}
+
 function getContent () {
   const content = [
     '这是一条测试数据',

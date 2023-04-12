@@ -51,6 +51,11 @@ function scrollToY (el, y) {
   }
 }
 
+// 是否为空 undefine or null
+function isEmpty (val) {
+  return typeof val === 'undefined' || val === null
+}
+
 // 表格body class名称
 const TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper']
 
@@ -97,6 +102,10 @@ export default {
     virtualized: {
       type: Boolean,
       default: true
+    },
+    // 表格行合并时，合并在一起的行返回相同的key值
+    rowSpanKey: {
+      type: Function
     }
   },
   provide () {
@@ -334,11 +343,58 @@ export default {
         start = start - 1
       }
 
+      // 计算包含合并行的开始结束区间
+      const [newStart, newEnd] = this.calcRenderSpanData(start, end)
+
       this.top = top
       this.bottom = bottom
-      this.start = start
-      this.end = end
-      this.renderData = data.slice(start, end + 1)
+      this.start = newStart
+      this.end = newEnd
+      this.renderData = data.slice(newStart, newEnd + 1)
+    },
+
+    // 如果存在合并行的情况，渲染的数据范围扩大到包含合并行
+    calcRenderSpanData (start, end) {
+      if (typeof this.rowSpanKey !== 'function') return [start, end]
+
+      // 从开始节点向上查找是否有合并行
+      let prevKey
+      while (start > 0) {
+        const curRow = this.data[start]
+        const curkey = this.rowSpanKey(curRow, start)
+        // 如果不存在key，说明当前行不属于合并行
+        if (isEmpty(curkey)) break
+
+        // 如果当前行与后面一行的key不相同，说明则当前行不属于合并行，从后一行开始截断
+        if (!isEmpty(prevKey) && prevKey !== curkey) {
+          start++
+          break
+        }
+
+        prevKey = curkey
+        start--
+      }
+
+      // 从末端节点向下查找是否有合并行
+      const len = this.data.length
+      prevKey = undefined
+      while (end < len) {
+        const curRow = this.data[end]
+        const curkey = this.rowSpanKey(curRow, end)
+        // 如果不存在key，说明当前行不属于合并行
+        if (!curkey) break
+
+        // 如果当前行与前面一行的key不相同，说明则当前行不属于合并行，从前一行开始截断
+        if (prevKey && prevKey !== curkey) {
+          end--
+          break
+        }
+
+        prevKey = curkey
+        end++
+      }
+
+      return [start, end]
     },
 
     // 计算位置

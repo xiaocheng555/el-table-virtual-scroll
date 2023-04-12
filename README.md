@@ -64,6 +64,7 @@ export default {
 | throttleTime | 滚动事件的节流时间 | number | — | 10 |
 | dynamic | 动态获取表格行高度，默认开启。设置为false时，则以itemSize为表格行的真实高度，能大大减少虚拟滚动计算量，减少滚动白屏；如果itemSize与表格行的真实高度不一致，可能导致滚动时表格数据错乱 | boolean | — | true |
 | virtualized | 是否开启虚拟滚动（1.0.3之后版本支持） | boolean | — | true |
+| rowSpanKey | 当使用了el-table的合并行，必须设置rowSpanKey函数并返回每组合并行中共用的key值 | Function(row, index) | — | - |
 
 
 ### Methods
@@ -203,3 +204,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复pageckage.json中module文件引入不正确
 
 * npm 1.0.12 版本发包
+
+
+### 2023-4-12
+
+* 增加rowSpanKey 属性兼容表格合并行；增加相关demo
+
+* npm 1.0.13 版本发包

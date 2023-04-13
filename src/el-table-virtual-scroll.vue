@@ -338,25 +338,28 @@ export default {
         }
       }
 
-      // 开始索引始终保持偶数，如果为奇数，则加1使其保持偶数【确保表格行的偶数数一致，不会导致斑马纹乱序显示】
-      if (start % 2) {
-        start = start - 1
+      if (this.isRowSpan()) {
+        // 计算包含合并行的开始结束区间（⚠️注意：合并行不支持使用斑马纹，因为不能100%确定合并行的开始行是偶数，可能会向上找一直到第一行，导致渲染非常多行，浪费性能）
+        [start, end] = this.calcRenderSpanData(start, end)
+      } else {
+        // 开始索引始终保持偶数，如果为奇数，则加1使其保持偶数【确保表格行的偶数数一致，不会导致斑马纹乱序显示】
+        if (start % 2) start = start - 1
       }
-
-      // 计算包含合并行的开始结束区间
-      const [newStart, newEnd] = this.calcRenderSpanData(start, end)
 
       this.top = top
       this.bottom = bottom
-      this.start = newStart
-      this.end = newEnd
-      this.renderData = data.slice(newStart, newEnd + 1)
+      this.start = start
+      this.end = end
+      this.renderData = data.slice(start, end + 1)
+    },
+
+    // 是否是合并行
+    isRowSpan () {
+      return typeof this.rowSpanKey === 'function'
     },
 
     // 如果存在合并行的情况，渲染的数据范围扩大到包含合并行
     calcRenderSpanData (start, end) {
-      if (typeof this.rowSpanKey !== 'function') return [start, end]
-
       // 从开始节点向上查找是否有合并行
       let prevKey
       while (start > 0) {

@@ -25,7 +25,12 @@
         <el-table-column
           prop="id"
           label="id"
-          width="420">
+          width="150">
+        </el-table-column>
+        <el-table-column
+          prop="cate"
+          label="cate值"
+          width="150">
         </el-table-column>
         <el-table-column
           prop="text"

@@ -827,7 +827,7 @@
           return el;
         }
         // 如果表格是固定高度，则获取表格内的滚动节点，否则获取父层滚动节点
-        if (this.elTable && this.elTable.height) {
+        if (this.elTable && (this.elTable.height || this.elTable.maxHeight)) {
           this.isInnerScroll = true;
           return this.$el.querySelector('.el-table__body-wrapper');
         } else {
@@ -966,27 +966,28 @@
             }
           }
         }
-
-        // 开始索引始终保持偶数，如果为奇数，则加1使其保持偶数【确保表格行的偶数数一致，不会导致斑马纹乱序显示】
-        if (start % 2) {
-          start = start - 1;
+        if (this.isRowSpan()) {
+          // 计算包含合并行的开始结束区间（⚠️注意：合并行不支持使用斑马纹，因为不能100%确定合并行的开始行是偶数，可能会向上找一直到第一行，导致渲染非常多行，浪费性能）
+          var _this$calcRenderSpanD = this.calcRenderSpanData(start, end);
+          var _this$calcRenderSpanD2 = _slicedToArray(_this$calcRenderSpanD, 2);
+          start = _this$calcRenderSpanD2[0];
+          end = _this$calcRenderSpanD2[1];
+        } else {
+          // 开始索引始终保持偶数，如果为奇数，则加1使其保持偶数【确保表格行的偶数数一致，不会导致斑马纹乱序显示】
+          if (start % 2) start = start - 1;
         }
-
-        // 计算包含合并行的开始结束区间
-        var _this$calcRenderSpanD = this.calcRenderSpanData(start, end),
-          _this$calcRenderSpanD2 = _slicedToArray(_this$calcRenderSpanD, 2),
-          newStart = _this$calcRenderSpanD2[0],
-          newEnd = _this$calcRenderSpanD2[1];
         this.top = top;
         this.bottom = bottom;
-        this.start = newStart;
-        this.end = newEnd;
-        this.renderData = data.slice(newStart, newEnd + 1);
+        this.start = start;
+        this.end = end;
+        this.renderData = data.slice(start, end + 1);
+      },
+      // 是否是合并行
+      isRowSpan: function isRowSpan() {
+        return typeof this.rowSpanKey === 'function';
       },
       // 如果存在合并行的情况，渲染的数据范围扩大到包含合并行
       calcRenderSpanData: function calcRenderSpanData(start, end) {
-        if (typeof this.rowSpanKey !== 'function') return [start, end];
-
         // 从开始节点向上查找是否有合并行
         var prevKey;
         while (start > 0) {
@@ -1417,8 +1418,8 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-200c2e98_0", {
-      source: ".is-expanding[data-v-200c2e98] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-200c2e98] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    inject("data-v-0cdc8618_0", {
+      source: ".is-expanding[data-v-0cdc8618] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-0cdc8618] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -1431,7 +1432,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-200c2e98";
+  var __vue_scope_id__$1 = "data-v-0cdc8618";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */

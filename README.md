@@ -211,3 +211,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 增加rowSpanKey 属性兼容表格合并行；增加相关demo
 
 * npm 1.0.13 版本发包
+
+
+### 2023-5-9
+
+* 修复 `<el-table>` 组件设置 `max-height` 属性，虚拟滚动有问题；增加表尾合计行demo
+
+* npm 1.0.14 版本发包

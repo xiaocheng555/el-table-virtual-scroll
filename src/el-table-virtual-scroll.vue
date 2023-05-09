@@ -190,7 +190,7 @@ export default {
         return el
       }
       // 如果表格是固定高度，则获取表格内的滚动节点，否则获取父层滚动节点
-      if (this.elTable && this.elTable.height) {
+      if (this.elTable && (this.elTable.height || this.elTable.maxHeight)) {
         this.isInnerScroll = true
         return this.$el.querySelector('.el-table__body-wrapper')
       } else {

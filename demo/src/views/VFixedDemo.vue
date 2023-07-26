@@ -1,52 +1,52 @@
 <template>
   <div>
-    <el-alert type="warning" title='自定义固定列用法: <el-table :headerCellStyle="cellFixedStyle" :cellStyle="cellFixedStyle"></table>设置固定列样式， 再设置固定列 <virtual-column vfixed="left/right"></virtual-column>，固定列是<virtual-column>组件内部实现，不会生成额外的table，滚动会更丝滑' show-icon></el-alert>
+    <el-alert type="warning" title='自定义固定列用法: <el-table :headerCellStyle="headerCellFixedStyle" :cellStyle="cellFixedStyle"></table>设置固定列样式， 再设置固定列 <virtual-column vfixed="left/right"></virtual-column>，固定列是<virtual-column>组件内部实现，不会生成额外的table，滚动会更丝滑' show-icon></el-alert>
     <virtual-scroll
       ref="virtualScroll"
       :data="list"
-      :item-size="57"
+      :item-size="56"
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">
-      <template slot-scope="{ cellFixedStyle }">
+      <template slot-scope="{ headerCellFixedStyle, cellFixedStyle }">
         <el-table
           :data="tableData"
-          :headerCellStyle="cellFixedStyle"
+          :headerCellStyle="headerCellFixedStyle"
           :cellStyle="cellFixedStyle"
           border
           stripe
           row-key="id"
           height="600px"
-          style="width: 100%">
+          style="width: 100%"
+          @header-dragend="onHeaderDragend">
           <VirtualColumn
             v-if="show"
             vfixed
             prop="date"
             label="日期"
-            width="120">
+            min-width="180">
           </VirtualColumn>
           <VirtualColumn
             vfixed
             prop="name"
             label="姓名"
-            width="150">
+            min-width="150">
           </VirtualColumn>
-          <VirtualColumn
-            vfixed
+          <el-table-column
             prop="province"
             label="省份"
             width="150">
-          </VirtualColumn>
-          <VirtualColumn
+          </el-table-column>
+          <el-table-column
             prop="province"
             label="省份"
             width="200">
-          </VirtualColumn>
-          <VirtualColumn
+          </el-table-column>
+          <el-table-column
             class-name="province"
             prop="province"
             label="省份"
             width="200">
-          </VirtualColumn>
+          </el-table-column>
           <el-table-column
             className="city"
             prop="city"
@@ -62,7 +62,7 @@
             vfixed="right"
             prop="zip"
             label="邮编"
-            width="200">
+            width="150">
           </VirtualColumn>
           <VirtualColumn
             vfixed="right"
@@ -97,6 +97,10 @@ export default {
     }
   },
   methods: {
+    onHeaderDragend () {
+      // 使用自定义列，改变列宽度后，需要手动更新table头部
+      this.$refs.virtualScroll.doHeaderLayout()
+    }
   },
   created () {
 

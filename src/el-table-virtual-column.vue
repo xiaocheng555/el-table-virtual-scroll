@@ -2,7 +2,7 @@
   <el-table-column
     v-bind="$attrs"
     v-on="$listeners"
-    :class-name="isTree ? 'el-table__row--level' : ''">
+    :class-name="getClassName">
     <!-- 列头部 -->
     <template slot="header" slot-scope="scope">
       <slot v-if="$scopedSlots['header']" name="header" v-bind="scope"></slot>
@@ -91,6 +91,18 @@ export default {
       isCheckedAll: false, // 全选
       isCheckedImn: false, // 控制半选样式
       isTree: false
+    }
+  },
+  computed: {
+    getClassName () {
+      const classnames = []
+      const classname = this.$attrs['class-name'] || this.$attrs.className
+      classname && classnames.push(classname)
+      this.isTree && classnames.push('el-table__row--level')
+      let vfixed = this.$attrs.vfixed
+      if (vfixed === true || vfixed === '') vfixed = 'left'
+      if (vfixed) classnames.push('virtual-column__fixed-' + vfixed)
+      return classnames.join(' ')
     }
   },
   methods: {
@@ -224,5 +236,68 @@ export default {
 }
 </script>
 
-<style lang='less' scoped>
+<style lang='less'>
+.el-table-virtual-scroll {
+  .virtual-column__fixed-left,
+  .virtual-column__fixed-right {
+    position: sticky !important;
+    z-index: 2 !important;
+    background: #fff;
+  }
+  &.is-scrolling-left {
+    .is-last-column {
+      &:before {
+        box-shadow: none;
+      }
+    }
+  }
+  &.is-scrolling-right,
+  &.is-scrolling-middle {
+    .is-last-column {
+      border-right: none;
+    }
+  }
+
+  &.is-scrolling-right {
+    .is-first-column {
+      &:before {
+        box-shadow: none;
+      }
+    }
+  }
+  &.is-scrolling-left,
+  &.is-scrolling-middle {
+    .is-first-column {
+      border-left: none;
+    }
+  }
+  .is-last-column,
+  .is-first-column {
+    overflow: visible !important;
+
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0px;
+      width: 10px;
+      bottom: -1px;
+      overflow-x: hidden;
+      overflow-y: hidden;
+      touch-action: none;
+      pointer-events: none;
+    }
+  }
+  .is-last-column {
+    &:before {
+      right: -10px;
+      box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, .12);
+    }
+  }
+  .is-first-column {
+    &:before {
+      left: -10px;
+      box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, .12);
+    }
+  }
+}
 </style>

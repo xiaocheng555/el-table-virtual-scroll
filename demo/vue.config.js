@@ -18,7 +18,7 @@ module.exports = {
   configureWebpack: {
     resolve: {
       alias: {
-        'el-table-virtual-scroll': path.resolve('../src/index')
+        // 'el-table-virtual-scroll': path.resolve('../src/index')
       }
     }
   }

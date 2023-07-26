@@ -1,8 +1,11 @@
 <template>
   <div
     class="el-table-virtual-scroll"
-    :class="[isExpanding ? 'is-expanding' : '', isHideAppend ? 'hide-append' : '']">
-    <slot></slot>
+    :class="[
+      isExpanding ? 'is-expanding' : '',
+      isHideAppend ? 'hide-append' : '',
+      scrollPosition ? `is-scrolling-${scrollPosition}` : '']">
+    <slot v-bind="{ cellFixedStyle }"></slot>
   </div>
 </template>
 
@@ -106,6 +109,11 @@ export default {
     // 表格行合并时，合并在一起的行返回相同的key值
     rowSpanKey: {
       type: Function
+    },
+    // 清除固定列存储值的间隔时间
+    clearFixedMapTime: {
+      type: Number,
+      default: 2000
     }
   },
   provide () {
@@ -121,7 +129,8 @@ export default {
       curRow: null, // 表格单选：选中的行
       isExpanding: false, // 列是否正在展开
       columnVms: [], // virtual-column 组件实例
-      isHideAppend: false
+      isHideAppend: false,
+      scrollPosition: ''
     }
   },
   computed: {
@@ -133,6 +142,9 @@ export default {
       let total = 0
       for (let i = 0; i < data.length; i++) {
         const key = data[i][keyProp]
+        if (typeof key === 'undefined') {
+          console.warn(`data[${i}][${keyProp}] 为 undefined，请确保 keyProp 对应的值不为undefined`)
+        }
         res[key] = total
 
         const curSize = sizes[key]
@@ -166,6 +178,7 @@ export default {
 
       this.scroller = this.getScroller()
       this.setToTop()
+      this.observeScrollPosition()
       // 初次执行
       setTimeout(() => {
         this.handleScroll()
@@ -205,6 +218,13 @@ export default {
       } else {
         this.toTop = this.$el.getBoundingClientRect().top - (this.scroller === window ? 0 : this.scroller.getBoundingClientRect().top) + getScrollTop(this.scroller)
       }
+    },
+
+    // 监听滚动位置
+    observeScrollPosition () {
+      this.scrollUnWatch = this.$watch(() => this.elTable.scrollPosition, (val) => {
+        this.scrollPosition = val
+      }, { immediate: true })
     },
 
     // 处理滚动事件
@@ -601,6 +621,61 @@ export default {
         this.hasDoUpdate = false
         this.isHideAppend = false
       })
+    },
+
+    // 设置固定左右样式
+    cellFixedStyle ({ column }) {
+      const elTable = this.$children[0]
+      if (!elTable) return
+      // 计算固定样式
+      if (!this.fixedMap) {
+        this.fixedMap = {}
+        this.totalLeft = 0 // 左边固定定位累加值
+        this.totalRight = 0 // 右边固定定位累加值
+        // 清空fixedMap
+        setTimeout(() => {
+          this.fixedMap = null
+        }, this.clearFixedMapTime)
+
+        const columns = elTable.columns
+        const rightColumns = []
+        let lastLeftColumn
+        let firstRightColumn
+        for (let i = 0; i < columns.length; i++) {
+          const column = columns[i]
+          const isLeft = column.className && column.className.includes('virtual-column__fixed-left')
+          const isRight = column.className && column.className.includes('virtual-column__fixed-right')
+
+          if (!isLeft && !isRight) continue
+          // 设置左边固定列定位样式
+          if (isLeft) {
+            lastLeftColumn = column
+            this.fixedMap[column.id] = {
+              left: this.totalLeft + 'px'
+            }
+            this.totalLeft += column.realWidth || column.width
+          }
+          // 收集右边固定列
+          if (isRight) {
+            if (!firstRightColumn) firstRightColumn = column
+            rightColumns.push(column)
+          }
+        }
+        // 设置固定列阴影classname
+        const leftClass = ' is-last-column'
+        const rightClass = ' is-first-column'
+        if (lastLeftColumn && !lastLeftColumn.className.includes(leftClass)) lastLeftColumn.className += leftClass
+        if (firstRightColumn && !firstRightColumn.className.includes(rightClass)) firstRightColumn.className += rightClass
+        // 设置右边固定列定位样式（从结尾开始算）
+        rightColumns.reverse().forEach(column => {
+          this.fixedMap[column.id] = {
+            right: this.totalRight + 'px'
+          }
+          this.totalRight += column.realWidth
+        })
+      }
+
+      return this.fixedMap[column.id]
     }
   },
   watch: {
@@ -633,6 +708,7 @@ export default {
       this.scroller.removeEventListener('scroll', this.onScroll)
       window.removeEventListener('resize', this.onScroll)
     }
+    this.scrollUnWatch && this.scrollUnWatch()
   }
 }
 </script>

@@ -100,8 +100,12 @@ export default {
           path: '/BasicDemo'
         },
         {
-          title: '固定表格',
+          title: '固定列',
           path: '/FixedDemo'
+        },
+        {
+          title: '固定列（自定义）',
+          path: '/VFixedDemo'
         },
         {
           title: '多表头',

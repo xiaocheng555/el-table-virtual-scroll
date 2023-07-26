@@ -739,6 +739,11 @@
       // 表格行合并时，合并在一起的行返回相同的key值
       rowSpanKey: {
         type: Function
+      },
+      // 清除固定列存储值的间隔时间
+      clearFixedMapTime: {
+        type: Number,
+        "default": 2000
       }
     },
     provide: function provide() {
@@ -758,7 +763,8 @@
         // 列是否正在展开
         columnVms: [],
         // virtual-column 组件实例
-        isHideAppend: false
+        isHideAppend: false,
+        scrollPosition: ''
       };
     },
     computed: {
@@ -773,6 +779,9 @@
         var total = 0;
         for (var i = 0; i < data.length; i++) {
           var key = data[i][keyProp];
+          if (typeof key === 'undefined') {
+            console.warn("data[".concat(i, "][").concat(keyProp, "] \u4E3A undefined\uFF0C\u8BF7\u786E\u4FDD keyProp \u5BF9\u5E94\u7684\u503C\u4E0D\u4E3Aundefined"));
+          }
           res[key] = total;
           var curSize = sizes[key];
           var size = typeof curSize === 'number' ? curSize : itemSize;
@@ -805,6 +814,7 @@
         }
         this.scroller = this.getScroller();
         this.setToTop();
+        this.observeScrollPosition();
         // 初次执行
         setTimeout(function () {
           _this.handleScroll();
@@ -842,6 +852,17 @@
           this.toTop = this.$el.getBoundingClientRect().top - (this.scroller === window ? 0 : this.scroller.getBoundingClientRect().top) + getScrollTop(this.scroller);
         }
       },
+      // 监听滚动位置
+      observeScrollPosition: function observeScrollPosition() {
+        var _this2 = this;
+        this.scrollUnWatch = this.$watch(function () {
+          return _this2.elTable.scrollPosition;
+        }, function (val) {
+          _this2.scrollPosition = val;
+        }, {
+          immediate: true
+        });
+      },
       // 处理滚动事件
       handleScroll: function handleScroll() {
         var shouldUpdate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
@@ -870,7 +891,7 @@
       },
       // 更新尺寸（高度）
       updateSizes: function updateSizes() {
-        var _this2 = this;
+        var _this3 = this;
         if (!this.dynamic) return;
         var rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row');
 
@@ -881,7 +902,7 @@
           rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0');
         }
         Array.from(rows).forEach(function (row, index) {
-          var item = _this2.renderData[index];
+          var item = _this3.renderData[index];
           if (!item) return;
 
           // 计算表格行的高度
@@ -898,9 +919,9 @@
               next = next.nextSibling;
             }
           }
-          var key = item[_this2.keyProp];
-          if (_this2.sizes[key] !== offsetHeight) {
-            _this2.$set(_this2.sizes, key, offsetHeight);
+          var key = item[_this3.keyProp];
+          if (_this3.sizes[key] !== offsetHeight) {
+            _this3.$set(_this3.sizes, key, offsetHeight);
           }
         });
       },
@@ -1026,7 +1047,7 @@
       },
       // 计算位置
       calcPosition: function calcPosition() {
-        var _this3 = this;
+        var _this4 = this;
         var last = this.data.length - 1;
         // 计算内容总高度
         var wrapHeight = this.getItemOffsetTop(last) + this.getItemSize(last);
@@ -1035,7 +1056,7 @@
 
         // 设置dom位置
         TableBodyClassNames.forEach(function (className) {
-          var el = _this3.$el.querySelector(className);
+          var el = _this4.$el.querySelector(className);
           if (!el) return;
 
           // 创建wrapEl、innerEl
@@ -1061,23 +1082,23 @@
       // 空闲时更新位置（触发时间：滚动停止后等待10ms执行）
       // 滚动停止之后，偶尔表格的行发生高度变更，那么当前计算的渲染数据是不正确的；那么需要手动触发最后一次handleScroll来重新计算
       updatePosition: function updatePosition() {
-        var _this4 = this;
+        var _this5 = this;
         this.timer && clearTimeout(this.timer);
         this.timer = setTimeout(function () {
-          _this4.timer && clearTimeout(_this4.timer);
+          _this5.timer && clearTimeout(_this5.timer);
           // 传入false，避免一直循环调用
-          _this4.handleScroll(false);
+          _this5.handleScroll(false);
         }, this.throttleTime + 10);
       },
       // 渲染全部数据
       renderAllData: function renderAllData() {
-        var _this5 = this;
+        var _this6 = this;
         this.renderData = this.data;
         this.$emit('change', this.data, 0, this.data.length - 1);
         this.$nextTick(function () {
           // 清除撑起的高度和位置
           TableBodyClassNames.forEach(function (className) {
-            var el = _this5.$el.querySelector(className);
+            var el = _this6.$el.querySelector(className);
             if (!el) return;
             if (el.wrapEl) {
               // 设置高度
@@ -1097,20 +1118,20 @@
       // 【外部调用】滚动到第几行
       // （不太精确：滚动到第n行时，如果周围的表格行计算出真实高度后会更新高度，导致内容坍塌或撑起）
       scrollTo: function scrollTo(index) {
-        var _this6 = this;
+        var _this7 = this;
         var stop = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var item = this.data[index];
         if (item && this.scroller) {
           this.updateSizes();
           this.calcRenderData();
           this.$nextTick(function () {
-            var offsetTop = _this6.getItemOffsetTop(index);
-            scrollToY(_this6.scroller, offsetTop);
+            var offsetTop = _this7.getItemOffsetTop(index);
+            scrollToY(_this7.scroller, offsetTop);
 
             // 调用两次scrollTo，第一次滚动时，如果表格行初次渲染高度发生变化时，会导致滚动位置有偏差，此时需要第二次执行滚动，确保滚动位置无误
             if (!stop) {
               setTimeout(function () {
-                _this6.scrollTo(index, true);
+                _this7.scrollTo(index, true);
               }, 50);
             }
           });
@@ -1133,11 +1154,11 @@
       },
       // 多选：选中所有列
       checkAll: function checkAll(val) {
-        var _this7 = this;
+        var _this8 = this;
         var removedRows = [];
         this.data.forEach(function (row) {
           if (row.$v_checked) removedRows.push(row);
-          _this7.checkRow(row, val, false);
+          _this8.checkRow(row, val, false);
         });
         this.emitSelectionChange(removedRows);
         if (val === false) checkOrder = 0; // 取消全选，则重置checkOrder
@@ -1176,29 +1197,29 @@
       },
       // 展开行：监听表格expand-change事件
       bindTableExpandEvent: function bindTableExpandEvent() {
-        var _this8 = this;
+        var _this9 = this;
         // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
         if (!this.isExpandType) return;
         this.elTable.$on('expand-change', function (row, expandedRows) {
-          _this8.$set(row, '$v_expanded', expandedRows.includes(row));
+          _this9.$set(row, '$v_expanded', expandedRows.includes(row));
         });
       },
       // 展开行：设置表格行展开
       setRowsExpanded: function setRowsExpanded() {
-        var _this9 = this;
+        var _this10 = this;
         if (!this.isExpandType) return;
         this.$nextTick(function () {
-          var expandRows = _this9.renderData.filter(function (item) {
+          var expandRows = _this10.renderData.filter(function (item) {
             return item.$v_expanded;
           });
           if (expandRows.length === 0) return;
           expandRows.forEach(function (row) {
-            _this9.elTable.toggleRowExpansion(row, true);
+            _this10.elTable.toggleRowExpansion(row, true);
           });
           // 手动设置列展开时，禁止展开动画
-          _this9.isExpanding = true;
+          _this10.isExpanding = true;
           setTimeout(function () {
-            _this9.isExpanding = false;
+            _this10.isExpanding = false;
           }, 10);
         });
       },
@@ -1221,7 +1242,7 @@
       },
       // 执行update方法更新虚拟滚动，且每次nextTick只能执行一次【在数据大于100条开启虚拟滚动时，由于监听了data、virtualized会连续触发两次update方法：第一次update时，（updateSize）计算尺寸里的渲染数据（renderData）与表格行的dom是一一对应，之后会改变渲染数据（renderData）的值；而第二次执行update时，renderData改变了，而表格行dom未改变，导致renderData与dom不一一对应，从而位置计算错误，最终渲染的数据对应不上。因此使用每次nextTick只能执行一次来避免bug发生】
       doUpdate: function doUpdate() {
-        var _this10 = this;
+        var _this11 = this;
         if (this.hasDoUpdate) return; // nextTick内已经执行过一次就不执行
         if (!this.scroller) return; // scroller不存在说明未初始化完成，不执行
 
@@ -1230,9 +1251,62 @@
         this.update();
         this.hasDoUpdate = true;
         this.$nextTick(function () {
-          _this10.hasDoUpdate = false;
-          _this10.isHideAppend = false;
+          _this11.hasDoUpdate = false;
+          _this11.isHideAppend = false;
         });
+      },
+      // 设置固定左右样式
+      cellFixedStyle: function cellFixedStyle(_ref2) {
+        var _this12 = this;
+        var column = _ref2.column;
+        var elTable = this.$children[0];
+        if (!elTable) return;
+        // 计算固定样式
+        if (!this.fixedMap) {
+          this.fixedMap = {};
+          this.totalLeft = 0; // 左边固定定位累加值
+          this.totalRight = 0; // 右边固定定位累加值
+          // 清空fixedMap
+          setTimeout(function () {
+            _this12.fixedMap = null;
+          }, this.clearFixedMapTime);
+          var columns = elTable.columns;
+          var rightColumns = [];
+          var lastLeftColumn;
+          var firstRightColumn;
+          for (var i = 0; i < columns.length; i++) {
+            var _column = columns[i];
+            var isLeft = _column.className && _column.className.includes('virtual-column__fixed-left');
+            var isRight = _column.className && _column.className.includes('virtual-column__fixed-right');
+            if (!isLeft && !isRight) continue;
+            // 设置左边固定列定位样式
+            if (isLeft) {
+              lastLeftColumn = _column;
+              this.fixedMap[_column.id] = {
+                left: this.totalLeft + 'px'
+              };
+              this.totalLeft += _column.realWidth || _column.width;
+            }
+            // 收集右边固定列
+            if (isRight) {
+              if (!firstRightColumn) firstRightColumn = _column;
+              rightColumns.push(_column);
+            }
+          }
+          // 设置固定列阴影classname
+          var leftClass = ' is-last-column';
+          var rightClass = ' is-first-column';
+          if (lastLeftColumn && !lastLeftColumn.className.includes(leftClass)) lastLeftColumn.className += leftClass;
+          if (firstRightColumn && !firstRightColumn.className.includes(rightClass)) firstRightColumn.className += rightClass;
+          // 设置右边固定列定位样式（从结尾开始算）
+          rightColumns.reverse().forEach(function (column) {
+            _this12.fixedMap[column.id] = {
+              right: _this12.totalRight + 'px'
+            };
+            _this12.totalRight += column.realWidth;
+          });
+        }
+        return this.fixedMap[column.id];
       }
     },
     watch: {
@@ -1258,9 +1332,9 @@
       }
     },
     created: function created() {
-      var _this11 = this;
+      var _this13 = this;
       this.$nextTick(function () {
-        _this11.initData();
+        _this13.initData();
       });
     },
     beforeDestroy: function beforeDestroy() {
@@ -1268,6 +1342,7 @@
         this.scroller.removeEventListener('scroll', this.onScroll);
         window.removeEventListener('resize', this.onScroll);
       }
+      this.scrollUnWatch && this.scrollUnWatch();
     }
   };
 
@@ -1409,8 +1484,10 @@
     var _c = _vm._self._c || _h;
     return _c("div", {
       staticClass: "el-table-virtual-scroll",
-      "class": [_vm.isExpanding ? "is-expanding" : "", _vm.isHideAppend ? "hide-append" : ""]
-    }, [_vm._t("default")], 2);
+      "class": [_vm.isExpanding ? "is-expanding" : "", _vm.isHideAppend ? "hide-append" : "", _vm.scrollPosition ? "is-scrolling-" + _vm.scrollPosition : ""]
+    }, [_vm._t("default", null, null, {
+      cellFixedStyle: _vm.cellFixedStyle
+    })], 2);
   };
   var __vue_staticRenderFns__$1 = [];
   __vue_render__$1._withStripped = true;
@@ -1418,8 +1495,8 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-0cdc8618_0", {
-      source: ".is-expanding[data-v-0cdc8618] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-0cdc8618] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    inject("data-v-a05c4a4e_0", {
+      source: ".is-expanding[data-v-a05c4a4e] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-a05c4a4e] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -1432,7 +1509,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-0cdc8618";
+  var __vue_scope_id__$1 = "data-v-a05c4a4e";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */
@@ -1471,6 +1548,18 @@
         // 控制半选样式
         isTree: false
       };
+    },
+    computed: {
+      getClassName: function getClassName() {
+        var classnames = [];
+        var classname = this.$attrs['class-name'] || this.$attrs.className;
+        classname && classnames.push(classname);
+        this.isTree && classnames.push('el-table__row--level');
+        var vfixed = this.$attrs.vfixed;
+        if (vfixed === true || vfixed === '') vfixed = 'left';
+        if (vfixed) classnames.push('virtual-column__fixed-' + vfixed);
+        return classnames.join(' ');
+      }
     },
     methods: {
       // 选择表格所有行
@@ -1611,7 +1700,7 @@
     var _c = _vm._self._c || _h;
     return _c("el-table-column", _vm._g(_vm._b({
       attrs: {
-        "class-name": _vm.isTree ? "el-table__row--level" : ""
+        "class-name": _vm.getClassName
       },
       scopedSlots: _vm._u([{
         key: "header",
@@ -1682,15 +1771,27 @@
   __vue_render__._withStripped = true;
 
   /* style */
-  var __vue_inject_styles__ = undefined;
+  var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
+    if (!inject) return;
+    inject("data-v-4a97c9fc_0", {
+      source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n",
+      map: {
+        "version": 3,
+        "sources": ["el-table-virtual-column.vue"],
+        "names": [],
+        "mappings": "AAAA;;EAEE,2BAA2B;EAC3B,qBAAqB;EACrB,gBAAgB;AAClB;AACA;EACE,gBAAgB;AAClB;AACA;;EAEE,kBAAkB;AACpB;AACA;EACE,gBAAgB;AAClB;AACA;;EAEE,iBAAiB;AACnB;AACA;;EAEE,4BAA4B;AAC9B;AACA;;EAEE,WAAW;EACX,kBAAkB;EAClB,QAAQ;EACR,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,oBAAoB;AACtB;AACA;EACE,YAAY;EACZ,uDAAuD;AACzD;AACA;EACE,WAAW;EACX,wDAAwD;AAC1D",
+        "file": "el-table-virtual-column.vue",
+        "sourcesContent": [".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n"]
+      },
+      media: undefined
+    });
+  };
   /* scoped */
-  var __vue_scope_id__ = "data-v-17266016";
+  var __vue_scope_id__ = undefined;
   /* module identifier */
   var __vue_module_identifier__ = undefined;
   /* functional template */
   var __vue_is_functional_template__ = false;
-  /* style inject */
-
   /* style inject SSR */
 
   /* style inject shadow dom */
@@ -1698,7 +1799,7 @@
   var __vue_component__ = /*#__PURE__*/normalizeComponent({
     render: __vue_render__,
     staticRenderFns: __vue_staticRenderFns__
-  }, __vue_inject_styles__, __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, false, undefined, undefined, undefined);
+  }, __vue_inject_styles__, __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, false, createInjector, undefined, undefined);
 
   exports.VirtualColumn = __vue_component__;
   exports.VirtualScroll = __vue_component__$1;

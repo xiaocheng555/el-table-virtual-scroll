@@ -5,7 +5,7 @@
       isExpanding ? 'is-expanding' : '',
       isHideAppend ? 'hide-append' : '',
       scrollPosition ? `is-scrolling-${scrollPosition}` : '']">
-    <slot v-bind="{ cellFixedStyle }"></slot>
+    <slot v-bind="{ headerCellFixedStyle, cellFixedStyle }"></slot>
   </div>
 </template>
 
@@ -624,9 +624,17 @@ export default {
     },
 
     // 设置固定左右样式
-    cellFixedStyle ({ column }) {
+    headerCellFixedStyle (data) {
+      return this.cellFixedStyle(data, true)
+    },
+
+    // 设置固定左右样式
+    cellFixedStyle ({ column }, isHeader = false) {
       const elTable = this.$children[0]
+      window.elTable = elTable
       if (!elTable) return
+      // 右边固定列头部需要加上滚动条宽度-gutterWidth
+      const gutterWidth = isHeader ? elTable.layout.gutterWidth : 0
       // 计算固定样式
       if (!this.fixedMap) {
         this.fixedMap = {}
@@ -651,7 +659,7 @@ export default {
           if (isLeft) {
             lastLeftColumn = column
             this.fixedMap[column.id] = {
-              left: this.totalLeft + 'px'
+              left: this.totalLeft
             }
             this.totalLeft += column.realWidth || column.width
           }
@@ -669,13 +677,22 @@ export default {
         // 设置右边固定列定位样式（从结尾开始算）
         rightColumns.reverse().forEach(column => {
           this.fixedMap[column.id] = {
-            right: this.totalRight + 'px'
+            right: this.totalRight
           }
-          this.totalRight += column.realWidth
+          this.totalRight += column.realWidth || column.width
         })
       }
+      const style = this.fixedMap[column.id]
+      if (!style) return
+      const isFixedRight = 'right' in style
+      return isFixedRight ? { right: style.right + gutterWidth + 'px' } : { left: style.left + 'px' }
+    },
 
-      return this.fixedMap[column.id]
+    // 更新表头布局
+    doHeaderLayout () {
+      if (!this.elTable) return
+      this.fixedMap = null
+      this.elTable.$refs.tableHeader.$forceUpdate()
     }
   },
   watch: {
@@ -712,6 +729,15 @@ export default {
   }
 }
 </script>
+
+<style lang="less">
+.el-table-virtual-scroll {
+  .virtual-column__fixed-right + .el-table__cell.gutter {
+    position: sticky;
+    right: 0;
+  }
+}
+</style>
 
 <style lang='less' scoped>
 .is-expanding {

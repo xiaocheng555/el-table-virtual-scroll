@@ -110,7 +110,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 | type    | type="index" 为索引；type="selection" 为多选；type="radio" 为单选；type="expand" 为扩展行；type="tree" 为模拟树结构 | String | 选填 |  |
 | indent | 展示树形数据时，树节点的缩进，type 为 tree 时生效 | Number | — | 16 |
 | load | 加载子节点数据的函数，type 为 tree 时生效 | Function(row, resolve) | — | - |
-| vfixed | 固定列（>=1.0.15版本支持）。使用 position: sticky; 来实现固定列，不会生成额外table，滚动更丝滑；使用时，需要设置table的headerCellStyle、cellStyle（注意组件必须按固定列顺序排列最左或最后），参考[demo](https://xiaocheng555.github.io/el-table-virtual-scroll/#/VFixedDemo) | String/Boolean | left/right/true | - |
+| vfixed | 固定列（>=1.0.16版本支持）。使用 position: sticky; 来实现固定列，不会生成额外table，滚动更丝滑；使用时，需要设置table的headerCellStyle、cellStyle（注意组件必须按固定列顺序排列最左或最右），参考[demo](https://xiaocheng555.github.io/el-table-virtual-scroll/#/VFixedDemo) | String/Boolean | left/right/true | - |
 
 ## el-table-virtual-scroll 组件注意事项
 
@@ -225,3 +225,9 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * `<virtual-column>` 组件增加 `vfixed: left/right` 来设置固定列，滚动更丝滑
 
 * npm 1.0.15 版本发包
+
+### 2023-7-27
+
+* 修复自定义固定列bug
+
+* npm 1.0.16 版本发包

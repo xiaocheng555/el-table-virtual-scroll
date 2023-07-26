@@ -1252,11 +1252,19 @@ var script$1 = {
       });
     },
     // 设置固定左右样式
+    headerCellFixedStyle: function headerCellFixedStyle(data) {
+      return this.cellFixedStyle(data, true);
+    },
+    // 设置固定左右样式
     cellFixedStyle: function cellFixedStyle(_ref2) {
       var _this12 = this;
       var column = _ref2.column;
+      var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       var elTable = this.$children[0];
+      window.elTable = elTable;
       if (!elTable) return;
+      // 右边固定列头部需要加上滚动条宽度-gutterWidth
+      var gutterWidth = isHeader ? elTable.layout.gutterWidth : 0;
       // 计算固定样式
       if (!this.fixedMap) {
         this.fixedMap = {};
@@ -1279,7 +1287,7 @@ var script$1 = {
           if (isLeft) {
             lastLeftColumn = _column;
             this.fixedMap[_column.id] = {
-              left: this.totalLeft + 'px'
+              left: this.totalLeft
             };
             this.totalLeft += _column.realWidth || _column.width;
           }
@@ -1297,12 +1305,25 @@ var script$1 = {
         // 设置右边固定列定位样式（从结尾开始算）
         rightColumns.reverse().forEach(function (column) {
           _this12.fixedMap[column.id] = {
-            right: _this12.totalRight + 'px'
+            right: _this12.totalRight
           };
-          _this12.totalRight += column.realWidth;
+          _this12.totalRight += column.realWidth || column.width;
         });
       }
-      return this.fixedMap[column.id];
+      var style = this.fixedMap[column.id];
+      if (!style) return;
+      var isFixedRight = ('right' in style);
+      return isFixedRight ? {
+        right: style.right + gutterWidth + 'px'
+      } : {
+        left: style.left + 'px'
+      };
+    },
+    // 更新表头布局
+    doHeaderLayout: function doHeaderLayout() {
+      if (!this.elTable) return;
+      this.fixedMap = null;
+      this.elTable.$refs.tableHeader.$forceUpdate();
     }
   },
   watch: {
@@ -1482,6 +1503,7 @@ var __vue_render__$1 = function __vue_render__() {
     staticClass: "el-table-virtual-scroll",
     "class": [_vm.isExpanding ? "is-expanding" : "", _vm.isHideAppend ? "hide-append" : "", _vm.scrollPosition ? "is-scrolling-" + _vm.scrollPosition : ""]
   }, [_vm._t("default", null, null, {
+    headerCellFixedStyle: _vm.headerCellFixedStyle,
     cellFixedStyle: _vm.cellFixedStyle
   })], 2);
 };
@@ -1491,8 +1513,19 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-a05c4a4e_0", {
-    source: ".is-expanding[data-v-a05c4a4e] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-a05c4a4e] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  inject("data-v-7208365d_0", {
+    source: ".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
+    map: {
+      "version": 3,
+      "sources": ["el-table-virtual-scroll.vue"],
+      "names": [],
+      "mappings": "AAAA;EACE,gBAAgB;EAChB,QAAQ;AACV",
+      "file": "el-table-virtual-scroll.vue",
+      "sourcesContent": [".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
+    },
+    media: undefined
+  }), inject("data-v-7208365d_1", {
+    source: ".is-expanding[data-v-7208365d] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-7208365d] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -1505,7 +1538,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-a05c4a4e";
+var __vue_scope_id__$1 = "data-v-7208365d";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */

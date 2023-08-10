@@ -232,7 +232,7 @@ export default {
       if (!this.virtualized) return
       // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
       // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
-      if (this.isInnerScroll && !this.elTable.layout.viewportHeight) {
+      if (this.isInnerScroll && !this.scroller.style.height) {
         this.updatePosition()
         return
       }

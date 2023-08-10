@@ -239,3 +239,9 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复 v-show 切换表格会卡顿
 
 * npm 1.0.17 版本发包
+
+### 2023-8-10
+
+* 修复 v-show 切换表格会卡顿
+
+* npm 1.0.18 版本发包

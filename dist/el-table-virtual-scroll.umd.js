@@ -869,7 +869,7 @@
         if (!this.virtualized) return;
         // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
         // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
-        if (this.isInnerScroll && !this.elTable.layout.viewportHeight) {
+        if (this.isInnerScroll && !this.scroller.style.height) {
           this.updatePosition();
           return;
         }
@@ -1527,7 +1527,7 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-2f3017b3_0", {
+    inject("data-v-a4d7a5f4_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -1538,8 +1538,8 @@
         "sourcesContent": [".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-2f3017b3_1", {
-      source: ".is-expanding[data-v-2f3017b3] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-2f3017b3] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-a4d7a5f4_1", {
+      source: ".is-expanding[data-v-a4d7a5f4] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-a4d7a5f4] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -1552,7 +1552,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-2f3017b3";
+  var __vue_scope_id__$1 = "data-v-a4d7a5f4";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */
@@ -1874,7 +1874,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-7b7cf042_0", {
+    inject("data-v-b4ef60d6_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n",
       map: {
         "version": 3,

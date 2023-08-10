@@ -249,6 +249,9 @@ export default {
       this.$emit('change', this.renderData, this.start, this.end)
       // 设置表格行展开
       this.setRowsExpanded()
+      if (this.start === 0 && this.end > 30 && this.end === this.data.length - 1) {
+        console.warn('[el-table-virtual-scroll] 表格数据全部渲染，渲染数量为:' + this.data.length)
+      }
     },
 
     // 移除多个hover-row
@@ -536,9 +539,9 @@ export default {
       this.columnVms = this.columnVms.filter(item => item !== vm)
     },
     // 多选：选中所有列
-    checkAll (val) {
+    checkAll (val, rows = this.data) {
       const removedRows = []
-      this.data.forEach(row => {
+      rows.forEach(row => {
         if (row.$v_checked) removedRows.push(row)
         this.checkRow(row, val, false)
       })

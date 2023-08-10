@@ -1,6 +1,7 @@
 <template>
   <div>
     <virtual-scroll
+      v-show="show"
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -14,7 +15,8 @@
         tooltip-effect="dark"
         style="width: 100%">
         <!-- 多选 -->
-        <virtual-column width="60" type="selection"></virtual-column>
+        <virtual-column width="60" type="selection" :selectable="getSelectable"></virtual-column>
+        <!-- <virtual-column width="60" type="selection"></virtual-column> -->
         <el-table-column
           label="日期"
           width="120">
@@ -35,6 +37,7 @@
     <div style="margin-top: 20px">
       <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
       <el-button @click="toggleSelection()">取消选择</el-button>
+      <el-button @click="show = !show">show</el-button>
     </div>
   </div>
 </template>
@@ -53,10 +56,14 @@ export default {
     return {
       list: mockData(0, 2000),
       tableData: [],
-      multipleSelection: []
+      multipleSelection: [],
+      show: true
     }
   },
   methods: {
+    getSelectable (row, idx) {
+      return idx > 5
+    },
     toggleSelection (rows) {
       if (rows) {
         rows.forEach(row => {

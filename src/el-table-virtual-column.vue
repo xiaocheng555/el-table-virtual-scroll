@@ -40,7 +40,8 @@
         <el-checkbox
           v-if="scope.column.type === 'v-selection'"
           :value="scope.row.$v_checked"
-          @change="onCheckRow(scope.row, !scope.row.$v_checked)">
+          :disabled="getDisabled(scope)"
+          @change="onCheckRow(scope, !scope.row.$v_checked)">
         </el-checkbox>
         <!-- 单选类型 -->
         <el-radio
@@ -84,6 +85,9 @@ export default {
     indent: {
       type: Number,
       default: 16
+    },
+    selectable: {
+      type: Function
     }
   },
   data () {
@@ -106,24 +110,74 @@ export default {
     }
   },
   methods: {
+    getDisabled (scope) {
+      if (this.selectable) {
+        const index = this.getIndex(scope, false)
+        return !this.selectable(scope.row, index)
+      }
+      return false
+    },
     // 选择表格所有行
     onCheckAllRows (val) {
       val = this.isCheckedImn ? true : val
+      if (this.selectable) {
+        const list = this.virtualScroll.data
+        // 筛选出可选的行
+        const selectableList = []
+        let hasUnselectableChecked = false // 是否不可选择的行已经勾选了
+        list.forEach((row, index) => {
+          const isSelectable = this.selectable(row, index)
+          if (isSelectable) {
+            selectableList.push(row)
+          } else {
+            if (row.$v_checked) hasUnselectableChecked = true
+          }
+        })
+        this.virtualScroll.checkAll(val, selectableList)
+        this.isCheckedAll = val
+        // 如果有不可选择的行已经勾选了，此时取消全选，选择框需要设置为半选状态
+        if (hasUnselectableChecked && !val) {
+          this.isCheckedImn = true
+        } else {
+          this.isCheckedImn = false
+        }
+        return
+      }
+
       this.virtualScroll.checkAll(val)
       this.isCheckedAll = val
       this.isCheckedImn = false
     },
     // 选择表格某行
-    onCheckRow (row, val) {
-      this.virtualScroll.checkRow(row, val)
+    onCheckRow (scope, val) {
+      const index = this.getIndex(scope, false)
+      if (this.selectable) {
+        const isSelectable = this.selectable(scope.row, index)
+        if (!isSelectable) return
+      }
+
+      this.virtualScroll.checkRow(scope.row, val)
       this.syncCheckStatus()
     },
     // 同步全选、半选框状态
     syncCheckStatus () {
       const list = this.virtualScroll.data
       const checkedLen = list.filter(row => row.$v_checked === true).length
+
+      // 计算可选行的长度
+      let selectableLen
+      let selectableCheckedLen
+      if (this.selectable) {
+        const selectableList = list.filter((row, index) => this.selectable(row, index))
+        selectableCheckedLen = selectableList.filter(row => row.$v_checked === true).length
+        selectableLen = selectableList.length
+      }
+
       if (checkedLen === 0) {
         this.isCheckedAll = false
+        this.isCheckedImn = false
+      } else if (this.selectable && selectableCheckedLen === selectableLen) {
+        this.isCheckedAll = true
         this.isCheckedImn = false
       } else if (checkedLen === list.length) {
         this.isCheckedAll = true
@@ -137,12 +191,12 @@ export default {
       this.virtualScroll.setCurrentRow(row)
     },
     // 获取索引值
-    getIndex (scope) {
+    getIndex (scope, add1 = true) {
       const index = this.virtualScroll.start + scope.$index
       if (typeof this.$attrs.index === 'function') {
         return this.$attrs.index(index)
       }
-      return index + 1
+      return index + (add1 ? 1 : 0)
     },
     // 展开收起事件
     onTreeNodeExpand (row) {

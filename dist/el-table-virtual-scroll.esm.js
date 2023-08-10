@@ -863,6 +863,12 @@ var script$1 = {
     handleScroll: function handleScroll() {
       var shouldUpdate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
       if (!this.virtualized) return;
+      // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
+      // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
+      if (this.isInnerScroll && !this.elTable.layout.viewportHeight) {
+        this.updatePosition();
+        return;
+      }
       this.removeHoverRows();
       // 更新当前尺寸（高度）
       this.updateSizes();
@@ -875,6 +881,9 @@ var script$1 = {
       this.$emit('change', this.renderData, this.start, this.end);
       // 设置表格行展开
       this.setRowsExpanded();
+      if (this.start === 0 && this.end > 30 && this.end === this.data.length - 1) {
+        console.warn('[el-table-virtual-scroll] 表格数据全部渲染，渲染数量为:' + this.data.length);
+      }
     },
     // 移除多个hover-row
     removeHoverRows: function removeHoverRows() {
@@ -1151,8 +1160,9 @@ var script$1 = {
     // 多选：选中所有列
     checkAll: function checkAll(val) {
       var _this8 = this;
+      var rows = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.data;
       var removedRows = [];
-      this.data.forEach(function (row) {
+      rows.forEach(function (row) {
         if (row.$v_checked) removedRows.push(row);
         _this8.checkRow(row, val, false);
       });
@@ -1513,7 +1523,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-7208365d_0", {
+  inject("data-v-2f3017b3_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -1524,8 +1534,8 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-7208365d_1", {
-    source: ".is-expanding[data-v-7208365d] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-7208365d] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-2f3017b3_1", {
+    source: ".is-expanding[data-v-2f3017b3] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-2f3017b3] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -1538,7 +1548,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-7208365d";
+var __vue_scope_id__$1 = "data-v-2f3017b3";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */
@@ -1567,6 +1577,9 @@ var script = {
     indent: {
       type: Number,
       "default": 16
+    },
+    selectable: {
+      type: Function
     }
   },
   data: function data() {
@@ -1591,26 +1604,79 @@ var script = {
     }
   },
   methods: {
+    getDisabled: function getDisabled(scope) {
+      if (this.selectable) {
+        var index = this.getIndex(scope, false);
+        return !this.selectable(scope.row, index);
+      }
+      return false;
+    },
     // 选择表格所有行
     onCheckAllRows: function onCheckAllRows(val) {
+      var _this = this;
       val = this.isCheckedImn ? true : val;
+      if (this.selectable) {
+        var list = this.virtualScroll.data;
+        // 筛选出可选的行
+        var selectableList = [];
+        var hasUnselectableChecked = false; // 是否不可选择的行已经勾选了
+        list.forEach(function (row, index) {
+          var isSelectable = _this.selectable(row, index);
+          if (isSelectable) {
+            selectableList.push(row);
+          } else {
+            if (row.$v_checked) hasUnselectableChecked = true;
+          }
+        });
+        this.virtualScroll.checkAll(val, selectableList);
+        this.isCheckedAll = val;
+        // 如果有不可选择的行已经勾选了，此时取消全选，选择框需要设置为半选状态
+        if (hasUnselectableChecked && !val) {
+          this.isCheckedImn = true;
+        } else {
+          this.isCheckedImn = false;
+        }
+        return;
+      }
       this.virtualScroll.checkAll(val);
       this.isCheckedAll = val;
       this.isCheckedImn = false;
     },
     // 选择表格某行
-    onCheckRow: function onCheckRow(row, val) {
-      this.virtualScroll.checkRow(row, val);
+    onCheckRow: function onCheckRow(scope, val) {
+      var index = this.getIndex(scope, false);
+      if (this.selectable) {
+        var isSelectable = this.selectable(scope.row, index);
+        if (!isSelectable) return;
+      }
+      this.virtualScroll.checkRow(scope.row, val);
       this.syncCheckStatus();
     },
     // 同步全选、半选框状态
     syncCheckStatus: function syncCheckStatus() {
+      var _this2 = this;
       var list = this.virtualScroll.data;
       var checkedLen = list.filter(function (row) {
         return row.$v_checked === true;
       }).length;
+
+      // 计算可选行的长度
+      var selectableLen;
+      var selectableCheckedLen;
+      if (this.selectable) {
+        var selectableList = list.filter(function (row, index) {
+          return _this2.selectable(row, index);
+        });
+        selectableCheckedLen = selectableList.filter(function (row) {
+          return row.$v_checked === true;
+        }).length;
+        selectableLen = selectableList.length;
+      }
       if (checkedLen === 0) {
         this.isCheckedAll = false;
+        this.isCheckedImn = false;
+      } else if (this.selectable && selectableCheckedLen === selectableLen) {
+        this.isCheckedAll = true;
         this.isCheckedImn = false;
       } else if (checkedLen === list.length) {
         this.isCheckedAll = true;
@@ -1625,11 +1691,12 @@ var script = {
     },
     // 获取索引值
     getIndex: function getIndex(scope) {
+      var add1 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       var index = this.virtualScroll.start + scope.$index;
       if (typeof this.$attrs.index === 'function') {
         return this.$attrs.index(index);
       }
-      return index + 1;
+      return index + (add1 ? 1 : 0);
     },
     // 展开收起事件
     onTreeNodeExpand: function onTreeNodeExpand(row) {
@@ -1774,11 +1841,12 @@ var __vue_render__ = function __vue_render__() {
           staticClass: "el-table__placeholder"
         })] : _vm._e(), _vm._v(" "), _vm.$scopedSlots["default"] ? _vm._t("default", null, null, scope) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
           attrs: {
-            value: scope.row.$v_checked
+            value: scope.row.$v_checked,
+            disabled: _vm.getDisabled(scope)
           },
           on: {
             change: function change($event) {
-              return _vm.onCheckRow(scope.row, !scope.row.$v_checked);
+              return _vm.onCheckRow(scope, !scope.row.$v_checked);
             }
           }
         }) : _vm._e(), _vm._v(" "), scope.column.type === "v-radio" ? _c("el-radio", {
@@ -1802,7 +1870,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-4a97c9fc_0", {
+  inject("data-v-7b7cf042_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n",
     map: {
       "version": 3,

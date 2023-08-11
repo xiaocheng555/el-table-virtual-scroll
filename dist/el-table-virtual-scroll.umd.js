@@ -764,7 +764,8 @@
         columnVms: [],
         // virtual-column 组件实例
         isHideAppend: false,
-        scrollPosition: ''
+        scrollPosition: '',
+        hasFixedRight: false
       };
     },
     computed: {
@@ -1275,12 +1276,15 @@
         var column = _ref2.column;
         var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var elTable = this.$children[0];
-        window.elTable = elTable;
         if (!elTable) return;
         // 右边固定列头部需要加上滚动条宽度-gutterWidth
-        var gutterWidth = isHeader ? elTable.layout.gutterWidth : 0;
+        var _elTable$layout = elTable.layout,
+          _gutterWidth = _elTable$layout.gutterWidth,
+          scrollY = _elTable$layout.scrollY;
+        var gutterWidth = isHeader && scrollY ? _gutterWidth : 0;
         // 计算固定样式
-        if (!this.fixedMap) {
+        if (!this.fixedMap || this.isScrollY !== scrollY) {
+          this.isScrollY = scrollY;
           this.fixedMap = {};
           this.totalLeft = 0; // 左边固定定位累加值
           this.totalRight = 0; // 右边固定定位累加值
@@ -1317,6 +1321,7 @@
           if (lastLeftColumn && !lastLeftColumn.className.includes(leftClass)) lastLeftColumn.className += leftClass;
           if (firstRightColumn && !firstRightColumn.className.includes(rightClass)) firstRightColumn.className += rightClass;
           // 设置右边固定列定位样式（从结尾开始算）
+          this.hasFixedRight = rightColumns.length > 0;
           rightColumns.reverse().forEach(function (column) {
             _this12.fixedMap[column.id] = {
               right: _this12.totalRight
@@ -1515,7 +1520,7 @@
     var _c = _vm._self._c || _h;
     return _c("div", {
       staticClass: "el-table-virtual-scroll",
-      "class": [_vm.isExpanding ? "is-expanding" : "", _vm.isHideAppend ? "hide-append" : "", _vm.scrollPosition ? "is-scrolling-" + _vm.scrollPosition : ""]
+      "class": [_vm.isExpanding ? "is-expanding" : "", _vm.isHideAppend ? "hide-append" : "", _vm.scrollPosition ? "is-scrolling-" + _vm.scrollPosition : "", _vm.hasFixedRight ? "has-custom-fixed-right" : ""]
     }, [_vm._t("default", null, null, {
       headerCellFixedStyle: _vm.headerCellFixedStyle,
       cellFixedStyle: _vm.cellFixedStyle
@@ -1527,19 +1532,19 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-a4d7a5f4_0", {
-      source: ".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
+    inject("data-v-50ab5fca_0", {
+      source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
         "names": [],
         "mappings": "AAAA;EACE,gBAAgB;EAChB,QAAQ;AACV",
         "file": "el-table-virtual-scroll.vue",
-        "sourcesContent": [".el-table-virtual-scroll .virtual-column__fixed-right + .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
+        "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-a4d7a5f4_1", {
-      source: ".is-expanding[data-v-a4d7a5f4] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-a4d7a5f4] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-50ab5fca_1", {
+      source: ".is-expanding[data-v-50ab5fca] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-50ab5fca] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -1552,7 +1557,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-a4d7a5f4";
+  var __vue_scope_id__$1 = "data-v-50ab5fca";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */
@@ -1874,7 +1879,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-b4ef60d6_0", {
+    inject("data-v-7b7cf042_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n",
       map: {
         "version": 3,

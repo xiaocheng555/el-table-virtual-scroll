@@ -4,7 +4,8 @@
     :class="[
       isExpanding ? 'is-expanding' : '',
       isHideAppend ? 'hide-append' : '',
-      scrollPosition ? `is-scrolling-${scrollPosition}` : '']">
+      scrollPosition ? `is-scrolling-${scrollPosition}` : '',
+      hasFixedRight ? 'has-custom-fixed-right' : '']">
     <slot v-bind="{ headerCellFixedStyle, cellFixedStyle }"></slot>
   </div>
 </template>
@@ -130,7 +131,8 @@ export default {
       isExpanding: false, // 列是否正在展开
       columnVms: [], // virtual-column 组件实例
       isHideAppend: false,
-      scrollPosition: ''
+      scrollPosition: '',
+      hasFixedRight: false
     }
   },
   computed: {
@@ -640,12 +642,13 @@ export default {
     // 设置固定左右样式
     cellFixedStyle ({ column }, isHeader = false) {
       const elTable = this.$children[0]
-      window.elTable = elTable
       if (!elTable) return
       // 右边固定列头部需要加上滚动条宽度-gutterWidth
-      const gutterWidth = isHeader ? elTable.layout.gutterWidth : 0
+      const { gutterWidth: _gutterWidth, scrollY } = elTable.layout
+      const gutterWidth = isHeader && scrollY ? _gutterWidth : 0
       // 计算固定样式
-      if (!this.fixedMap) {
+      if (!this.fixedMap || this.isScrollY !== scrollY) {
+        this.isScrollY = scrollY
         this.fixedMap = {}
         this.totalLeft = 0 // 左边固定定位累加值
         this.totalRight = 0 // 右边固定定位累加值
@@ -684,6 +687,7 @@ export default {
         if (lastLeftColumn && !lastLeftColumn.className.includes(leftClass)) lastLeftColumn.className += leftClass
         if (firstRightColumn && !firstRightColumn.className.includes(rightClass)) firstRightColumn.className += rightClass
         // 设置右边固定列定位样式（从结尾开始算）
+        this.hasFixedRight = rightColumns.length > 0
         rightColumns.reverse().forEach(column => {
           this.fixedMap[column.id] = {
             right: this.totalRight
@@ -741,9 +745,11 @@ export default {
 
 <style lang="less">
 .el-table-virtual-scroll {
-  .virtual-column__fixed-right + .el-table__cell.gutter {
-    position: sticky;
-    right: 0;
+  &.has-custom-fixed-right {
+    .el-table__cell.gutter {
+      position: sticky;
+      right: 0;
+    }
   }
 }
 </style>

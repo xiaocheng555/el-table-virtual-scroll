@@ -251,3 +251,12 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复自定义固定列表格不存在滚动条时，表头偏移
 
 * npm 1.0.19 版本发包
+
+
+### 2023-8-21
+
+* 修复 v-show 切换表格引起的bug
+
+* 增加 disabled prop 禁止虚拟计算（v-show=false时可设置）
+
+* npm 1.0.20 版本发包

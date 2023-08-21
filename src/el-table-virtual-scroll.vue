@@ -115,6 +115,14 @@ export default {
     clearFixedMapTime: {
       type: Number,
       default: 2000
+    },
+    warn: {
+      type: Boolean,
+      default: true
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   provide () {
@@ -145,7 +153,7 @@ export default {
       for (let i = 0; i < data.length; i++) {
         const key = data[i][keyProp]
         if (typeof key === 'undefined') {
-          console.warn(`data[${i}][${keyProp}] 为 undefined，请确保 keyProp 对应的值不为undefined`)
+          this.warn && console.warn(`data[${i}][${keyProp}] 为 undefined，请确保 keyProp 对应的值不为undefined`)
         }
         res[key] = total
 
@@ -169,8 +177,6 @@ export default {
       this.end = undefined
       // 是否是表格内部滚动
       this.isInnerScroll = false
-      // 设置表格到滚动容器的距离
-      this.toTop = 0
 
       // 验证ElTable组件
       this.elTable = this.$children[0]
@@ -179,8 +185,7 @@ export default {
       }
 
       this.scroller = this.getScroller()
-      this.setToTop()
-      this.observeScrollPosition()
+      this.observeElTable()
       // 初次执行
       setTimeout(() => {
         this.handleScroll()
@@ -214,30 +219,35 @@ export default {
     },
 
     // 设置表格到滚动容器的距离
-    setToTop () {
+    getToTop () {
       if (this.isInnerScroll) {
-        this.toTop = 0
+        return 0
       } else {
-        this.toTop = this.$el.getBoundingClientRect().top - (this.scroller === window ? 0 : this.scroller.getBoundingClientRect().top) + getScrollTop(this.scroller)
+        return this.$el.getBoundingClientRect().top - (this.scroller === window ? 0 : this.scroller.getBoundingClientRect().top) + getScrollTop(this.scroller)
       }
     },
 
-    // 监听滚动位置
-    observeScrollPosition () {
-      this.scrollUnWatch = this.$watch(() => this.elTable.scrollPosition, (val) => {
+    // 监听el-table
+    observeElTable () {
+      // 监听滚动位置
+      const unWatch1 = this.$watch(() => this.elTable.scrollPosition, (val) => {
         this.scrollPosition = val
       }, { immediate: true })
+
+      // 监听表格滚动高度变化（切换v-show时更新）
+      const unWatch2 = this.$watch(() => this.elTable.layout.bodyHeight, (val) => {
+        val > 0 && this.update()
+      })
+      this.unWatchs = [unWatch1, unWatch2]
     },
 
     // 处理滚动事件
     handleScroll (shouldUpdate = true) {
+      if (this.disabled) return
       if (!this.virtualized) return
       // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
       // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
-      if (this.isInnerScroll && !this.scroller.style.height) {
-        this.updatePosition()
-        return
-      }
+      if (this.isInnerScroll && !this.scroller.style.height && !this.scroller.style.maxHeight) return
 
       this.removeHoverRows()
       // 更新当前尺寸（高度）
@@ -251,9 +261,6 @@ export default {
       this.$emit('change', this.renderData, this.start, this.end)
       // 设置表格行展开
       this.setRowsExpanded()
-      if (this.start === 0 && this.end > 30 && this.end === this.data.length - 1) {
-        console.warn('[el-table-virtual-scroll] 表格数据全部渲染，渲染数量为:' + this.data.length)
-      }
     },
 
     // 移除多个hover-row
@@ -298,7 +305,7 @@ export default {
         }
 
         const key = item[this.keyProp]
-        if (this.sizes[key] !== offsetHeight) {
+        if (offsetHeight && this.sizes[key] !== offsetHeight) {
           this.$set(this.sizes, key, offsetHeight)
         }
       })
@@ -332,8 +339,9 @@ export default {
     calcRenderData () {
       const { scroller, data, buffer } = this
       // 计算可视范围顶部、底部
-      const top = getScrollTop(scroller) - buffer - this.toTop
-      const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer - this.toTop
+      const toTop = this.getToTop() // 表格到滚动容器的距离
+      const top = getScrollTop(scroller) - buffer - toTop
+      const bottom = getScrollTop(scroller) + getOffsetHeight(scroller) + buffer - toTop
 
       let start
       let end
@@ -382,6 +390,9 @@ export default {
       this.start = start
       this.end = end
       this.renderData = data.slice(start, end + 1)
+      if (this.start === 0 && this.end > 30 && this.end === this.data.length - 1) {
+        this.warn && console.warn('[el-table-virtual-scroll] 表格数据全部渲染，渲染数量为:' + this.data.length)
+      }
     },
 
     // 是否是合并行
@@ -501,7 +512,6 @@ export default {
     // 【外部调用】更新
     update () {
       // console.log('update')
-      this.setToTop()
       this.handleScroll()
     },
 
@@ -726,6 +736,9 @@ export default {
           this.doUpdate()
         }
       }
+    },
+    disabled () {
+      this.doUpdate()
     }
   },
   created () {
@@ -738,7 +751,9 @@ export default {
       this.scroller.removeEventListener('scroll', this.onScroll)
       window.removeEventListener('resize', this.onScroll)
     }
-    this.scrollUnWatch && this.scrollUnWatch()
+    if (this.unWatchs) {
+      this.unWatchs.forEach(unWatch => unWatch())
+    }
   }
 }
 </script>

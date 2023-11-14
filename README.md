@@ -59,9 +59,9 @@ export default {
 | data    | 总数据 | Array | 必填 |  |
 | keyProp | key值，data数据中的唯一id【⚠️若keyProp未设置或keyProp值不唯一，可能导致表格空数据或者滚动时渲染的数据断层、不连贯、滚动不了】 | string | — | id |
 | itemSize | 每一行的预估高度 | number | — | 60 |
-| scrollBox | 指定滚动容器；在指定滚动容器时，如果表格设置了height高度，则滚动容器为表格内的滚动容器；如果表格为设置height高度，则自动获取父层以外的滚动容器，直至window容器为止 | string | 'window'、css选择器 | - |
+| scrollBox | 指定滚动容器；在指定滚动容器时，如果表格设置了height高度，则滚动容器为表格内的滚动容器；如果表格未设置height高度，则自动获取外层的滚动容器，直至window容器为止 | string | 'window'、css选择器 | - |
 | buffer | 顶部和底部缓冲区域，值越大显示表格的行数越多 | Number | — | 200 |
-| throttleTime | 滚动事件的节流时间 | number | — | 10 |
+| throttleTime | 滚动事件的节流时间 | number | — | 16 |
 | dynamic | 动态获取表格行高度，默认开启。设置为false时，则以itemSize为表格行的真实高度，能大大减少虚拟滚动计算量，减少滚动白屏；如果itemSize与表格行的真实高度不一致，可能导致滚动时表格数据错乱、抖动、底部有空白 | boolean | — | true |
 | virtualized | 是否开启虚拟滚动（>=1.0.3版本支持） | boolean | — | true |
 | rowSpanKey | 当使用了el-table的合并行，必须设置rowSpanKey函数并返回每组合并行中共用的key值（>=1.0.13版本支持） | Function(row, index) | — | - |
@@ -260,3 +260,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 增加 disabled prop 禁止虚拟计算（v-show=false时可设置）
 
 * npm 1.0.20 版本发包
+
+
+### 2023-11-14
+
+* `<virtual-column>` 支持嵌套
+
+* npm 1.0.21 版本发包

@@ -19,6 +19,10 @@
         </template>
       </template>
     </template>
+    <!-- 列嵌套 -->
+    <template v-if="isNested">
+      <slot></slot>
+    </template>
     <!-- 列内容 -->
     <template slot-scope="scope">
       <!-- v-tree类型 -->
@@ -94,7 +98,9 @@ export default {
     return {
       isCheckedAll: false, // 全选
       isCheckedImn: false, // 控制半选样式
-      isTree: false
+      isTree: false, // 树结构
+      isNested: false // 是否列嵌套
+
     }
   },
   computed: {
@@ -275,6 +281,7 @@ export default {
     }
   },
   created () {
+    this.isNested = !this.$scopedSlots?.default?.name
     this.virtualScroll.addColumn(this)
 
     const { type } = this.$attrs

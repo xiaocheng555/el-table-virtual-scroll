@@ -1616,9 +1616,12 @@
         // 全选
         isCheckedImn: false,
         // 控制半选样式
-        isTree: false
+        isTree: false,
+        // 树结构
+        isNested: false // 是否列嵌套
       };
     },
+
     computed: {
       getClassName: function getClassName() {
         var classnames = [];
@@ -1801,6 +1804,8 @@
       }
     },
     created: function created() {
+      var _this$$scopedSlots, _this$$scopedSlots$de;
+      this.isNested = !((_this$$scopedSlots = this.$scopedSlots) !== null && _this$$scopedSlots !== void 0 && (_this$$scopedSlots$de = _this$$scopedSlots["default"]) !== null && _this$$scopedSlots$de !== void 0 && _this$$scopedSlots$de.name);
       this.virtualScroll.addColumn(this);
       var type = this.$attrs.type;
       if (type === 'expand') {
@@ -1890,7 +1895,7 @@
           }, [_c("span")]) : scope.column.type === "v-index" ? _c("span", [_vm._v("\n        " + _vm._s(_vm.getIndex(scope)) + "\n      ")]) : [_vm._v("\n        " + _vm._s(scope.row[scope.column.property]) + "\n      ")]]];
         }
       }], null, true)
-    }, "el-table-column", _vm.$attrs, false), _vm.$listeners));
+    }, "el-table-column", _vm.$attrs, false), _vm.$listeners), [_vm._v(" "), _vm.isNested ? [_vm._t("default")] : _vm._e()], 2);
   };
   var __vue_staticRenderFns__ = [];
   __vue_render__._withStripped = true;
@@ -1898,7 +1903,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-7b7cf042_0", {
+    inject("data-v-4a1847d7_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n",
       map: {
         "version": 3,

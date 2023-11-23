@@ -4,7 +4,7 @@ const buildDemoFiles = require('./build/buildDemoFiles.js')
 const isProduction = process.env.NODE_ENV === 'production'
 const demoFiles = buildDemoFiles()
 
-const useLocalLib = process.argv.at(-1) !== 'test' // 使用本地的库
+const useLocalLib = !process.env.npm_config_test // 使用本地的库
 const alias = useLocalLib ? {
   'el-table-virtual-scroll': path.resolve('../src/index')
 } : ''

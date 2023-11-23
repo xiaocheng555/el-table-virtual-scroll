@@ -29,6 +29,7 @@
             vfixed
             prop="name"
             label="姓名"
+            :formatter="formatter"
             min-width="150">
           </VirtualColumn>
           <el-table-column
@@ -100,6 +101,9 @@ export default {
     onHeaderDragend () {
       // 使用自定义列，改变列宽度后，需要手动更新table头部
       this.$refs.virtualScroll.doHeaderLayout()
+    },
+    formatter(row, column, value) {
+      return `姓名：${value}`
     }
   },
   created () {

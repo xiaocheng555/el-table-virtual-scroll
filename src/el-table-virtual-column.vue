@@ -59,6 +59,10 @@
         <span v-else-if="scope.column.type === 'v-index'">
           {{getIndex(scope)}}
         </span>
+        <!-- 有formatter参数的情况 -->
+        <template v-else-if="scope.column.formatter">
+          {{scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)}}
+        </template>
         <template v-else>
           {{scope.row[scope.column.property]}}
         </template>

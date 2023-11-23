@@ -267,3 +267,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * `<virtual-column>` 支持嵌套
 
 * npm 1.0.21 版本发包
+
+
+### 2023-11-23
+
+* `<virtual-column>` 支持 `formatter` 属性
+
+* npm 1.0.22 版本发包

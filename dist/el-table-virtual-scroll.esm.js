@@ -1072,9 +1072,9 @@ var script$1 = {
       var wrapHeight = this.getItemOffsetTop(last) + this.getItemSize(last);
       // 计算当前滚动位置需要撑起的高度
       var offsetTop = this.getItemOffsetTop(this.start);
-
+      var tableWrapEl;
       // 设置dom位置
-      TableBodyClassNames.forEach(function (className) {
+      TableBodyClassNames.forEach(function (className, index) {
         var el = _this4.$el.querySelector(className);
         if (!el) return;
 
@@ -1087,7 +1087,16 @@ var script$1 = {
           el.insertBefore(wrapEl, el.firstChild);
           el.wrapEl = wrapEl;
           el.innerEl = innerEl;
+
+          // 修复 fixed 动态切换时，固定列不显示（scrollTop位置和非固定列滚动位置不一致导致的，需要同步scrollTop的值）
+          if (index > 0 && tableWrapEl) {
+            _this4.$nextTick(function () {
+              el.scrollTop = tableWrapEl.scrollTop;
+            });
+          }
         }
+        index === 0 && (tableWrapEl = el); // 记录非固定列的dom
+
         if (el.wrapEl) {
           // 设置高度
           el.wrapEl.style.height = wrapHeight + 'px';
@@ -1547,7 +1556,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-277bf529_0", {
+  inject("data-v-6e0e63b4_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -1558,8 +1567,8 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-277bf529_1", {
-    source: ".is-expanding[data-v-277bf529] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-277bf529] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-6e0e63b4_1", {
+    source: ".is-expanding[data-v-6e0e63b4] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-6e0e63b4] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -1572,7 +1581,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-277bf529";
+var __vue_scope_id__$1 = "data-v-6e0e63b4";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */

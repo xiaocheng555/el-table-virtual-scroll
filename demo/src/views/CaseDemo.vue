@@ -1,7 +1,7 @@
 <template>
   <div>
     <div>
-      <el-select style="width: 100px;" v-model="fixed">
+      <el-select style="width: 100px;" v-model="fixed" @change="onFixedChange">
         <el-option :value="undefined" label="不固定"></el-option>
         <el-option :value="'left'" label="固定左边"></el-option>
         <el-option :value="'right'" label="固定右边"></el-option>
@@ -80,6 +80,10 @@ export default {
     }
   },
   methods: {
+    onFixedChange () {
+      // 当fixed更改时，固定列位置可能会错乱，需要更新虚拟滚动组件
+      this.$refs.virtualScroll.update()
+    },
     fetchData () {
       this.loading = true
       this.list = []

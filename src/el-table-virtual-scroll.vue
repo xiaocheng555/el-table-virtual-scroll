@@ -450,8 +450,9 @@ export default {
       // 计算当前滚动位置需要撑起的高度
       const offsetTop = this.getItemOffsetTop(this.start)
 
+      let tableWrapEl
       // 设置dom位置
-      TableBodyClassNames.forEach(className => {
+      TableBodyClassNames.forEach((className, index) => {
         const el = this.$el.querySelector(className)
         if (!el) return
 
@@ -464,7 +465,15 @@ export default {
           el.insertBefore(wrapEl, el.firstChild)
           el.wrapEl = wrapEl
           el.innerEl = innerEl
+
+          // 修复 fixed 动态切换时，固定列不显示（scrollTop位置和非固定列滚动位置不一致导致的，需要同步scrollTop的值）
+          if (index > 0 && tableWrapEl) {
+            this.$nextTick(() => {
+              el.scrollTop = tableWrapEl.scrollTop
+            })
+          }
         }
+        index === 0 && (tableWrapEl = el) // 记录非固定列的dom
 
         if (el.wrapEl) {
           // 设置高度

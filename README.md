@@ -274,3 +274,11 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * `<virtual-column>` 支持 `formatter` 属性
 
 * npm 1.0.22 版本发包
+
+
+
+### 2023-11-28
+
+* 修复固定列 fixed 动态切换时，固定列位置可能会错乱
+
+* npm 1.0.23 版本发包

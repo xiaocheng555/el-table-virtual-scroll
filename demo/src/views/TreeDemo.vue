@@ -54,7 +54,7 @@ export default {
             show: false,
             text,
             text2,
-            hasChildren: true
+            hasChildren: Math.random() > 0.02
           })
         }
         this.loading = false

@@ -914,11 +914,14 @@
         if (!this.dynamic) return;
         var rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row');
 
-        // 处理树形表格
-        var isTree = false;
-        if (rows[0] && rows[0].classList.contains('el-table__row--level-0')) {
-          isTree = true;
-          rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0');
+        // 处理树形表格(修复树结构懒加载 如果有hasChildren=false的行 行可视区域高度异常 #45)
+        var isTree = this.elTable.lazy;
+        var noFirstLevelReg = /el-table__row--level-[1-9]\d*/; // 匹配树形表格非一级行
+        if (isTree) {
+          // 筛选出树形表格的一级行，一级行className含有el-table__row--level-0或者不存在层级className
+          rows = Array.from(this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')).filter(function (row) {
+            return !noFirstLevelReg.test(row.className);
+          });
         }
         Array.from(rows).forEach(function (row, index) {
           var item = _this3.renderData[index];
@@ -933,7 +936,7 @@
           // 表格行如果有子孙节点，需要加上子孙节点的高度
           if (isTree) {
             var next = row.nextSibling;
-            while (next && next.tagName === 'TR' && !next.classList.contains('el-table__row--level-0')) {
+            while (next && next.tagName === 'TR' && noFirstLevelReg.test(next.className)) {
               offsetHeight += next.offsetHeight;
               next = next.nextSibling;
             }
@@ -1560,7 +1563,7 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-6e0e63b4_0", {
+    inject("data-v-0dacc8f5_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -1571,8 +1574,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-6e0e63b4_1", {
-      source: ".is-expanding[data-v-6e0e63b4] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-6e0e63b4] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-0dacc8f5_1", {
+      source: ".is-expanding[data-v-0dacc8f5] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-0dacc8f5] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -1585,7 +1588,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-6e0e63b4";
+  var __vue_scope_id__$1 = "data-v-0dacc8f5";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */

@@ -278,11 +278,14 @@ export default {
       if (!this.dynamic) return
       let rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')
 
-      // 处理树形表格
-      let isTree = false
-      if (rows[0] && rows[0].classList.contains('el-table__row--level-0')) {
-        isTree = true
-        rows = this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row.el-table__row--level-0')
+      // 处理树形表格(修复树结构懒加载 如果有hasChildren=false的行 行可视区域高度异常 #45)
+      const isTree = this.elTable.lazy
+      const noFirstLevelReg = /el-table__row--level-[1-9]\d*/ // 匹配树形表格非一级行
+      if (isTree) {
+        // 筛选出树形表格的一级行，一级行className含有el-table__row--level-0或者不存在层级className
+        rows = Array.from(this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')).filter(row => {
+          return !noFirstLevelReg.test(row.className)
+        })
       }
 
       Array.from(rows).forEach((row, index) => {
@@ -298,7 +301,7 @@ export default {
         // 表格行如果有子孙节点，需要加上子孙节点的高度
         if (isTree) {
           let next = row.nextSibling
-          while (next && next.tagName === 'TR' && !next.classList.contains('el-table__row--level-0')) {
+          while (next && next.tagName === 'TR' && noFirstLevelReg.test(next.className)) {
             offsetHeight += next.offsetHeight
             next = next.nextSibling
           }

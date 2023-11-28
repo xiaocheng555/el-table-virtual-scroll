@@ -282,3 +282,11 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复固定列 fixed 动态切换时，固定列位置可能会错乱
 
 * npm 1.0.23 版本发包
+
+
+### 2023-11-28
+
+* 修复树结构懒加载 如果有hasChildren=false的行 行可视区域高度异常
+
+* npm 1.0.24 版本发包
+

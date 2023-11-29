@@ -116,10 +116,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 ### Methods
 | 方法名 | 说明 | 参数 |
 |---------- |-------- |---------- |
-| expand （>=1.0.25版本支持）| 【仅type="tree" 模拟树结构】展开行，其中 expandKeys 为展开行的 keys 数组；expanded 为展开或收起，默认为true；doLoad 为当展开时，是否展开新的行（调用load方法），默认为true | Function(expandKeys, expanded, doLoad)
-| expandPath （>=1.0.25版本支持） | 【仅type="tree" 模拟树结构】展开目标路径，keyPath为路径数组，如['key1', 'key2', 'key3']，该方法会展开 key1 -> key2 -> key3 对应的树节点 | keyPath: Array |
-| expandAll （>=1.0.25版本支持）| 【仅type="tree" 模拟树结构】展开所有行 | - |
-| unexpandAll （>=1.0.25版本支持）| 【仅type="tree" 模拟树结构】收起所有行 | - |
+| expand | 【仅type="tree" 模拟树结构】展开行，其中 expandKeys 为展开行的 keys 数组；expanded 为展开或收起，默认为true；doLoad 为当展开时，是否展开新的行（调用load方法），默认为true（>=1.0.25版本支持）| Function(expandKeys, expanded, doLoad)
+| expandPath | 【仅type="tree" 模拟树结构】展开目标路径，keyPath为路径数组，如['key1', 'key2', 'key3']，该方法会展开 key1 -> key2 -> key3 对应的树节点（>=1.0.25版本支持） | keyPath: Array |
+| expandAll | 【仅type="tree" 模拟树结构】展开所有行（>=1.0.25版本支持） | - |
+| unexpandAll | 【仅type="tree" 模拟树结构】收起所有行（>=1.0.25版本支持） | - |
 
 
 ## el-table-virtual-scroll 组件注意事项

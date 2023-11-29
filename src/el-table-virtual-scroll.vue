@@ -639,8 +639,12 @@ export default {
       this.$emit('current-change', row)
     },
     // 更新数据
-    updateData (data) {
-      this.$emit('update:data', data)
+    updateData (data = []) {
+      this.list = data
+      this.$emit('update:data', this.list)
+    },
+    getData () {
+      return this.list || this.data
     },
     // 执行update方法更新虚拟滚动，且每次nextTick只能执行一次【在数据大于100条开启虚拟滚动时，由于监听了data、virtualized会连续触发两次update方法：第一次update时，（updateSize）计算尺寸里的渲染数据（renderData）与表格行的dom是一一对应，之后会改变渲染数据（renderData）的值；而第二次执行update时，renderData改变了，而表格行dom未改变，导致renderData与dom不一一对应，从而位置计算错误，最终渲染的数据对应不上。因此使用每次nextTick只能执行一次来避免bug发生】
     doUpdate () {

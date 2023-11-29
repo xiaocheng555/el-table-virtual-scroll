@@ -27,7 +27,7 @@
     <template slot-scope="scope">
       <!-- v-tree类型 -->
       <template v-if="scope.column && scope.column.type === 'v-tree'">
-        <span class="el-table__indent" :style="{ paddingLeft: `${(scope.row.$level - 1) * indent}px` }"></span>
+        <span class="el-table__indent" :style="{ paddingLeft: `${(scope.row.$v_level - 1) * indent}px` }"></span>
         <div
           v-if="(scope.row.$v_hasChildren !== false)"
           class="el-table__expand-icon"
@@ -120,6 +120,7 @@ export default {
     }
   },
   methods: {
+    // 获取多选禁用状态
     getDisabled (scope) {
       if (this.selectable) {
         const index = this.getIndex(scope, false)
@@ -131,7 +132,7 @@ export default {
     onCheckAllRows (val) {
       val = this.isCheckedImn ? true : val
       if (this.selectable) {
-        const list = this.virtualScroll.data
+        const list = this.virtualScroll.getData()
         // 筛选出可选的行
         const selectableList = []
         let hasUnselectableChecked = false // 是否不可选择的行已经勾选了
@@ -171,7 +172,7 @@ export default {
     },
     // 同步全选、半选框状态
     syncCheckStatus () {
-      const list = this.virtualScroll.data
+      const list = this.virtualScroll.getData()
       const checkedLen = list.filter(row => row.$v_checked === true).length
 
       // 计算可选行的长度
@@ -197,10 +198,11 @@ export default {
         this.isCheckedImn = true
       }
     },
+    // 单选
     onRadioChange (row) {
       this.virtualScroll.setCurrentRow(row)
     },
-    // 获取索引值
+    // 获取索引值; add1 - 是否加1
     getIndex (scope, add1 = true) {
       const index = this.virtualScroll.start + scope.$index
       if (typeof this.$attrs.index === 'function') {
@@ -208,59 +210,75 @@ export default {
       }
       return index + (add1 ? 1 : 0)
     },
-    // 展开收起事件
-    onTreeNodeExpand (row) {
-      this.$set(row, '$v_expanded', !row.$v_expanded)
-      if (row.$v_expanded) {
-        this.loadChildNodes(row)
+    // 展开收起事件，返回子节点
+    async onTreeNodeExpand (row, expanded = !row.$v_expanded, doLoad = true) {
+      if (row.$v_expanded === expanded) return []
+
+      if (expanded) {
+        // 如果已经加载，则显示隐藏的字节点
+        if (row.$v_loaded) {
+          return this.loadOldChildNodes(row)
+        } else if (doLoad) {
+          return this.loadChildNodes(row)
+        }
       } else {
-        this.hideChildNodes(row)
+        return this.hideChildNodes(row)
       }
     },
     // 加载子节点
     loadChildNodes (row) {
-      // 如果已经加载，则显示隐藏的字节点
-      if (row.$v_loaded) {
-        const list = this.virtualScroll.data
-        const index = list.findIndex(item => item === row)
-        if (index > -1) {
-          this.virtualScroll.updateData([
-            ...list.slice(0, index + 1),
-            ...row.$v_hideNodes,
-            ...list.slice(index + 1)
-          ])
+      return new Promise((resolve, reject) => {
+        // 获取子节点数据并显示
+        this.$set(row, '$v_loading', true)
+        this.load && this.load(row, resolveFn.bind(this))
+
+        function resolveFn (data) {
+          if (!Array.isArray(data)) {
+            this.$set(row, '$v_loading', false)
+            resolve()
+            return
+          }
+
+          this.$set(row, '$v_loading', false)
+          this.$set(row, '$v_expanded', true)
+          this.$set(row, '$v_loaded', true)
+          this.$set(row, '$v_hasChildren', !!data.length)
+          data.forEach(item => {
+            item.$v_level = typeof row.$v_level === 'number' ? row.$v_level + 1 : 2
+          })
+          // 所有子节点插入到当前同级节点下
+          const list = this.virtualScroll.getData()
+          const index = list.findIndex(item => item === row)
+          if (index > -1) {
+            this.virtualScroll.updateData([
+              ...list.slice(0, index + 1),
+              ...data,
+              ...list.slice(index + 1)
+            ])
+          }
+          resolve(data)
         }
-        return
+      })
+    },
+    // 加载已经加载的子节点
+    loadOldChildNodes (row) {
+      this.$set(row, '$v_expanded', true)
+      const list = this.virtualScroll.getData()
+      const index = list.findIndex(item => item === row)
+      if (index > -1) {
+        this.virtualScroll.updateData([
+          ...list.slice(0, index + 1),
+          ...(row.$v_hideNodes || []),
+          ...list.slice(index + 1)
+        ])
+        return row.$v_hideNodes
       }
-
-      // 获取子节点数据并显示
-      this.$set(row, '$v_loading', true)
-      this.load && this.load(row, resolve.bind(this))
-
-      function resolve (data) {
-        if (Array.isArray(!data)) data = []
-
-        this.$set(row, '$v_loading', false)
-        this.$set(row, '$v_loaded', true)
-        this.$set(row, '$v_hasChildren', !!data.length)
-        data.forEach(item => {
-          item.$level = typeof row.$level === 'number' ? row.$level + 1 : 2
-        })
-        // 所有子节点插入到当前同级节点下
-        const list = this.virtualScroll.data
-        const index = list.findIndex(item => item === row)
-        if (index > -1) {
-          this.virtualScroll.updateData([
-            ...list.slice(0, index + 1),
-            ...data,
-            ...list.slice(index + 1)
-          ])
-        }
-      }
+      return []
     },
     // 隐藏子节点
     hideChildNodes (row) {
-      const list = this.virtualScroll.data
+      this.$set(row, '$v_expanded', false)
+      const list = this.virtualScroll.getData()
       const index = list.findIndex(item => item === row)
       if (index === -1) return
 
@@ -268,7 +286,7 @@ export default {
       const hideNodes = []
       for (let i = index + 1; i < list.length; i++) {
         const curRow = list[i]
-        if ((curRow.$level || 1) <= (row.$level || 1)) break
+        if ((curRow.$v_level || 1) <= (row.$v_level || 1)) break
         hideNodes.push(curRow)
       }
       this.$set(row, '$v_hideNodes', hideNodes)
@@ -276,6 +294,80 @@ export default {
       const newList = list.filter(item => !hideNodes.includes(item))
       this.virtualScroll.updateData(newList)
       this.virtualScroll.update()
+      return []
+    },
+    // 展开节点
+    // expandKeys - 展开节点的keys值
+    // expanded - 展开/收起
+    // doLoad - 未加载子节点则执行load函数去加载，已加载则展开
+    expand (expandKeys, expanded = true, doLoad = true) {
+      if (!Array.isArray(expandKeys)) return
+
+      const { getData, keyProp } = this.virtualScroll
+      const data = getData()
+      const plist = []
+      data.forEach((row) => {
+        if (row[keyProp] && expandKeys.includes(row[keyProp])) {
+          plist.push(this.onTreeNodeExpand(row, expanded, doLoad))
+        }
+      })
+      return Promise.all(plist)
+    },
+    // 展开路径
+    expandPath (keyPath) {
+      if (!Array.isArray(keyPath)) return
+
+      // 递归路径，逐层展开节点
+      const expand = async (rows, n) => {
+        if (n === keyPath.length) return keyPath[n - 1]
+        if (!Array.isArray(rows) || !rows.length) return keyPath[n - 1]
+        const targetRow = rows.find(row => row[keyProp] === keyPath[n])
+        if (targetRow) {
+          if (!targetRow.$v_expanded) {
+            rows = await this.onTreeNodeExpand(targetRow, true)
+          }
+          return expand(rows, n + 1)
+        } else {
+          console.warn(`[expandPath] 没有找到 ${keyPath[n]} key值对应的行`)
+          return keyPath[n - 1] // 返回上一个key值
+        }
+      }
+      const { getData, keyProp } = this.virtualScroll
+      const data = getData()
+      return expand(data, 0)
+    },
+    // 展开所有存在的节点
+    expandAll () {
+      // 展开节点（递归）
+      const expandRows = (data) => {
+        if (Array.isArray(data) && data.length) {
+          data.forEach((row) => {
+            this.onTreeNodeExpand(row, true, false)
+            expandRows(row.$v_hideNodes)
+          })
+        }
+      }
+
+      const { getData } = this.virtualScroll
+      const data = getData()
+      expandRows(data)
+    },
+    // 收起所有节点
+    unexpandAll () {
+      const { getData } = this.virtualScroll
+      const data = getData()
+      const levelMap = []
+      data.forEach(row => {
+        const level = row.$v_level || 1
+        !levelMap[level] && (levelMap[level] = [])
+        levelMap[level].push(row)
+      })
+      for (let i = levelMap.length - 1; i >= 0; i--) {
+        if (!levelMap[i]) continue
+        levelMap[i].forEach(row => {
+          this.onTreeNodeExpand(row, false)
+        })
+      }
     }
   },
   beforeCreate () {

@@ -142,6 +142,10 @@ export default {
           path: '/VTreeDemo'
         },
         {
+          title: '模拟树结构懒加载2',
+          path: '/VTreeDemo2'
+        },
+        {
           title: '合并行',
           path: '/Rowspan'
         },

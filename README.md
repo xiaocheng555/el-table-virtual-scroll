@@ -70,7 +70,7 @@ export default {
 ### Methods
 | 方法名 | 说明 | 参数 |
 |---------- |-------- |---------- |
-| scrollTo | 滚动到第几行；index - 行数索引值；offset - 偏移位置（>=1.0.25版本支持） | (index, offset) |
+| scrollTo | 滚动到第几行；index - 行数索引值；offset - 偏移位置（>=1.0.25版本支持） | (index: number, offset: number) |
 | update | 更新，会重新计算实际渲染数据和位置 | - |
 | reset | 重置 | - |
 | clearSelection | 用于多选 `<virtual-column type="selection">`，清空用户的选择 | - |
@@ -111,6 +111,15 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 | indent | 展示树形数据时，树节点的缩进，type 为 tree 时生效 | Number | — | 16 |
 | load | 加载子节点数据的函数，type 为 tree 时生效 | Function(row, resolve) | — | - |
 | vfixed | 固定列（>=1.0.16版本支持）。使用 position: sticky; 来实现固定列，不会生成额外table，滚动更丝滑；使用时，需要设置table的headerCellStyle、cellStyle（注意组件必须按固定列顺序排列最左或最右），参考[demo](https://xiaocheng555.github.io/el-table-virtual-scroll/#/VFixedDemo) | String/Boolean | left/right/true | - |
+
+
+### Methods
+| 方法名 | 说明 | 参数 |
+|---------- |-------- |---------- |
+| expand （>=1.0.25版本支持）| 【仅type="tree" 模拟树结构】展开行，其中 expandKeys 为展开行的 keys 数组；expanded 为展开或收起，默认为true；doLoad 为当展开时，是否展开新的行（调用load方法），默认为true | Function(expandKeys, expanded, doLoad)
+| expandPath （>=1.0.25版本支持） | 【仅type="tree" 模拟树结构】展开目标路径，keyPath为路径数组，如['key1', 'key2', 'key3']，该方法会展开 key1 -> key2 -> key3 对应的树节点 | keyPath: Array |
+| expandAll （>=1.0.25版本支持）| 【仅type="tree" 模拟树结构】展开所有行 | - |
+| unexpandAll （>=1.0.25版本支持）| 【仅type="tree" 模拟树结构】收起所有行 | - |
 
 
 ## el-table-virtual-scroll 组件注意事项
@@ -290,4 +299,15 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复树结构懒加载 如果有hasChildren=false的行 行可视区域高度异常
 
 * npm 1.0.24 版本发包
+
+
+### 2023-11-29
+
+* 模拟树结构表格增加一系列展开方法和demo
+
+* `<virtual-column>` 列嵌套修改
+
+* `scrollTo` 方法 支持传入偏移量
+
+* npm 1.0.25 版本发包
 

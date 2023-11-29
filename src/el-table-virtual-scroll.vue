@@ -529,20 +529,21 @@ export default {
 
     // 【外部调用】滚动到第几行
     // （不太精确：滚动到第n行时，如果周围的表格行计算出真实高度后会更新高度，导致内容坍塌或撑起）
-    scrollTo (index, stop = false) {
+    // offsetY - 偏移量
+    scrollTo (index, offsetY = 0, stop = false) {
       const item = this.data[index]
       if (item && this.scroller) {
         this.updateSizes()
         this.calcRenderData()
 
         this.$nextTick(() => {
-          const offsetTop = this.getItemOffsetTop(index)
+          const offsetTop = this.getItemOffsetTop(index) - offsetY
           scrollToY(this.scroller, offsetTop)
 
           // 调用两次scrollTo，第一次滚动时，如果表格行初次渲染高度发生变化时，会导致滚动位置有偏差，此时需要第二次执行滚动，确保滚动位置无误
           if (!stop) {
             setTimeout(() => {
-              this.scrollTo(index, true)
+              this.scrollTo(index, offsetY, true)
             }, 50)
           }
         })
@@ -551,7 +552,7 @@ export default {
     // 【外部调用】重置
     reset () {
       this.sizes = {}
-      this.scrollTo(0, false)
+      this.scrollTo(0, 0, false)
     },
 
     // 添加virtual-column实例

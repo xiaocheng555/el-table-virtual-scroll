@@ -285,7 +285,7 @@ export default {
     }
   },
   created () {
-    this.isNested = !this.$scopedSlots?.default?.name
+    this.isNested = !!this.$slots.default // 是否列嵌套
     this.virtualScroll.addColumn(this)
 
     const { type } = this.$attrs

@@ -70,7 +70,7 @@ export default {
 ### Methods
 | 方法名 | 说明 | 参数 |
 |---------- |-------- |---------- |
-| scrollTo | 滚动到第几行 | index |
+| scrollTo | 滚动到第几行；index - 行数索引值；offset - 偏移位置（>=1.0.25版本支持） | (index, offset) |
 | update | 更新，会重新计算实际渲染数据和位置 | - |
 | reset | 重置 | - |
 | clearSelection | 用于多选 `<virtual-column type="selection">`，清空用户的选择 | - |
@@ -111,6 +111,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 | indent | 展示树形数据时，树节点的缩进，type 为 tree 时生效 | Number | — | 16 |
 | load | 加载子节点数据的函数，type 为 tree 时生效 | Function(row, resolve) | — | - |
 | vfixed | 固定列（>=1.0.16版本支持）。使用 position: sticky; 来实现固定列，不会生成额外table，滚动更丝滑；使用时，需要设置table的headerCellStyle、cellStyle（注意组件必须按固定列顺序排列最左或最右），参考[demo](https://xiaocheng555.github.io/el-table-virtual-scroll/#/VFixedDemo) | String/Boolean | left/right/true | - |
+
 
 ## el-table-virtual-scroll 组件注意事项
 

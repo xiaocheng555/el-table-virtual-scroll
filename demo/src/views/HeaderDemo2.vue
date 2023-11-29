@@ -11,17 +11,17 @@
         height="600"
         row-key="id"
         style="width: 100%">
-        <el-table-column
+        <VirtualColumn
           prop="date"
           label="日期"
           width="150">
-        </el-table-column>
-        <el-table-column label="配送信息">
-          <el-table-column
+        </VirtualColumn>
+        <VirtualColumn label="配送信息">
+          <VirtualColumn
             prop="name"
             label="姓名"
             width="120">
-          </el-table-column>
+          </VirtualColumn>
           <VirtualColumn label="地址">
             <VirtualColumn
               show-overflow-tooltip
@@ -33,43 +33,49 @@
               label="text"
               min-width="120">
             </VirtualColumn>
-            <el-table-column
+            <VirtualColumn
               show-overflow-tooltip
               :formatter="formatter"
               prop="text"
               label="text"
               min-width="120">
-            </el-table-column>
-            <el-table-column
+            </VirtualColumn>
+            <VirtualColumn
               prop="city"
               label="市区"
               width="120">
-            </el-table-column>
-            <el-table-column
+            </VirtualColumn>
+            <VirtualColumn
               prop="address"
               label="地址"
               width="300">
-            </el-table-column>
-            <el-table-column
+            </VirtualColumn>
+            <VirtualColumn
               class-name="yz"
               align="right"
               header-align="center"
               prop="zip"
               label="邮编"
               width="120">
-            </el-table-column>
+            </VirtualColumn>
             <VirtualColumn
               label="详情"
               align="right"
               header-align="center"
               class-name="detail"
               label-class-name="label2">
-              <template slot-scope="{ row }">
+              <template v-slot="{ row }">
                 <div>{{ row.text2 }}</div>
               </template>
             </VirtualColumn>
           </VirtualColumn>
-        </el-table-column>
+          <VirtualColumn label="test">
+            <template #default="{ row }">
+              <!-- 非空判断后就能正常显示 -->
+              {{ row.text }}
+            </template>
+          </VirtualColumn>
+        </VirtualColumn>
       </el-table>
     </virtual-scroll>
   </div>
@@ -86,7 +92,7 @@ export default {
   },
   data () {
     return {
-      list: mockData(0, 2000),
+      list: [],
       tableData: []
     }
   },
@@ -96,6 +102,9 @@ export default {
     }
   },
   created () {
+    setTimeout(() => {
+      this.list = mockData(0, 2000)
+    }, 1000)
   }
 }
 </script>

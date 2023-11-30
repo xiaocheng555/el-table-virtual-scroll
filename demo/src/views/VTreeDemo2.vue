@@ -11,7 +11,7 @@
       ref="virtualScroll"
       class="visual-table"
       :data.sync="treeData"
-      :item-size="40"
+      :item-size="48"
       key-prop="id"
       @change="(virtualList) => (tableData = virtualList)">
       <el-table
@@ -151,16 +151,11 @@ export default {
 }
 </script>
 
-<style>
-.cell {
+<style lang="less" scoped>
+/deep/ .cell {
   display: flex;
   align-items: center;
   overflow: unset !important;
-}
-
-.el-table .el-table__cell {
-  position: unset;
-  padding: 6px 0 !important;
 }
 
 .visual-table {

@@ -7,6 +7,8 @@
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">
       <el-table
+        :key="tablekey"
+        height="500"
         :data="tableData"
         tooltip-effect="dark"
         style="width: 100%"
@@ -87,6 +89,7 @@ export default {
         texts: [],
         counts: []
       },
+      tablekey: 0,
       sortVal: {} // 排序的值，只有一个
     }
   },
@@ -94,6 +97,10 @@ export default {
     onSortChange ({ prop, order }) {
       this.sortVal = { prop, order }
       this.doFilter()
+      this.tablekey++
+      this.$nextTick(() => {
+        this.$refs.virtualScroll.initData()
+      })
     },
     onFilterChange (filters) {
       Object.assign(this.filterVal, filters)

@@ -314,4 +314,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 ### 2023-11-30
 
-* 兼容 `highlight-selection-row`
+* 兼容行高亮（单选）
+
+* npm 1.0.26 版本发包
+

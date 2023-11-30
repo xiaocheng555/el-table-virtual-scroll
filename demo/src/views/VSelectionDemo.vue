@@ -13,10 +13,15 @@
         height="500"
         row-key="id"
         tooltip-effect="dark"
-        style="width: 100%">
+        style="width: 100%"
+        :row-class-name="getRowClassName">
         <!-- 多选 -->
         <virtual-column width="60" type="selection" :selectable="getSelectable"></virtual-column>
-        <!-- <virtual-column width="60" type="selection"></virtual-column> -->
+        <el-table-column
+          label="id"
+          prop="id"
+          width="120">
+        </el-table-column>
         <el-table-column
           label="日期"
           width="120">
@@ -38,6 +43,7 @@
       <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
       <el-button @click="toggleSelection()">取消选择</el-button>
       <el-button @click="show = !show">show</el-button>
+      <span style="margin-left: 10px;">选中高亮: <el-switch v-model="highlight"></el-switch></span>
     </div>
   </div>
 </template>
@@ -57,12 +63,13 @@ export default {
       list: mockData(0, 2000),
       tableData: [],
       multipleSelection: [],
-      show: true
+      show: true,
+      highlight: false
     }
   },
   methods: {
     getSelectable (row, idx) {
-      return idx > 5
+      return idx > 2
     },
     toggleSelection (rows) {
       if (rows) {
@@ -76,6 +83,13 @@ export default {
     handleSelectionChange (val) {
       console.log('multipleSelection', val)
       this.multipleSelection = val
+    },
+    getRowClassName ({row}) {
+      if (!this.highlight) return
+      // 选中行高亮
+      if (row.$v_checked) {
+        return 'selection-row'
+      }
     }
   },
   created () {

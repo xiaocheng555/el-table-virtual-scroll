@@ -1,56 +1,22 @@
 <template>
   <div>
-    <virtual-scroll
-      ref="virtualScroll"
-      :data="mList"
-      :item-size="71"
-      key-prop="id"
+    <virtual-scroll ref="virtualScroll" :data="mList" :item-size="71" key-prop="id"
       @change="(virtualList) => tableData = virtualList">
-      <el-table
-        :key="tablekey"
-        height="500"
-        :data="tableData"
-        tooltip-effect="dark"
-        style="width: 100%"
-        row-key="id"
-        @sort-change="onSortChange"
+      <el-table :data="tableData" tooltip-effect="dark" style="width: 100%" row-key="id" @sort-change="onSortChange"
         @filter-change="onFilterChange">
-        <el-table-column
-          label="id"
-          prop="id"
-          width="100"
-          sortable="count">
+        <el-table-column label="id" prop="id" width="100" sortable="count">
         </el-table-column>
-        <el-table-column
-          label="随机数"
-          prop="count"
-          width="300"
-          sortable="count"
-          column-key="counts"
-          :filter-multiple="false"
-          :filters="filters2">
+        <el-table-column label="随机数" prop="count" width="300" sortable="count" column-key="counts"
+          :filter-multiple="false" :filters="filters2">
         </el-table-column>
-        <el-table-column
-          label="content"
-          prop="text"
-          width="500"
-          column-key="texts"
-          :filters="filters">
+        <el-table-column label="content" prop="text" width="500" column-key="texts" :filters="filters">
         </el-table-column>
-        <el-table-column
-          label="日期"
-          width="120">
+        <el-table-column label="日期" width="120">
           <template slot-scope="scope">{{ scope.row.date }}</template>
         </el-table-column>
-        <el-table-column
-          prop="name"
-          label="姓名"
-          width="120">
+        <el-table-column prop="name" label="姓名" width="120">
         </el-table-column>
-        <el-table-column
-          prop="address"
-          label="地址"
-          show-overflow-tooltip>
+        <el-table-column prop="address" label="地址" show-overflow-tooltip>
         </el-table-column>
       </el-table>
     </virtual-scroll>
@@ -66,7 +32,7 @@ export default {
   components: {
     VirtualScroll
   },
-  data () {
+  data() {
     const list = mockData(0, 2000)
     return {
       list: list,
@@ -89,24 +55,19 @@ export default {
         texts: [],
         counts: []
       },
-      tablekey: 0,
       sortVal: {} // 排序的值，只有一个
     }
   },
   methods: {
-    onSortChange ({ prop, order }) {
+    onSortChange({ prop, order }) {
       this.sortVal = { prop, order }
       this.doFilter()
-      this.tablekey++
-      this.$nextTick(() => {
-        this.$refs.virtualScroll.initData()
-      })
     },
-    onFilterChange (filters) {
+    onFilterChange(filters) {
       Object.assign(this.filterVal, filters)
       this.doFilter()
     },
-    doFilter () {
+    doFilter() {
       // 过滤
       const { texts, counts } = this.filterVal
       this.mList = this.originList.filter(item => {
@@ -127,12 +88,10 @@ export default {
       }
     }
   },
-  created () {
+  created() {
     this.originList = [...this.mList]
   }
 }
 </script>
 
-<style lang='less' scoped>
-
-</style>
+<style lang='less' scoped></style>

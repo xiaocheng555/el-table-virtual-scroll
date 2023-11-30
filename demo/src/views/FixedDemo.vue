@@ -1,6 +1,8 @@
 <template>
   <div>
+    <el-button @click="show = !show">切换显示</el-button>
     <virtual-scroll
+      v-show="show"
       ref="virtualScroll"
       :data="list"
       :item-size="62"
@@ -67,6 +69,7 @@ export default {
   },
   data () {
     return {
+      show: true,
       list: mockData(0, 2000),
       tableData: []
     }

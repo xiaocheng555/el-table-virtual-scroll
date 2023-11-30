@@ -123,6 +123,11 @@ export default {
     disabled: {
       type: Boolean,
       default: false
+    },
+    // 废弃updatePosition犯法
+    discardUpdateAgain: {
+      type: Boolean,
+      default: true
     }
   },
   provide () {
@@ -189,10 +194,6 @@ export default {
 
       this.scroller = this.getScroller()
       this.observeElTable()
-      // 初次执行
-      setTimeout(() => {
-        this.handleScroll()
-      }, 100)
 
       // 监听事件
       this.onScroll = !this.throttleTime ? this.handleScroll : throttle(this.handleScroll, this.throttleTime)
@@ -200,6 +201,11 @@ export default {
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
       this.hackRowHighlight()
+
+      // 初次执行
+      setTimeout(() => {
+        this.onScroll()
+      }, 100)
     },
 
     // 获取滚动元素
@@ -240,7 +246,7 @@ export default {
 
       // 监听表格滚动高度变化（切换v-show时更新）
       const unWatch2 = this.$watch(() => this.elTable.layout.bodyHeight, (val) => {
-        val > 0 && this.update()
+        val > 0 && this.onScroll()
       })
       this.unWatchs = [unWatch1, unWatch2]
     },
@@ -498,6 +504,8 @@ export default {
     // 空闲时更新位置（触发时间：滚动停止后等待10ms执行）
     // 滚动停止之后，偶尔表格的行发生高度变更，那么当前计算的渲染数据是不正确的；那么需要手动触发最后一次handleScroll来重新计算
     updatePosition () {
+      if (this.discardUpdateAgain) return // 该方法没啥作用了，废弃
+
       this.timer && clearTimeout(this.timer)
       this.timer = setTimeout(() => {
         this.timer && clearTimeout(this.timer)
@@ -660,7 +668,7 @@ export default {
 
       // 启动虚拟滚动的瞬间，需要暂时隐藏el-table__append-wrapper里的内容，不然会导致滚动位置一直到append的内容处
       this.isHideAppend = true
-      this.update()
+      this.onScroll()
       this.hasDoUpdate = true
       this.$nextTick(() => {
         this.hasDoUpdate = false

@@ -12,6 +12,7 @@
     "publish": "npm run build && npm run deploy"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.12.1",
     "core-js": "^3.8.3",
     "el-table-infinite-scroll": "^2.0.0",
     "el-table-virtual-scroll": "^1.0.25",
@@ -62,6 +63,7 @@
   "browserslist": [
     "> 1%",
     "last 2 versions",
+    "not ie < 11",
     "not dead"
   ]
 }

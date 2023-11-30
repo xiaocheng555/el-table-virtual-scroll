@@ -112,6 +112,10 @@ export default {
           path: '/HeaderDemo'
         },
         {
+          title: '行高亮-单选',
+          path: '/Highlight'
+        },
+        {
           title: '树结构',
           path: '/TreeDemoDef'
         },

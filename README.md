@@ -88,7 +88,7 @@ export default {
 
 ## virtual-column 组件
 
-使用 `<el-table-virtual-scroll>` 做表格虚拟滚动，是不支持 `ElementUI` 表格的原有的索引、单选、多选、扩展行等功能，需要使用 `<virtual-column>` 来兼容。`<virtual-column>` 组件内封装了 `<el-table-column>`，支持传入 `<el-table-column>` 组件的props属性。
+使用 `<el-table-virtual-scroll>` 做表格虚拟滚动，是不支持 `ElementUI` 表格的原有的索引、多选、扩展行等功能，需要使用 `<virtual-column>` 来兼容。`<virtual-column>` 组件内封装了 `<el-table-column>`，支持传入 `<el-table-column>` 组件的props属性。
 其中 `<virtual-column>` 会在表格row数据上扩展 `$v_checked`、`$v_expanded` ... 等属性，请悉知。 
 
 更多demo & 源码查看：https://xiaocheng555.github.io/el-table-virtual-scroll/
@@ -311,3 +311,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * npm 1.0.25 版本发包
 
+
+### 2023-11-30
+
+* 兼容 `highlight-selection-row`

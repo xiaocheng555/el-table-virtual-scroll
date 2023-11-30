@@ -167,6 +167,7 @@ export default {
   methods: {
     // 初始化数据
     initData () {
+      this.destory() // 销毁，防止多次调用
       // 可视范围内显示数据
       this.renderData = []
       // 页面可视范围顶端、底部
@@ -177,6 +178,8 @@ export default {
       this.end = undefined
       // 是否是表格内部滚动
       this.isInnerScroll = false
+      // 高亮的行
+      this.highlightRow = null
 
       // 验证ElTable组件
       this.elTable = this.$children[0]
@@ -196,6 +199,7 @@ export default {
       this.scroller.addEventListener('scroll', this.onScroll)
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
+      this.hackRowHighlight()
     },
 
     // 获取滚动元素
@@ -261,6 +265,8 @@ export default {
       this.$emit('change', this.renderData, this.start, this.end)
       // 设置表格行展开
       this.setRowsExpanded()
+      // 同步表格行高亮
+      this.syncRowsHighlight()
     },
 
     // 移除多个hover-row
@@ -603,9 +609,10 @@ export default {
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
       if (!this.isExpandType) return
 
-      this.elTable.$on('expand-change', (row, expandedRows) => {
+      this.onExpandChange = (row, expandedRows) => {
         this.$set(row, '$v_expanded', expandedRows.includes(row))
-      })
+      }
+      this.elTable.$on('expand-change', this.onExpandChange)
     },
     // 展开行：设置表格行展开
     setRowsExpanded () {
@@ -733,6 +740,46 @@ export default {
       if (!this.elTable) return
       this.fixedMap = null
       this.elTable.$refs.tableHeader.$forceUpdate()
+    },
+    // 兼容行高亮
+    hackRowHighlight () {
+      // 重写setCurrentRow方法
+      if (this.elTable.__overviewSetCurrentRow) {
+        this.elTable.__overviewSetCurrentRow = true
+        const setCurrentRow = this.elTable.setCurrentRow.bind(this.elTable)
+        this.elTable.setCurrentRow = (row) => {
+          this.elTable.store.states.currentRow = this.highlightRow // 同步表格行高亮的值
+          if (this.highlightRow !== row) this.highlightRow = row // 同步highlightRow的值
+          setCurrentRow(row) // 执行原方法
+        }
+      }
+
+      // 监听高亮的事件
+      this.onCurrentChange = (row) => {
+        this.highlightRow = row
+      }
+      this.elTable.$on('current-change', this.onCurrentChange)
+    },
+    // 同步表格行高亮的值
+    syncRowsHighlight () {
+      if (!this.elTable.highlightCurrentRow) return
+      // 必须使用nextTick，不然值同步不上
+      this.$nextTick(() => {
+        this.elTable.store.states.currentRow = this.highlightRow
+      })
+    },
+    // 销毁
+    destory () {
+      this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
+      this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
+
+      if (this.scroller) {
+        this.scroller.removeEventListener('scroll', this.onScroll)
+        window.removeEventListener('resize', this.onScroll)
+      }
+      if (this.unWatchs) {
+        this.unWatchs.forEach(unWatch => unWatch())
+      }
     }
   },
   watch: {
@@ -764,13 +811,7 @@ export default {
     })
   },
   beforeDestroy () {
-    if (this.scroller) {
-      this.scroller.removeEventListener('scroll', this.onScroll)
-      window.removeEventListener('resize', this.onScroll)
-    }
-    if (this.unWatchs) {
-      this.unWatchs.forEach(unWatch => unWatch())
-    }
+    this.destory()
   }
 }
 </script>

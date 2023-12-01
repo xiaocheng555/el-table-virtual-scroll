@@ -751,7 +751,7 @@ export default {
     },
     // 兼容行高亮
     hackRowHighlight () {
-      // 重写setCurrentRow方法
+      // 兼容el-table的setCurrentRow：重写setCurrentRow方法
       if (this.elTable.__overviewSetCurrentRow) {
         this.elTable.__overviewSetCurrentRow = true
         const setCurrentRow = this.elTable.setCurrentRow.bind(this.elTable)
@@ -761,6 +761,14 @@ export default {
           setCurrentRow(row) // 执行原方法
         }
       }
+      // 兼容el-table的currentRowKey属性
+      const unWatch = this.$watch(() => this.elTable.currentRowKey, (val) => {
+        if (this.elTable.rowKey) {
+          const targetRow = this.data.find(row => val === row[this.elTable.rowKey])
+          this.highlightRow = targetRow
+        }
+      }, { immediate: true })
+      this.unWatchs.push(unWatch)
 
       // 监听高亮的事件
       this.onCurrentChange = (row) => {

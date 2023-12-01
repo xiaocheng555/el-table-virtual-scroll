@@ -5,19 +5,12 @@
       <el-button @click="setCheckedRow(list[1])">选中第二行</el-button>
       <el-button @click="setCheckedRow()">取消选择</el-button>
     </div>
-    <virtual-scroll
-      ref="virtualScroll"
-      :data="list"
-      :item-size="62"
-      key-prop="id"
-      @change="(virtualList) => tableData = virtualList">
       <el-table
         ref="tableRef"
-        :data="tableData"
+        :data="list"
         height="500"
-        row-key="id"
-        :currentRowKey="currentRowKey"
         tooltip-effect="dark"
+        :currentRowKey="currentRowKey"
         highlight-current-row
         style="width: 100%"
         @current-change="handleCurrentChange">
@@ -30,24 +23,21 @@
         <el-table-column prop="address" label="地址" show-overflow-tooltip>
         </el-table-column>
       </el-table>
-    </virtual-scroll>
   </div>
 </template>
 
 <script>
-import VirtualScroll from 'el-table-virtual-scroll'
 import { mockData } from '@/utils'
 
 export default {
   components: {
-    VirtualScroll
   },
   data() {
     return {
-      currentRowKey: 5,
-      list: mockData(0, 2000),
+      list: mockData(0, 200),
       tableData: [],
-      checkedRow: null
+      checkedRow: null,
+      currentRowKey: 50
     }
   },
   methods: {

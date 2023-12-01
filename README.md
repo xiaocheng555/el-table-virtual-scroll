@@ -318,3 +318,8 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * npm 1.0.26 版本发包
 
+
+### 2023-11-31
+
+* 支持 `currentRowKey`
+

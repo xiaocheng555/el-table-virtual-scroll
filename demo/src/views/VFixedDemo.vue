@@ -6,6 +6,8 @@
       :data="list"
       :item-size="56"
       key-prop="id"
+      :selection-sort="null"
+      @selection-change="updateSelection"
       @change="(virtualList) => tableData = virtualList">
       <template slot-scope="{ headerCellFixedStyle, cellFixedStyle }">
         <el-table
@@ -18,6 +20,11 @@
           height="600px"
           style="width: 100%"
           @header-dragend="onHeaderDragend">
+          <VirtualColumn
+            vfixed
+            type="selection"
+            min-width="60">
+          </VirtualColumn>
           <VirtualColumn
             v-if="show"
             vfixed
@@ -68,10 +75,11 @@
           <VirtualColumn
             vfixed="right"
             label="操作"
-            width="100">
+            width="120">
             <template slot-scope="scope">
               <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
               <el-button type="text" size="small">编辑</el-button>
+              <el-button class="danger" type="text" @click="handleDelete(scope.row)" size="small">删除</el-button>
             </template>
           </VirtualColumn>
         </el-table>
@@ -94,7 +102,8 @@ export default {
     return {
       list: mockData(0, 2000),
       tableData: [],
-      show: true
+      show: true,
+      selection: [],
     }
   },
   methods: {
@@ -104,6 +113,14 @@ export default {
     },
     formatter(row, column, value) {
       return `姓名：${value}`
+    },
+    updateSelection(selection) {
+      console.log('selection', selection)
+      this.selection = selection
+    },
+    handleDelete(row) {
+      const indexToDelete = this.list.findIndex(data => data === row)
+      this.list.splice(indexToDelete, 1)
     }
   },
   created () {
@@ -113,5 +130,7 @@ export default {
 </script>
 
 <style lang='less' scoped>
-
+  .danger {
+    color: red;
+  }
 </style>

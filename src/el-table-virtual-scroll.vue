@@ -128,6 +128,11 @@ export default {
     discardUpdateAgain: {
       type: Boolean,
       default: true
+    },
+    // 支持自定义选中数据的排序规则，传入null则可保留列表的排序规则，默认是按照选中顺序排序
+    selectionSort: {
+      type: [Function, null],
+      default: (a, b) => a.$v_checkedOrder - b.$v_checkedOrder
     }
   },
   provide () {
@@ -145,7 +150,8 @@ export default {
       columnVms: [], // virtual-column 组件实例
       isHideAppend: false,
       scrollPosition: '',
-      hasFixedRight: false
+      hasFixedRight: false,
+      checkedRows: [] // 最近选中的数据，用于在原始数据变化时进行比较
     }
   },
   computed: {
@@ -596,10 +602,27 @@ export default {
       this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
       emit && this.emitSelectionChange(val ? [] : [row])
     },
+    checkSelectionIsChange (oldSelection, newSelection) {
+      // 数量不一致说明选中项变化了
+      if (oldSelection.length !== newSelection.length) return true
+      // 生成旧对象唯一id的obj，方便查询
+      const oldKeyMapping = oldSelection.reduce((total, dataItem) => {
+        total[dataItem[this.keyProp]] = 1
+        return total
+      }, {})
+      // 新选中项只要有一项id在id对象上查询不到，就是选中项变化了
+      return newSelection.some(dataItem => !oldKeyMapping[dataItem[this.keyProp]])
+    },
     // 多选：兼容表格selection-change事件
-    emitSelectionChange (removedRows) {
-      const selection = this.data.filter(row => row.$v_checked).sort((a, b) => a.$v_checkedOrder - b.$v_checkedOrder)
-      this.$emit('selection-change', selection, removedRows)
+    emitSelectionChange (removedRows, isCheckChange) {
+      const selection = this.data.filter(row => row.$v_checked)
+      if (this.selectionSort) selection.sort(this.selectionSort)
+      // 出于性能考虑，普通单选、全选事件不需要判断选中项是否变化，直接触发change事件；data变化时，先判断选中项是否变化再触发change事件，避免在删除没有选中的数据时触发change
+      if (!isCheckChange || this.checkSelectionIsChange(this.checkedRows, selection)) {
+        // 缓存最后选中的数据，在data变化后用于对比
+        this.checkedRows = selection
+        this.$emit('selection-change', selection, removedRows)
+      }
     },
     // 多选：兼容表格clearSelection方法
     clearSelection () {
@@ -776,10 +799,22 @@ export default {
         this.elTable.store.states.currentRow = this.highlightRow
       })
     },
+    // 获取被删除的选中项
+    getRemovedRows () {
+      const newDataMapping = this.data.reduce((total, dataItem) => {
+        total[dataItem[this.keyProp]] = 1
+        return total
+      }, {})
+      return this.checkedRows.reduce((total, checkedRow) => {
+        if (!newDataMapping[checkedRow[this.keyProp]]) total.push(checkedRow)
+        return total
+      }, [])
+    },
     // 销毁
     destory () {
       this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
       this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
+      this.checkedRows = null
 
       if (this.scroller) {
         this.scroller.removeEventListener('scroll', this.onScroll)
@@ -792,6 +827,9 @@ export default {
   },
   watch: {
     data () {
+      const removedRows = this.getRemovedRows()
+      // 数据源变化时，判断选中项是否变化
+      this.emitSelectionChange(removedRows, true)
       if (!this.virtualized) {
         this.renderAllData()
       } else {

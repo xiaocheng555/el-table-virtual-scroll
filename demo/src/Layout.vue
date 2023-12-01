@@ -72,6 +72,34 @@ export default {
           title: '案例'
         },
         {
+          title: '基础表格',
+          path: '/BasicDemo'
+        },
+        {
+          title: '固定行高',
+          path: '/UndynamicDemo'
+        },
+        {
+          title: '多表头',
+          path: '/HeaderDemo'
+        },
+        {
+          title: '固定列',
+          path: '/FixedDemo'
+        },
+        {
+          title: '固定列（自定义）',
+          path: '/VFixedDemo'
+        },
+        {
+          title: '行高亮-单选',
+          path: '/Highlight'
+        },
+        {
+          title: '动态开启虚拟滚动',
+          path: '/virtualizedDemo'
+        },
+        {
           title: '表格不固定高度',
           path: '/HeightDemo'
         },
@@ -88,34 +116,6 @@ export default {
           path: '/LoadmoreDemo2'
         },
         {
-          title: '动态开启虚拟滚动',
-          path: '/virtualizedDemo'
-        },
-        {
-          title: '固定行高',
-          path: '/UndynamicDemo'
-        },
-        {
-          title: '基础表格',
-          path: '/BasicDemo'
-        },
-        {
-          title: '固定列',
-          path: '/FixedDemo'
-        },
-        {
-          title: '固定列（自定义）',
-          path: '/VFixedDemo'
-        },
-        {
-          title: '多表头',
-          path: '/HeaderDemo'
-        },
-        {
-          title: '行高亮-单选',
-          path: '/Highlight'
-        },
-        {
           title: '树结构',
           path: '/TreeDemoDef'
         },
@@ -126,7 +126,7 @@ export default {
 
         '兼容',
         {
-          title: '单选',
+          title: '单选-radio',
           path: '/VRadioDemo'
         },
         {

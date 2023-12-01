@@ -124,7 +124,7 @@ export default {
       type: Boolean,
       default: false
     },
-    // 废弃updatePosition犯法
+    // 废弃updatePosition方法
     discardUpdateAgain: {
       type: Boolean,
       default: true
@@ -235,20 +235,6 @@ export default {
       } else {
         return this.$el.getBoundingClientRect().top - (this.scroller === window ? 0 : this.scroller.getBoundingClientRect().top) + getScrollTop(this.scroller)
       }
-    },
-
-    // 监听el-table
-    observeElTable () {
-      // 监听滚动位置
-      const unWatch1 = this.$watch(() => this.elTable.scrollPosition, (val) => {
-        this.scrollPosition = val
-      }, { immediate: true })
-
-      // 监听表格滚动高度变化（切换v-show时更新）
-      const unWatch2 = this.$watch(() => this.elTable.layout.bodyHeight, (val) => {
-        val > 0 && this.onScroll()
-      })
-      this.unWatchs = [unWatch1, unWatch2]
     },
 
     // 处理滚动事件
@@ -501,7 +487,36 @@ export default {
       })
     },
 
-    // 空闲时更新位置（触发时间：滚动停止后等待10ms执行）
+    // 监听el-table
+    observeElTable () {
+      // 监听滚动位置
+      const unWatch1 = this.$watch(() => this.elTable.scrollPosition, (val) => {
+        this.scrollPosition = val
+      }, { immediate: true })
+
+      // 监听表格滚动高度变化（切换v-show时更新）
+      const unWatch2 = this.$watch(() => this.elTable.layout.bodyHeight, (val) => {
+        val > 0 && this.onScroll()
+      })
+      this.unWatchs = [unWatch1, unWatch2]
+    },
+
+    // 执行update方法更新虚拟滚动，且每次nextTick只能执行一次【在数据大于100条开启虚拟滚动时，由于监听了data、virtualized会连续触发两次update方法：第一次update时，（updateSize）计算尺寸里的渲染数据（renderData）与表格行的dom是一一对应，之后会改变渲染数据（renderData）的值；而第二次执行update时，renderData改变了，而表格行dom未改变，导致renderData与dom不一一对应，从而位置计算错误，最终渲染的数据对应不上。因此使用每次nextTick只能执行一次来避免bug发生】
+    doUpdate () {
+      if (this.hasDoUpdate) return // nextTick内已经执行过一次就不执行
+      if (!this.scroller) return // scroller不存在说明未初始化完成，不执行
+
+      // 启动虚拟滚动的瞬间，需要暂时隐藏el-table__append-wrapper里的内容，不然会导致滚动位置一直到append的内容处
+      this.isHideAppend = true
+      this.onScroll()
+      this.hasDoUpdate = true
+      this.$nextTick(() => {
+        this.hasDoUpdate = false
+        this.isHideAppend = false
+      })
+    },
+
+    // 空闲时更新位置（触发时间：滚动停止后等待10ms执行）- 后面确定无用就删除
     // 滚动停止之后，偶尔表格的行发生高度变更，那么当前计算的渲染数据是不正确的；那么需要手动触发最后一次handleScroll来重新计算
     updatePosition () {
       if (this.discardUpdateAgain) return // 该方法没啥作用了，废弃
@@ -563,21 +578,50 @@ export default {
         })
       }
     },
+
     // 【外部调用】重置
     reset () {
       this.sizes = {}
       this.scrollTo(0, 0, false)
     },
 
-    // 添加virtual-column实例
+    // 销毁
+    destory () {
+      this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
+      this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
+
+      if (this.scroller) {
+        this.scroller.removeEventListener('scroll', this.onScroll)
+        window.removeEventListener('resize', this.onScroll)
+      }
+      if (this.unWatchs) {
+        this.unWatchs.forEach(unWatch => unWatch())
+      }
+    },
+
+    // 【VirtualColumn调用】更新数据
+    updateData (data = []) {
+      // 先存在list，通过$emit update更新data不是立即执行的（那么拿到的data就是最新），所以先存到list里，拿的就是最新数据
+      this.list = data
+      this.$emit('update:data', this.list)
+    },
+
+    // 【VirtualColumn调用】获取列表全部数据】
+    getData () {
+      return this.list || this.data
+    },
+
+    // 【VirtualColumn调用】添加virtual-column实例
     addColumn (vm) {
       this.columnVms.push(vm)
     },
-    // 移除virtual-column实例
+
+    // 【VirtualColumn调用】移除virtual-column实例
     removeColumn (vm) {
       this.columnVms = this.columnVms.filter(item => item !== vm)
     },
-    // 多选：选中所有列
+
+    // 【多选】选中所有列
     checkAll (val, rows = this.data) {
       const removedRows = []
       rows.forEach(row => {
@@ -588,7 +632,8 @@ export default {
 
       if (val === false) checkOrder = 0 // 取消全选，则重置checkOrder
     },
-    // 多选：选中某一列
+
+    // 【多选】选中某一列
     checkRow (row, val, emit = true) {
       if (row.$v_checked === val) return
 
@@ -596,23 +641,70 @@ export default {
       this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
       emit && this.emitSelectionChange(val ? [] : [row])
     },
-    // 多选：兼容表格selection-change事件
+
+    // 【多选】兼容表格selection-change事件
     emitSelectionChange (removedRows) {
       const selection = this.data.filter(row => row.$v_checked).sort((a, b) => a.$v_checkedOrder - b.$v_checkedOrder)
       this.$emit('selection-change', selection, removedRows)
     },
-    // 多选：兼容表格clearSelection方法
+
+    // 【多选】兼容表格clearSelection方法
     clearSelection () {
       this.checkAll(false)
       this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
-    // 多选：兼容表格toggleRowSelection方法
+
+    // 【多选】兼容表格toggleRowSelection方法
     toggleRowSelection (row, selected) {
       const val = typeof selected === 'boolean' ? selected : !row.$v_checked
       this.checkRow(row, val)
       this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
-    // 展开行：监听表格expand-change事件
+
+    // 【radio单选】设置选中行
+    setCurrentRow (row) {
+      this.curRow = row
+      this.$emit('current-change', row)
+    },
+
+    // 【单选高亮】兼容行高亮
+    hackRowHighlight () {
+      // 兼容el-table的setCurrentRow：重写setCurrentRow方法
+      if (this.elTable.__overviewSetCurrentRow) {
+        this.elTable.__overviewSetCurrentRow = true
+        const setCurrentRow = this.elTable.setCurrentRow.bind(this.elTable)
+        this.elTable.setCurrentRow = (row) => {
+          this.elTable.store.states.currentRow = this.highlightRow // 同步表格行高亮的值
+          if (this.highlightRow !== row) this.highlightRow = row // 同步highlightRow的值
+          setCurrentRow(row) // 执行原方法
+        }
+      }
+      // 兼容el-table的currentRowKey属性
+      const unWatch = this.$watch(() => this.elTable.currentRowKey, (val) => {
+        if (this.elTable.rowKey) {
+          const targetRow = this.data.find(row => val === row[this.elTable.rowKey])
+          this.highlightRow = targetRow
+        }
+      }, { immediate: true })
+      this.unWatchs.push(unWatch)
+
+      // 监听高亮的事件
+      this.onCurrentChange = (row) => {
+        this.highlightRow = row
+      }
+      this.elTable.$on('current-change', this.onCurrentChange)
+    },
+
+    // 【单选高亮】同步表格行高亮的值
+    syncRowsHighlight () {
+      if (!this.elTable.highlightCurrentRow) return
+      // 必须使用nextTick，不然值同步不上
+      this.$nextTick(() => {
+        this.elTable.store.states.currentRow = this.highlightRow
+      })
+    },
+
+    // 【展开行】监听表格expand-change事件
     bindTableExpandEvent () {
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
       if (!this.isExpandType) return
@@ -622,7 +714,8 @@ export default {
       }
       this.elTable.$on('expand-change', this.onExpandChange)
     },
-    // 展开行：设置表格行展开
+
+    // 【展开行】设置表格行展开
     setRowsExpanded () {
       if (!this.isExpandType) return
 
@@ -640,7 +733,8 @@ export default {
         }, 10)
       })
     },
-    // 展开行：切换某一行的展开状态
+
+    // 【展开行】切换某一行的展开状态
     toggleRowExpansion (row, expanded) {
       const hasVal = typeof expanded === 'boolean'
       this.$set(row, '$v_expanded', hasVal ? expanded : !row.$v_expanded)
@@ -648,40 +742,13 @@ export default {
         this.elTable.toggleRowExpansion(row, expanded)
       }
     },
-    // 单选：设置选中行
-    setCurrentRow (row) {
-      this.curRow = row
-      this.$emit('current-change', row)
-    },
-    // 更新数据
-    updateData (data = []) {
-      this.list = data
-      this.$emit('update:data', this.list)
-    },
-    getData () {
-      return this.list || this.data
-    },
-    // 执行update方法更新虚拟滚动，且每次nextTick只能执行一次【在数据大于100条开启虚拟滚动时，由于监听了data、virtualized会连续触发两次update方法：第一次update时，（updateSize）计算尺寸里的渲染数据（renderData）与表格行的dom是一一对应，之后会改变渲染数据（renderData）的值；而第二次执行update时，renderData改变了，而表格行dom未改变，导致renderData与dom不一一对应，从而位置计算错误，最终渲染的数据对应不上。因此使用每次nextTick只能执行一次来避免bug发生】
-    doUpdate () {
-      if (this.hasDoUpdate) return // nextTick内已经执行过一次就不执行
-      if (!this.scroller) return // scroller不存在说明未初始化完成，不执行
 
-      // 启动虚拟滚动的瞬间，需要暂时隐藏el-table__append-wrapper里的内容，不然会导致滚动位置一直到append的内容处
-      this.isHideAppend = true
-      this.onScroll()
-      this.hasDoUpdate = true
-      this.$nextTick(() => {
-        this.hasDoUpdate = false
-        this.isHideAppend = false
-      })
-    },
-
-    // 设置固定左右样式
+    // 【自定义固定列】设置固定左右样式
     headerCellFixedStyle (data) {
       return this.cellFixedStyle(data, true)
     },
 
-    // 设置固定左右样式
+    // 【自定义固定列】设置固定左右样式
     cellFixedStyle ({ column }, isHeader = false) {
       const elTable = this.$children[0]
       if (!elTable) return
@@ -743,59 +810,11 @@ export default {
       return isFixedRight ? { right: style.right + gutterWidth + 'px' } : { left: style.left + 'px' }
     },
 
-    // 更新表头布局
+    // 【自定义固定列】更新表头布局
     doHeaderLayout () {
       if (!this.elTable) return
       this.fixedMap = null
       this.elTable.$refs.tableHeader.$forceUpdate()
-    },
-    // 兼容行高亮
-    hackRowHighlight () {
-      // 兼容el-table的setCurrentRow：重写setCurrentRow方法
-      if (this.elTable.__overviewSetCurrentRow) {
-        this.elTable.__overviewSetCurrentRow = true
-        const setCurrentRow = this.elTable.setCurrentRow.bind(this.elTable)
-        this.elTable.setCurrentRow = (row) => {
-          this.elTable.store.states.currentRow = this.highlightRow // 同步表格行高亮的值
-          if (this.highlightRow !== row) this.highlightRow = row // 同步highlightRow的值
-          setCurrentRow(row) // 执行原方法
-        }
-      }
-      // 兼容el-table的currentRowKey属性
-      const unWatch = this.$watch(() => this.elTable.currentRowKey, (val) => {
-        if (this.elTable.rowKey) {
-          const targetRow = this.data.find(row => val === row[this.elTable.rowKey])
-          this.highlightRow = targetRow
-        }
-      }, { immediate: true })
-      this.unWatchs.push(unWatch)
-
-      // 监听高亮的事件
-      this.onCurrentChange = (row) => {
-        this.highlightRow = row
-      }
-      this.elTable.$on('current-change', this.onCurrentChange)
-    },
-    // 同步表格行高亮的值
-    syncRowsHighlight () {
-      if (!this.elTable.highlightCurrentRow) return
-      // 必须使用nextTick，不然值同步不上
-      this.$nextTick(() => {
-        this.elTable.store.states.currentRow = this.highlightRow
-      })
-    },
-    // 销毁
-    destory () {
-      this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
-      this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
-
-      if (this.scroller) {
-        this.scroller.removeEventListener('scroll', this.onScroll)
-        window.removeEventListener('resize', this.onScroll)
-      }
-      if (this.unWatchs) {
-        this.unWatchs.forEach(unWatch => unWatch())
-      }
     }
   },
   watch: {

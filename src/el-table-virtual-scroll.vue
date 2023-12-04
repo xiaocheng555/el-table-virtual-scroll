@@ -124,11 +124,6 @@ export default {
       type: Boolean,
       default: false
     },
-    // 废弃updatePosition方法
-    discardUpdateAgain: {
-      type: Boolean,
-      default: true
-    },
     // 支持自定义选中数据的排序规则，传入false则可保留列表的排序规则，默认是按照选中顺序排序
     selectionSort: {
       type: [Function, Boolean],
@@ -522,11 +517,9 @@ export default {
       })
     },
 
-    // 空闲时更新位置（触发时间：滚动停止后等待10ms执行）- 后面确定无用就删除
-    // 滚动停止之后，偶尔表格的行发生高度变更，那么当前计算的渲染数据是不正确的；那么需要手动触发最后一次handleScroll来重新计算
+    // 空闲时更新位置（触发时间：滚动停止后等待10ms执行）
+    // 场景：固定表格fixed变化时、扩展行展开滑动时需要更新
     updatePosition () {
-      if (this.discardUpdateAgain) return // 该方法没啥作用了，废弃
-
       this.timer && clearTimeout(this.timer)
       this.timer = setTimeout(() => {
         this.timer && clearTimeout(this.timer)

@@ -65,6 +65,7 @@ export default {
 | dynamic | 动态获取表格行高度，默认开启。设置为false时，则以itemSize为表格行的真实高度，能大大减少虚拟滚动计算量，减少滚动白屏；如果itemSize与表格行的真实高度不一致，可能导致滚动时表格数据错乱、抖动、底部有空白 | boolean | — | true |
 | virtualized | 是否开启虚拟滚动（>=1.0.3版本支持） | boolean | — | true |
 | rowSpanKey | 当使用了el-table的合并行，必须设置rowSpanKey函数并返回每组合并行中共用的key值（>=1.0.13版本支持） | Function(row, index) | — | - |
+| selectionSort | 支持多选可自定义选中数据的排序规则，默认为 `true` 按选择顺序排，传入 `false` 为按列表中的顺序排，传入函数为自定义排序规则 （>=1.0.27版本支持） | Boolean、Function | — | - |
 
 
 ### Methods
@@ -322,4 +323,13 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 ### 2023-11-31
 
 * 支持 `currentRowKey`
+
+
+### 2023-12-4
+
+* 增加多选项可选择排序方式；
+
+* 修复删除多选项时没有触发selection-change事件
+
+* npm 1.0.27 版本发包
 

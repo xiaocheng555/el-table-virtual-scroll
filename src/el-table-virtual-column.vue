@@ -170,6 +170,10 @@ export default {
       this.virtualScroll.checkRow(scope.row, val)
       this.syncCheckStatus()
     },
+    // 是否自定义多选
+    isSelection () {
+      return this.$attrs.type !== 'v-selection'
+    },
     // 同步全选、半选框状态
     syncCheckStatus () {
       const list = this.virtualScroll.getData()

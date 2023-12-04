@@ -37,6 +37,12 @@
           label="地址"
           show-overflow-tooltip>
         </el-table-column>
+        <el-table-column label="操作" width="260">
+          <template slot-scope="{ row }">
+            {{ row.id }}
+            <el-button @click="onDel(row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </virtual-scroll>
     <div style="margin-top: 20px">
@@ -89,6 +95,12 @@ export default {
       // 选中行高亮
       if (row.$v_checked) {
         return 'selection-row'
+      }
+    },
+    onDel (row) {
+      const index = this.list.findIndex(item => item === row)
+      if (index > -1) {
+        this.list.splice(index, 1)
       }
     }
   },

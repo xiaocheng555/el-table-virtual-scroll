@@ -128,6 +128,11 @@ export default {
     discardUpdateAgain: {
       type: Boolean,
       default: true
+    },
+    // 支持自定义选中数据的排序规则，传入false则可保留列表的排序规则，默认是按照选中顺序排序
+    selectionSort: {
+      type: [Function, Boolean],
+      default: true
     }
   },
   provide () {
@@ -141,6 +146,7 @@ export default {
       start: 0,
       end: undefined,
       curRow: null, // 表格单选：选中的行
+      oldSelection: [], // 表格多选：选中的行
       isExpanding: false, // 列是否正在展开
       columnVms: [], // virtual-column 组件实例
       isHideAppend: false,
@@ -587,6 +593,7 @@ export default {
 
     // 销毁
     destory () {
+      this.oldSelection = []
       this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
       this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
 
@@ -642,12 +649,6 @@ export default {
       emit && this.emitSelectionChange(val ? [] : [row])
     },
 
-    // 【多选】兼容表格selection-change事件
-    emitSelectionChange (removedRows) {
-      const selection = this.data.filter(row => row.$v_checked).sort((a, b) => a.$v_checkedOrder - b.$v_checkedOrder)
-      this.$emit('selection-change', selection, removedRows)
-    },
-
     // 【多选】兼容表格clearSelection方法
     clearSelection () {
       this.checkAll(false)
@@ -659,6 +660,60 @@ export default {
       const val = typeof selected === 'boolean' ? selected : !row.$v_checked
       this.checkRow(row, val)
       this.columnVms.forEach(vm => vm.syncCheckStatus())
+    },
+
+    // 【多选】兼容表格selection-change事件
+    emitSelectionChange (removedRows) {
+      const selection = this.data.filter(row => row.$v_checked)
+      this.sortSelection(selection)
+      this.$emit('selection-change', selection, removedRows)
+      this.oldSelection = [...selection]
+    },
+
+    // 【多选】更新多选的值
+    updateSelectionData (data, oldData) {
+      if (data !== oldData) {
+        this.syncSelectionStatus()
+        this.oldSelection = []
+        return
+      }
+
+      // 新的选中项
+      const selection = this.data.filter(row => row.$v_checked)
+      this.sortSelection(selection)
+      // 新的选中项key map
+      const selectionKeyMap = selection.reduce((map, dataItem) => {
+        map[dataItem[this.keyProp]] = true
+        return map
+      }, {})
+      // 移除的项
+      const removedRows = this.oldSelection.reduce((rows, row) => {
+        if (!(row[this.keyProp] in selectionKeyMap)) rows.push(row)
+        return rows
+      }, [])
+      // 手动删除选中项、新旧项不一致（正常不会发生），触发selection-change事件
+      if (removedRows.length || selection.length !== this.oldSelection.length) {
+        this.$emit('selection-change', selection, removedRows)
+        this.oldSelection = [...selection]
+      }
+    },
+
+    // 【多选】多选排序
+    sortSelection (selection) {
+      if (!this.selectionSort) return
+      if (typeof this.selectionSort === 'function') {
+        selection.sort((a, b) => this.selectionSort(a, b))
+      } else {
+        selection.sort((a, b) => a.$v_checkedOrder - b.$v_checkedOrder)
+      }
+    },
+
+    // 【多选】同步多选状态
+    syncSelectionStatus () {
+      const selectionVm = this.columnVms.find(vm => vm.isSelection())
+      if (selectionVm) {
+        selectionVm.syncCheckStatus()
+      }
     },
 
     // 【radio单选】设置选中行
@@ -818,13 +873,13 @@ export default {
     }
   },
   watch: {
-    data () {
+    data (data, oldData) {
       if (!this.virtualized) {
         this.renderAllData()
       } else {
         this.doUpdate()
       }
-      this.columnVms.forEach(vm => vm.syncCheckStatus())
+      this.updateSelectionData(data, oldData)
     },
     virtualized: {
       immediate: true,

@@ -6,6 +6,8 @@
       tooltip-effect="dark"
       :select-on-indeterminate="false"
       style="width: 100%"
+      row-key="id"
+      height="400"
       @selection-change="handleSelectionChange">
       <el-table-column
         type="selection"
@@ -26,10 +28,17 @@
         label="地址"
         show-overflow-tooltip>
       </el-table-column>
+      <el-table-column label="操作" width="260">
+        <template slot-scope="{ row }">
+          {{ row.id }}
+          <el-button @click="onDel(row)">删除</el-button>
+        </template>
+      </el-table-column>
     </el-table>
     <div style="margin-top: 20px">
-      <el-button @click="toggleSelection([tableData[1], tableData[2]])">切换第二、第三行的选中状态</el-button>
+      <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
       <el-button @click="toggleSelection()">取消选择</el-button>
+      <el-button @click="refresh()">重新获取数据</el-button>
     </div>
   </div>
 </template>
@@ -42,7 +51,7 @@ export default {
   },
   data () {
     return {
-      list: mockData(0, 200),
+      list: mockData(0, 50),
       tableData: [],
       multipleSelection: [],
       show: true,
@@ -53,7 +62,7 @@ export default {
      toggleSelection (rows) {
       if (rows) {
         rows.forEach(row => {
-          this.$refs.multipleTable.toggleRowSelection(row)
+          this.$refs.multipleTable.toggleRowSelection(row, true)
         });
       } else {
         this.$refs.multipleTable.clearSelection()
@@ -61,6 +70,15 @@ export default {
     },
     handleSelectionChange(val) {
       this.multipleSelection = val
+    },
+    refresh () {
+      this.list = mockData(30, 80)
+    },
+    onDel(row) {
+      const index = this.list.findIndex(item => item === row)
+      if (index > -1) {
+        this.list.splice(index, 1)
+      }
     }
   },
   created () {

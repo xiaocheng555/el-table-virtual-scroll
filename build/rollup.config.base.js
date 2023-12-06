@@ -24,5 +24,5 @@ export default {
     commonjs()
   ],
   // 外部模块
-  external: ['vue', 'lodash']
+  external: ['vue', 'lodash', 'normalize-wheel']
 }

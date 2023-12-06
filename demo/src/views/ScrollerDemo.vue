@@ -1,5 +1,7 @@
 <template>
   <div class="scroller-box">
+    开启减缓滚动速度：<el-switch v-model="isSlow"></el-switch>
+
     <h2>红色边框的是滚动容器</h2>
     <p
       :style="{height: largeHeight ? '600px' : '200px', background: 'pink'}"
@@ -75,7 +77,8 @@ export default {
     return {
       list: mockData(0, 2000),
       tableData: [],
-      largeHeight: false
+      largeHeight: false,
+      isSlow: false
     }
   },
   methods: {
@@ -84,6 +87,13 @@ export default {
       // 当滚动容器顶部内容高度变化很大时，需要更新虚拟滚动组件，避免出现表格出现一段空白内容
       this.$nextTick(() => {
         this.$refs.virtualScroll.update()
+      })
+    }
+  },
+  watch: {
+    isSlow(val) {
+      setTimeout(() => {
+        this.$refs.virtualScroll.slowOnMousewheel(val ? 1 : 0)
       })
     }
   }

@@ -78,7 +78,7 @@ export default {
 | toggleRowSelection | 用于多选 `<virtual-column type="selection">`, 切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中） | row, selected |
 | toggleRowExpansion | 用于展开行 `<virtual-column type="expand">`, 切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开）| row, expanded |
 | setCurrentRow | 用于单选 `<virtual-column type="radio">`, 设定某一行为选中行 | row |
-
+| slowOnMousewheel | 减缓滚轮滚动的速度，slowNum参数为减缓参数，默认为1，数值越大滚动越慢；在mac电脑上，谷歌、火狐浏览器在 `自定义固定列` demo 上快速滚动会有白屏，可以使用该方法减少白屏。请根据实际情况使用，使用不当可能会让表格滚动卡顿。【注意：滚轮滚动有效，拖动滚动条滚动无效】（>=1.0.28版本支持） | slowNum |
 
 ### Events
 | 事件名称 | 说明 | 参数 |
@@ -340,4 +340,13 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复删除多选项时没有触发selection-change事件
 
 * npm 1.0.27 版本发包
+
+
+### 2023-12-6
+
+* 增加 `slowOnMousewheel` 方法
+
+* npm 1.0.28 版本发包
+
+
 

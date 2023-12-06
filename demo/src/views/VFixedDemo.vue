@@ -32,6 +32,15 @@
             :formatter="formatter"
             min-width="150">
           </VirtualColumn>
+          <el-table-column label="id" prop="id"></el-table-column>
+          <el-table-column label="内容" width="260" prop="text"></el-table-column>
+          <el-table-column label="内容省略" width="260" prop="text" show-overflow-tooltip></el-table-column>
+          <el-table-column label="详情" min-width="260">
+            <template slot-scope="{ row }">
+              <el-button type="text" @click="row.show = !row.show;">{{ row.show ? '隐藏' : '显示' }}</el-button>
+              <div v-if="row.show">{{ row.text2 }}</div>
+            </template>
+          </el-table-column>
           <el-table-column
             prop="province"
             label="省份"
@@ -77,6 +86,7 @@
         </el-table>
       </template>
     </virtual-scroll>
+    开启减缓滚动速度：<el-switch v-model="isSlow"></el-switch>
     <!-- <el-button @click="show = !show">{{ show ? '隐藏' : '显示'}}第一列</el-button> -->
   </div>
 </template>
@@ -84,6 +94,11 @@
 <script>
 import VirtualScroll, { VirtualColumn } from 'el-table-virtual-scroll'
 import { mockData } from '@/utils'
+
+const userAgent = navigator.userAgent
+const isMac = /Macintosh/.test(userAgent)
+const isChrome = /Chrome/.test(userAgent)
+const isFirefox = /Firefox/.test(userAgent)
 
 export default {
   components: {
@@ -94,7 +109,9 @@ export default {
     return {
       list: mockData(0, 2000),
       tableData: [],
-      show: true
+      show: true,
+      isSlow: false,
+      isMac
     }
   },
   methods: {
@@ -106,8 +123,18 @@ export default {
       return `姓名：${value}`
     }
   },
-  created () {
-
+  watch: {
+    isSlow (val) {
+      setTimeout(() => {
+        // mac电脑谷歌、火狐浏览器上，会出现滚动白屏，通过调用slowOnMousewheel减缓滚动速度，减少白屏
+        if (isMac && (isChrome || isFirefox)) {
+          // 滚轮滚动速度减缓，减少快速滚动白屏
+          this.$refs.virtualScroll.slowOnMousewheel(val ? 1 : 0)
+        } else {
+          alert('非mac电脑，不执行slowOnMousewheel')
+        }
+      })
+    }
   }
 }
 </script>

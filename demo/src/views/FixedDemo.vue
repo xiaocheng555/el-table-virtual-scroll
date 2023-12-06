@@ -11,9 +11,19 @@
       <el-table
         :data="tableData"
         border
+        :fit="false"
         row-key="id"
         height="500px"
         style="width: 100%">
+        <el-table-column label="id" prop="id" fixed></el-table-column>
+        <el-table-column label="内容" width="260" prop="text" fixed></el-table-column>
+        <el-table-column label="内容省略" width="260" prop="text" show-overflow-tooltip></el-table-column>
+        <el-table-column label="详情" min-width="260">
+          <template slot-scope="{ row }">
+            <el-button type="text" @click="row.show = !row.show;">{{ row.show ? '隐藏' : '显示' }}</el-button>
+            <div v-if="row.show">{{ row.text2 }}</div>
+          </template>
+        </el-table-column>
         <el-table-column
           fixed
           prop="date"
@@ -77,7 +87,11 @@ export default {
   methods: {
 
   },
-  created () {
+  mounted() {
+    setTimeout(() => {
+      // 针对mac电脑：滚轮滚动速度减缓，减少快速滚动白屏
+      this.$refs.virtualScroll.slowOnMousewheel()
+    })
   }
 }
 </script>

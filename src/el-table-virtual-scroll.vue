@@ -12,6 +12,7 @@
 
 <script>
 import throttle from 'lodash/throttle'
+import normalizeWheel from 'normalize-wheel'
 
 // 判断是否是滚动容器
 function isScroller (el) {
@@ -58,6 +59,29 @@ function scrollToY (el, y) {
 // 是否为空 undefine or null
 function isEmpty (val) {
   return typeof val === 'undefined' || val === null
+}
+
+const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+// 设置滚轮速度（完全参考 element-ui > table > handleFixedMousewheel方法）
+function setMousewheelSlow (scroller, slow) {
+  function handler (event) {
+    const data = normalizeWheel(event)
+    if (Math.abs(data.spinY) > 0) {
+      const currentScrollTop = scroller.scrollTop
+      if (data.pixelY < 0 && currentScrollTop !== 0) {
+        event.preventDefault()
+      }
+      if (data.pixelY > 0 && scroller.scrollHeight - scroller.clientHeight > currentScrollTop) {
+        event.preventDefault()
+      }
+      scroller.scrollTop += Math.ceil(data.pixelY / slow)
+    }
+  }
+  const throttleHandler = throttle(handler, 0)
+  scroller.addEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', throttleHandler, { passive: false })
+  return function destory () {
+    scroller.removeEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', throttleHandler)
+  }
 }
 
 // 表格body class名称
@@ -207,6 +231,16 @@ export default {
       setTimeout(() => {
         this.onScroll()
       }, 100)
+    },
+
+    // 滚轮滚动速度减缓，减少快速滚动白屏
+    // slowNum - 减速的值，值越大，滚动越慢
+    slowOnMousewheel (slowNum = 1, scroller = this.scroller) {
+      this.removeMousewheelEvent && this.removeMousewheelEvent()
+      this.removeMousewheelEvent = null
+
+      if (!slowNum) return
+      this.removeMousewheelEvent = setMousewheelSlow(scroller, slowNum)
     },
 
     // 获取滚动元素
@@ -485,6 +519,9 @@ export default {
           // 设置paddingTop撑起高度
           // el.innerEl.style.paddingTop = `${offsetTop}px`
         }
+        // if (index > 0 && tableWrapEl) {
+        //   el.scrollTop = tableWrapEl.scrollTop
+        // }
       })
     },
 
@@ -589,6 +626,7 @@ export default {
       this.oldSelection = []
       this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
       this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
+      this.removeMousewheelEvent && this.removeMousewheelEvent()
 
       if (this.scroller) {
         this.scroller.removeEventListener('scroll', this.onScroll)

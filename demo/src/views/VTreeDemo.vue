@@ -18,6 +18,7 @@
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
       </el-table>
     </virtual-scroll>
+    <el-button type="primary" @click="refresh">refresh</el-button>
   </div>
 </template>
 
@@ -38,6 +39,9 @@ export default {
     }
   },
   methods: {
+    refresh () {
+      this.fetchData()
+    },
     fetchData () {
       this.loading = true
       this.list = []

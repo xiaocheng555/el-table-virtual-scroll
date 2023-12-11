@@ -1885,6 +1885,9 @@ var script$1 = {
       } else {
         this.doUpdate();
       }
+      if (this.list && _data !== oldData) {
+        this.list = _data;
+      }
       this.updateSelectionData(_data, oldData);
     },
     virtualized: {
@@ -2062,7 +2065,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-5088df2c_0", {
+  inject("data-v-f9b8488e_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2073,8 +2076,8 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-5088df2c_1", {
-    source: ".is-expanding[data-v-5088df2c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-5088df2c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-f9b8488e_1", {
+    source: ".is-expanding[data-v-f9b8488e] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-f9b8488e] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2087,7 +2090,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-5088df2c";
+var __vue_scope_id__$1 = "data-v-f9b8488e";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */

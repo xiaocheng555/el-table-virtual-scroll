@@ -918,6 +918,9 @@ export default {
       } else {
         this.doUpdate()
       }
+      if (this.list && data !== oldData) {
+        this.list = data
+      }
       this.updateSelectionData(data, oldData)
     },
     virtualized: {

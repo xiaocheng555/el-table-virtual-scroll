@@ -350,11 +350,18 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * npm 1.0.28 版本发包
 
 
-### 2023-12-6
+### 2023-12-11
 
 * 增加 `getElTable` 属性
 
 * npm 1.0.29 版本发包
+
+
+### 2023-12-11
+
+* 修复自定义表格树刷新数据后，子节点无法展开
+
+* npm 1.0.30 版本发包
 
 
 

@@ -119,7 +119,7 @@ export default {
     // 滚动事件的节流时间
     throttleTime: {
       type: Number,
-      default: 10
+      default: 16
     },
     // 是否获取表格行动态高度
     dynamic: {
@@ -144,6 +144,7 @@ export default {
       type: Boolean,
       default: true
     },
+    // 禁用虚拟滚动
     disabled: {
       type: Boolean,
       default: false
@@ -152,6 +153,13 @@ export default {
     selectionSort: {
       type: [Function, Boolean],
       default: true
+    },
+    // 获取el-table组件，默认 virtual-scroll 组件的第一个子组件
+    getElTable: {
+      type: Function,
+      default: function () {
+        return this.$children[0]
+      }
     }
   },
   provide () {
@@ -212,9 +220,9 @@ export default {
       this.highlightRow = null
 
       // 验证ElTable组件
-      this.elTable = this.$children[0]
+      this.elTable = this.getElTable()
       if (!this.elTable || this.elTable.$options.name !== 'ElTable') {
-        throw new Error('el-table-virtual-column 组件插槽内必须是el-table')
+        throw new Error('未找到 <el-table> 组件. 请确保 <el-table> 组件在虚拟组件内，且 getElTable 方法能获取到正确的 <el-table> 组件！')
       }
 
       this.scroller = this.getScroller()

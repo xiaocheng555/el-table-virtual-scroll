@@ -1076,7 +1076,7 @@ var script$1 = {
     // 滚动事件的节流时间
     throttleTime: {
       type: Number,
-      "default": 10
+      "default": 16
     },
     // 是否获取表格行动态高度
     dynamic: {
@@ -1101,6 +1101,7 @@ var script$1 = {
       type: Boolean,
       "default": true
     },
+    // 禁用虚拟滚动
     disabled: {
       type: Boolean,
       "default": false
@@ -1109,6 +1110,13 @@ var script$1 = {
     selectionSort: {
       type: [Function, Boolean],
       "default": true
+    },
+    // 获取el-table组件，默认 virtual-scroll 组件的第一个子组件
+    getElTable: {
+      type: Function,
+      "default": function _default() {
+        return this.$children[0];
+      }
     }
   },
   provide: function provide() {
@@ -1177,9 +1185,9 @@ var script$1 = {
       this.highlightRow = null;
 
       // 验证ElTable组件
-      this.elTable = this.$children[0];
+      this.elTable = this.getElTable();
       if (!this.elTable || this.elTable.$options.name !== 'ElTable') {
-        throw new Error('el-table-virtual-column 组件插槽内必须是el-table');
+        throw new Error('未找到 <el-table> 组件. 请确保 <el-table> 组件在虚拟组件内，且 getElTable 方法能获取到正确的 <el-table> 组件！');
       }
       this.scroller = this.getScroller();
       this.observeElTable();
@@ -2054,7 +2062,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-6b0fa46c_0", {
+  inject("data-v-5088df2c_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2065,8 +2073,8 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-6b0fa46c_1", {
-    source: ".is-expanding[data-v-6b0fa46c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-6b0fa46c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-5088df2c_1", {
+    source: ".is-expanding[data-v-5088df2c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-5088df2c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2079,7 +2087,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-6b0fa46c";
+var __vue_scope_id__$1 = "data-v-5088df2c";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */

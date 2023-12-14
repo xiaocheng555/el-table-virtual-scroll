@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-alert type="info" title='版本>=1.26.0支持' show-icon></el-alert>
+    <el-alert type="info" title='版本>=1.0.26支持' show-icon></el-alert>
     <div style="margin-top: 20px">
       <el-button @click="setCheckedRow(list[1])">选中第二行</el-button>
       <el-button @click="setCheckedRow()">取消选择</el-button>

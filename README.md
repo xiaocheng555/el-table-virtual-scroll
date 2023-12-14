@@ -130,7 +130,9 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * `<el-table>` 组件最好写上 `row-key` 属性，能避免一些奇怪的问题。例：`<el-table row-key="id">`，其中id为数据中唯一key值。
 
-* 不支持 Element-UI Table 原有单选、多选、扩展行、索引，请使用 `<virtual-column>` 做兼容，详见demo。
+* 不支持 Element-UI Table 原有多选、扩展行、索引，请使用 `<virtual-column>` 做兼容，详见demo。
+
+* Element-UI Table 单选高亮 版本>=1.0.26支持
 
 * 使用 Element-UI Table 排序时，需要做额外兼容，详见demo。
 

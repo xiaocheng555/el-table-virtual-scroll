@@ -43,7 +43,7 @@
         <!-- 多选类型 -->
         <el-checkbox
           v-if="scope.column.type === 'v-selection'"
-          :value="scope.row.$v_checked"
+          :value="scope.row.$v_checked || false"
           :disabled="getDisabled(scope)"
           @change="onCheckRow(scope, !scope.row.$v_checked)">
         </el-checkbox>

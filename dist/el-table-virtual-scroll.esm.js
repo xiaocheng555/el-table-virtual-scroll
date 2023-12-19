@@ -1664,8 +1664,8 @@ var script$1 = {
     // 【多选】更新多选的值
     updateSelectionData: function updateSelectionData(data, oldData) {
       var _this10 = this;
+      this.syncSelectionStatus();
       if (data !== oldData) {
-        this.syncSelectionStatus();
         this.oldSelection = [];
         return;
       }
@@ -2065,7 +2065,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-f9b8488e_0", {
+  inject("data-v-46636419_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2076,8 +2076,8 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-f9b8488e_1", {
-    source: ".is-expanding[data-v-f9b8488e] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-f9b8488e] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-46636419_1", {
+    source: ".is-expanding[data-v-46636419] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-46636419] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2090,7 +2090,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$1 = "data-v-f9b8488e";
+var __vue_scope_id__$1 = "data-v-46636419";
 /* module identifier */
 var __vue_module_identifier__$1 = undefined;
 /* functional template */
@@ -2554,7 +2554,7 @@ var __vue_render__ = function __vue_render__() {
           staticClass: "el-table__placeholder"
         })] : _vm._e(), _vm._v(" "), _vm.$scopedSlots["default"] ? _vm._t("default", null, null, scope) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
           attrs: {
-            value: scope.row.$v_checked,
+            value: scope.row.$v_checked || false,
             disabled: _vm.getDisabled(scope)
           },
           on: {
@@ -2583,7 +2583,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-da26b882_0", {
+  inject("data-v-ce907664_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n",
     map: {
       "version": 3,

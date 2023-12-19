@@ -366,4 +366,11 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * npm 1.0.30 版本发包
 
 
+### 2023-12-19
+
+* 修复表格多选时，刷新列表后选中项还在
+
+* npm 1.0.31 版本发包
+
+
 

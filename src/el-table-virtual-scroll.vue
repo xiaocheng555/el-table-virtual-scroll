@@ -711,8 +711,9 @@ export default {
 
     // 【多选】更新多选的值
     updateSelectionData (data, oldData) {
+      this.syncSelectionStatus()
+
       if (data !== oldData) {
-        this.syncSelectionStatus()
         this.oldSelection = []
         return
       }

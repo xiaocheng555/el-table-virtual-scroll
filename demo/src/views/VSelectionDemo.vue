@@ -48,6 +48,7 @@
     <div style="margin-top: 20px">
       <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
       <el-button @click="toggleSelection()">取消选择</el-button>
+      <el-button @click="refresh()">刷新</el-button>
       <el-button @click="show = !show">show</el-button>
       <span style="margin-left: 10px;">选中高亮: <el-switch v-model="highlight"></el-switch></span>
     </div>
@@ -74,6 +75,9 @@ export default {
     }
   },
   methods: {
+    refresh () {
+      this.list = mockData(0, 2000)
+    },
     getSelectable (row, idx) {
       return idx > 2
     },

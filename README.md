@@ -137,11 +137,11 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 使用 Element-UI Table 排序时，需要做额外兼容，详见demo。
 
 
-## 贡献者
+<!-- ## 贡献者
 
 <a href="https://github.com/xiaocheng555/el-table-virtual-scroll/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=xiaocheng555/el-table-virtual-scroll" />
-</a>
+</a> -->
 
 
 ## 更新内容

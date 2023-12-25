@@ -42,6 +42,7 @@
       <template v-else>
         <!-- 多选类型 -->
         <el-checkbox
+          @click.native.stop
           v-if="scope.column.type === 'v-selection'"
           :value="scope.row.$v_checked || false"
           :disabled="getDisabled(scope)"

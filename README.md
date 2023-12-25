@@ -139,11 +139,8 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 ## 贡献者
 
-<a href="https://github.com/george-hong/el-table-virtual-scroll/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=george-hong/el-table-virtual-scroll" />
-</a>
-<a href="https://github.com/1054959069/el-table-virtual-scroll/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=1054959069/el-table-virtual-scroll" />
+<a href="https://github.com/xiaocheng555/el-table-virtual-scroll/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=xiaocheng555/el-table-virtual-scroll" />
 </a>
 
 

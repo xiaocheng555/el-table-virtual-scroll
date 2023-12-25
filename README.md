@@ -142,6 +142,9 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 <a href="https://github.com/george-hong/el-table-virtual-scroll/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=george-hong/el-table-virtual-scroll" />
 </a>
+<a href="https://github.com/1054959069/el-table-virtual-scroll/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=1054959069/el-table-virtual-scroll" />
+</a>
 
 
 ## 更新内容
@@ -373,4 +376,9 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * npm 1.0.31 版本发包
 
 
+### 2023-12-25
+
+* 修复 el-table-virtual-column 中未阻止事件冒泡
+
+* npm 1.0.32 版本发包
 

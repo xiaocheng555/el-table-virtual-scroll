@@ -160,6 +160,10 @@ export default {
       default: function () {
         return this.$children[0]
       }
+    },
+    keepScroll: {
+      type: Boolean,
+      default: true
     }
   },
   provide () {
@@ -218,6 +222,8 @@ export default {
       this.isInnerScroll = false
       // 高亮的行
       this.highlightRow = null
+      // 滚动位置
+      this.scrollPos = [0, 0]
 
       // 验证ElTable组件
       this.elTable = this.getElTable()
@@ -287,6 +293,14 @@ export default {
       // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
       // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
       if (this.isInnerScroll && !this.scroller.style.height && !this.scroller.style.maxHeight) return
+
+      // 如果组件失活，则不再执行handleScroll；否则外部容器滚动情况下记录的scrollTop会是0
+      if (this.isDeactivated) return
+      // 记录scrollPos
+      if (this.isInnerScroll) {
+        this.scrollPos[0] = this.scroller.scrollTop
+        this.scrollPos[1] = this.scroller.scrollLeft
+      }
 
       this.removeHoverRows()
       // 更新当前尺寸（高度）
@@ -542,7 +556,7 @@ export default {
 
       // 监听表格滚动高度变化（切换v-show时更新）
       const unWatch2 = this.$watch(() => this.elTable.layout.bodyHeight, (val) => {
-        val > 0 && this.onScroll()
+        val > 0 && this.$nextTick(this.onScroll)
       })
       this.unWatchs = [unWatch1, unWatch2]
     },
@@ -910,6 +924,23 @@ export default {
       if (!this.elTable) return
       this.fixedMap = null
       this.elTable.$refs.tableHeader.$forceUpdate()
+    },
+    // 恢复滚动位置（仅支持表格内部滚动）
+    restoreScroll () {
+      if (!this.scroller || !this.isInnerScroll) return
+      const restore = () => {
+        this.scroller.scrollLeft = this.keepScroll ? this.scrollPos[1] : 0
+        this.scroller.scrollTop = this.keepScroll ? this.scrollPos[0] : 0
+      }
+      if (!this.elTable.fit) {
+        restore()
+      } else {
+        // 需要表格恢复固定高度后才能进行滚动
+        const unWatch = this.$watch(() => this.elTable.layout.bodyHeight, () => {
+          unWatch()
+          restore()
+        })
+      }
     }
   },
   watch: {
@@ -942,6 +973,13 @@ export default {
     this.$nextTick(() => {
       this.initData()
     })
+  },
+  activated () {
+    this.isDeactivated = false
+    this.restoreScroll()
+  },
+  deactivated () {
+    this.isDeactivated = true
   },
   beforeDestroy () {
     this.destory()

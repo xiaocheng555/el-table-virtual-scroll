@@ -1124,6 +1124,10 @@
         "default": function _default() {
           return this.$children[0];
         }
+      },
+      keepScroll: {
+        type: Boolean,
+        "default": true
       }
     },
     provide: function provide() {
@@ -1190,6 +1194,8 @@
         this.isInnerScroll = false;
         // 高亮的行
         this.highlightRow = null;
+        // 滚动位置
+        this.scrollPos = [0, 0];
 
         // 验证ElTable组件
         this.elTable = this.getElTable();
@@ -1255,6 +1261,14 @@
         // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
         // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
         if (this.isInnerScroll && !this.scroller.style.height && !this.scroller.style.maxHeight) return;
+
+        // 如果组件失活，则不再执行handleScroll；否则外部容器滚动情况下记录的scrollTop会是0
+        if (this.isDeactivated) return;
+        // 记录scrollPos
+        if (this.isInnerScroll) {
+          this.scrollPos[0] = this.scroller.scrollTop;
+          this.scrollPos[1] = this.scroller.scrollLeft;
+        }
         this.removeHoverRows();
         // 更新当前尺寸（高度）
         this.updateSizes();
@@ -1504,7 +1518,7 @@
         var unWatch2 = this.$watch(function () {
           return _this4.elTable.layout.bodyHeight;
         }, function (val) {
-          val > 0 && _this4.onScroll();
+          val > 0 && _this4.$nextTick(_this4.onScroll);
         });
         this.unWatchs = [unWatch1, unWatch2];
       },
@@ -1883,6 +1897,26 @@
         if (!this.elTable) return;
         this.fixedMap = null;
         this.elTable.$refs.tableHeader.$forceUpdate();
+      },
+      // 恢复滚动位置（仅支持表格内部滚动）
+      restoreScroll: function restoreScroll() {
+        var _this17 = this;
+        if (!this.scroller || !this.isInnerScroll) return;
+        var restore = function restore() {
+          _this17.scroller.scrollLeft = _this17.keepScroll ? _this17.scrollPos[1] : 0;
+          _this17.scroller.scrollTop = _this17.keepScroll ? _this17.scrollPos[0] : 0;
+        };
+        if (!this.elTable.fit) {
+          restore();
+        } else {
+          // 需要表格恢复固定高度后才能进行滚动
+          var unWatch = this.$watch(function () {
+            return _this17.elTable.layout.bodyHeight;
+          }, function () {
+            unWatch();
+            restore();
+          });
+        }
       }
     },
     watch: {
@@ -1912,10 +1946,17 @@
       }
     },
     created: function created() {
-      var _this17 = this;
+      var _this18 = this;
       this.$nextTick(function () {
-        _this17.initData();
+        _this18.initData();
       });
+    },
+    activated: function activated() {
+      this.isDeactivated = false;
+      this.restoreScroll();
+    },
+    deactivated: function deactivated() {
+      this.isDeactivated = true;
     },
     beforeDestroy: function beforeDestroy() {
       this.destory();
@@ -2072,7 +2113,7 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-46636419_0", {
+    inject("data-v-3739f649_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2083,8 +2124,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-46636419_1", {
-      source: ".is-expanding[data-v-46636419] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-46636419] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-3739f649_1", {
+      source: ".is-expanding[data-v-3739f649] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-3739f649] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2097,7 +2138,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-46636419";
+  var __vue_scope_id__$1 = "data-v-3739f649";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */

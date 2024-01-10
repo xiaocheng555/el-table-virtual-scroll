@@ -116,6 +116,10 @@ export default {
           path: '/LoadmoreDemo2'
         },
         {
+          title: 'keep-alive',
+          path: '/KeepAlive'
+        },
+        {
           title: '树结构',
           path: '/TreeDemoDef'
         },

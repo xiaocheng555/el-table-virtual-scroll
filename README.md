@@ -379,3 +379,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * npm 1.0.32 版本发包
 
+
+### 2024-1-10
+
+* keep-alive 保持滚动位置
+
+* npm 1.1.0 版本发包
+

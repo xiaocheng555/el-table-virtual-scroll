@@ -1,6 +1,8 @@
 <template>
   <div>
-    切换v-show恢复滚动位置：<el-switch v-model="visible" @change="onVisible"></el-switch>
+    <el-alert type="info" title='版本>=1.1.1支持' show-icon></el-alert>
+
+    切换v-show恢复滚动位置：<el-switch v-model="visible"></el-switch>
 
     <virtual-scroll
       v-show="visible"
@@ -61,13 +63,6 @@ export default {
       visible: true,
       list: mockData(0, 2000),
       tableData: []
-    }
-  },
-  methods: {
-    onVisible() {
-      if (this.visible) {
-        this.$refs.virtualScroll.restoreScroll()
-      }
     }
   },
   deactivated () {

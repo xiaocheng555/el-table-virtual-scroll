@@ -541,9 +541,6 @@ export default {
           // 设置paddingTop撑起高度
           // el.innerEl.style.paddingTop = `${offsetTop}px`
         }
-        // if (index > 0 && tableWrapEl) {
-        //   el.scrollTop = tableWrapEl.scrollTop
-        // }
       })
     },
 
@@ -556,7 +553,8 @@ export default {
 
       // 监听表格滚动高度变化（切换v-show时更新）
       const unWatch2 = this.$watch(() => this.elTable.layout.bodyHeight, (val) => {
-        val > 0 && this.$nextTick(this.onScroll)
+        this.restoreScroll()
+        val > 0 && this.onScroll()
       })
       this.unWatchs = [unWatch1, unWatch2]
     },
@@ -606,6 +604,13 @@ export default {
           }
         })
       })
+    },
+
+    // 恢复滚动位置（仅支持表格内部滚动）
+    restoreScroll () {
+      if (!this.scroller || !this.isInnerScroll) return
+      this.scroller.scrollLeft = this.keepScroll ? this.scrollPos[1] : 0
+      this.scroller.scrollTop = this.keepScroll ? this.scrollPos[0] : 0
     },
 
     // 【外部调用】更新
@@ -924,23 +929,6 @@ export default {
       if (!this.elTable) return
       this.fixedMap = null
       this.elTable.$refs.tableHeader.$forceUpdate()
-    },
-    // 恢复滚动位置（仅支持表格内部滚动）
-    restoreScroll () {
-      if (!this.scroller || !this.isInnerScroll) return
-      const restore = () => {
-        this.scroller.scrollLeft = this.keepScroll ? this.scrollPos[1] : 0
-        this.scroller.scrollTop = this.keepScroll ? this.scrollPos[0] : 0
-      }
-      if (!this.elTable.fit) {
-        restore()
-      } else {
-        // 需要表格恢复固定高度后才能进行滚动
-        const unWatch = this.$watch(() => this.elTable.layout.bodyHeight, () => {
-          unWatch()
-          restore()
-        })
-      }
     }
   },
   watch: {
@@ -976,7 +964,7 @@ export default {
   },
   activated () {
     this.isDeactivated = false
-    this.restoreScroll()
+    this.elTable?.fit === false && this.restoreScroll()
   },
   deactivated () {
     this.isDeactivated = true

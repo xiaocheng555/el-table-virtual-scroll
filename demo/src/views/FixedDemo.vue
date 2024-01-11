@@ -11,7 +11,6 @@
       <el-table
         :data="tableData"
         border
-        :fit="false"
         row-key="id"
         height="500px"
         style="width: 100%">

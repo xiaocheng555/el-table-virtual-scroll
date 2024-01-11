@@ -1497,9 +1497,6 @@
             // 设置paddingTop撑起高度
             // el.innerEl.style.paddingTop = `${offsetTop}px`
           }
-          // if (index > 0 && tableWrapEl) {
-          //   el.scrollTop = tableWrapEl.scrollTop
-          // }
         });
       },
       // 监听el-table
@@ -1518,7 +1515,8 @@
         var unWatch2 = this.$watch(function () {
           return _this4.elTable.layout.bodyHeight;
         }, function (val) {
-          val > 0 && _this4.$nextTick(_this4.onScroll);
+          _this4.restoreScroll();
+          val > 0 && _this4.onScroll();
         });
         this.unWatchs = [unWatch1, unWatch2];
       },
@@ -1566,6 +1564,12 @@
             }
           });
         });
+      },
+      // 恢复滚动位置（仅支持表格内部滚动）
+      restoreScroll: function restoreScroll() {
+        if (!this.scroller || !this.isInnerScroll) return;
+        this.scroller.scrollLeft = this.keepScroll ? this.scrollPos[1] : 0;
+        this.scroller.scrollTop = this.keepScroll ? this.scrollPos[0] : 0;
       },
       // 【外部调用】更新
       update: function update() {
@@ -1897,26 +1901,6 @@
         if (!this.elTable) return;
         this.fixedMap = null;
         this.elTable.$refs.tableHeader.$forceUpdate();
-      },
-      // 恢复滚动位置（仅支持表格内部滚动）
-      restoreScroll: function restoreScroll() {
-        var _this17 = this;
-        if (!this.scroller || !this.isInnerScroll) return;
-        var restore = function restore() {
-          _this17.scroller.scrollLeft = _this17.keepScroll ? _this17.scrollPos[1] : 0;
-          _this17.scroller.scrollTop = _this17.keepScroll ? _this17.scrollPos[0] : 0;
-        };
-        if (!this.elTable.fit) {
-          restore();
-        } else {
-          // 需要表格恢复固定高度后才能进行滚动
-          var unWatch = this.$watch(function () {
-            return _this17.elTable.layout.bodyHeight;
-          }, function () {
-            unWatch();
-            restore();
-          });
-        }
       }
     },
     watch: {
@@ -1946,14 +1930,15 @@
       }
     },
     created: function created() {
-      var _this18 = this;
+      var _this17 = this;
       this.$nextTick(function () {
-        _this18.initData();
+        _this17.initData();
       });
     },
     activated: function activated() {
+      var _this$elTable;
       this.isDeactivated = false;
-      this.restoreScroll();
+      ((_this$elTable = this.elTable) === null || _this$elTable === void 0 ? void 0 : _this$elTable.fit) === false && this.restoreScroll();
     },
     deactivated: function deactivated() {
       this.isDeactivated = true;
@@ -2113,7 +2098,7 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-3739f649_0", {
+    inject("data-v-5298ae9c_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2124,8 +2109,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-3739f649_1", {
-      source: ".is-expanding[data-v-3739f649] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-3739f649] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-5298ae9c_1", {
+      source: ".is-expanding[data-v-5298ae9c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-5298ae9c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2138,7 +2123,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-3739f649";
+  var __vue_scope_id__$1 = "data-v-5298ae9c";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */

@@ -67,6 +67,7 @@ export default {
 | rowSpanKey | 当使用了el-table的合并行，必须设置rowSpanKey函数并返回每组合并行中共用的key值（>=1.0.13版本支持） | Function(row, index) | — | - |
 | selectionSort | 支持多选可自定义选中数据的排序规则，默认为 `true` 按选择顺序排，传入 `false` 为按列表中的顺序排，传入函数为自定义排序规则 （>=1.0.27版本支持） | Boolean、Function | — | - |
 | getElTable | 获取 `<el-table>` 组件，默认获取 `<virtual-scroll>` 的第一个子组件；如果 `<el-table>` 组件经过用户封装，那么需要使用该方法返回正确的 `<el-table>` 组件【可通过 ref、$children 返回正确的值】（>=1.0.29版本支持） | Function | — | - |
+| keepScroll | 当使用v-show，keep-alive 切换表格显示时，会保持原来滚动位置（>=1.1.1版本支持） | boolean | — | true |
 
 
 ### Methods
@@ -386,3 +387,9 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * npm 1.1.0 版本发包
 
+
+### 2024-1-11
+
+* keep-alive 保持滚动位置（优化）
+
+* npm 1.1.1 版本发包

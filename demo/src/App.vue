@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <layout>
-      <KeepAlive :includes="['Keepalive']">
+      <KeepAlive :include="['Keepalive']">
         <router-view></router-view>
       </KeepAlive>
     </layout>

@@ -57,7 +57,8 @@
     "rules": {
       "no-debugger": "off",
       "no-console": "off",
-      "vue/multi-word-component-names": "off"
+      "vue/multi-word-component-names": "off",
+      "vue/no-unused-components": "off"
     }
   },
   "browserslist": [

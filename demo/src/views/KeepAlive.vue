@@ -15,7 +15,7 @@
         :data="tableData"
         border
         row-key="id"
-        height="500px"
+        max-height="500px"
         style="width: 100%">
         <el-table-column label="id" prop="id"></el-table-column>
         <el-table-column label="内容" width="260" prop="text"></el-table-column>

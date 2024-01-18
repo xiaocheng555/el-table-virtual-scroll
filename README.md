@@ -400,3 +400,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 兼容设置 `virtualized=false`，keep-alive 保持滚动位置
 
 * npm 1.1.2 版本发包
+
+
+### 2024-1-19
+
+* 修复通过 `babel-plugin-component` 按需引入 `element-ui` 时，会导致 `<virtual-column>` 组件报重复key
+
+* npm 1.1.3 版本发包

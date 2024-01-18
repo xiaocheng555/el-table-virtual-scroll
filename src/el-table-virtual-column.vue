@@ -73,19 +73,8 @@
 </template>
 
 <script>
-import {
-  TableColumn as ElTableColumn,
-  Checkbox as ElCheckbox,
-  Radio as ElRadio
-} from 'element-ui'
-
 export default {
   name: 'el-table-virtual-column',
-  components: {
-    ElTableColumn,
-    ElCheckbox,
-    ElRadio
-  },
   inject: ['virtualScroll'],
   props: {
     load: {
@@ -376,6 +365,13 @@ export default {
     }
   },
   beforeCreate () {
+    // 当全局有引入element-ui时，就不用局部再引入了（__VirtualColumnRequire__ 留个开关）
+    if (window.__VirtualColumnRequire__ || !this.$ELEMENT) {
+      this.$options.components.ElTableColumn = require('element-ui').TableColumn
+      this.$options.components.ElCheckbox = require('element-ui').Checkbox
+      this.$options.components.ElRadio = require('element-ui').Radio
+    }
+
     const { type } = this.$attrs
     if (['index', 'selection', 'radio', 'tree'].includes(type)) {
       this.$attrs.type = 'v-' + type

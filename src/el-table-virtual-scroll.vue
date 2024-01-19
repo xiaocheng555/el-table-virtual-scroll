@@ -245,6 +245,15 @@ export default {
       setTimeout(() => {
         this.onScroll()
       }, 100)
+
+      // 防止el-table绑定key时，重新渲染表格但没有重新初始化<virtual-scroll>组件
+      this.elTable.$on('hook:beforeDestory', () => {
+        this.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁')
+        this.destory()
+        this.$nextTick(() => {
+          this.initData()
+        })
+      })
     },
 
     // 滚轮滚动速度减缓，减少快速滚动白屏
@@ -289,6 +298,7 @@ export default {
     // 处理滚动事件
     handleScroll (shouldUpdate = true) {
       if (this.disabled) return
+      if (!this.scroller) return
 
       // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
       // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
@@ -663,6 +673,9 @@ export default {
       if (this.unWatchs) {
         this.unWatchs.forEach(unWatch => unWatch())
       }
+      this.elTable = null
+      this.scroller = null
+      this.unWatchs = []
     },
 
     // 【VirtualColumn调用】更新数据

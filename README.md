@@ -407,3 +407,12 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复通过 `babel-plugin-component` 按需引入 `element-ui` 时，会导致 `<virtual-column>` 组件报重复key
 
 * npm 1.1.3 版本发包
+
+
+### 2024-1-25
+
+* 修复表格隐藏时向列表头部插入表格数据，显示时不能保持滚动条位置
+
+* 修复自定义固定列如果没有横向滚动条时，仍然显示固定样式
+
+* npm 1.1.4 版本发包

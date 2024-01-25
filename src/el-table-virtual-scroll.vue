@@ -307,7 +307,8 @@ export default {
       // 如果组件失活，则不再执行handleScroll；否则外部容器滚动情况下记录的scrollTop会是0
       if (this.isDeactivated) return
       // 记录scrollPos
-      if (this.isInnerScroll) {
+      // 需要判断表格没有隐藏（修复表格隐藏状态下更新绑定数组长度，显示后滚动条位置异常 #67）
+      if (this.isInnerScroll && this.elTable.layout.bodyHeight) {
         this.scrollPos[0] = this.scroller.scrollTop
         this.scrollPos[1] = this.scroller.scrollLeft
       }
@@ -559,7 +560,8 @@ export default {
     observeElTable () {
       // 监听滚动位置
       const unWatch1 = this.$watch(() => this.elTable.scrollPosition, (val) => {
-        this.scrollPosition = val
+        // 修复自定义固定列 所有列宽总宽度小于表格宽度时 固定列样式有问题 #65
+        this.scrollPosition = this.elTable.layout.scrollX ? val : 'none'
       }, { immediate: true })
 
       // 监听表格滚动高度变化（切换v-show时更新）

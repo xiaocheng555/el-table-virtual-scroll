@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('normalize-wheel')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'normalize-wheel'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["el-table-virtual-scroll"] = {}, global.normalizeWheel));
-})(this, (function (exports, normalizeWheel) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('normalize-wheel'), require('element-ui')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'normalize-wheel', 'element-ui'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["el-table-virtual-scroll"] = {}, global.normalizeWheel, global.elementUi));
+})(this, (function (exports, normalizeWheel, elementUi) { 'use strict';
 
   function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -1216,6 +1216,15 @@
         setTimeout(function () {
           _this.onScroll();
         }, 100);
+
+        // 防止el-table绑定key时，重新渲染表格但没有重新初始化<virtual-scroll>组件
+        this.elTable.$on('hook:beforeDestory', function () {
+          _this.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁');
+          _this.destory();
+          _this.$nextTick(function () {
+            _this.initData();
+          });
+        });
       },
       // 滚轮滚动速度减缓，减少快速滚动白屏
       // slowNum - 减速的值，值越大，滚动越慢
@@ -1257,6 +1266,7 @@
       handleScroll: function handleScroll() {
         var shouldUpdate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
         if (this.disabled) return;
+        if (!this.scroller) return;
 
         // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
         // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
@@ -1265,7 +1275,8 @@
         // 如果组件失活，则不再执行handleScroll；否则外部容器滚动情况下记录的scrollTop会是0
         if (this.isDeactivated) return;
         // 记录scrollPos
-        if (this.isInnerScroll) {
+        // 需要判断表格没有隐藏（修复表格隐藏状态下更新绑定数组长度，显示后滚动条位置异常 #67）
+        if (this.isInnerScroll && this.elTable.layout.bodyHeight) {
           this.scrollPos[0] = this.scroller.scrollTop;
           this.scrollPos[1] = this.scroller.scrollLeft;
         }
@@ -1507,7 +1518,8 @@
         var unWatch1 = this.$watch(function () {
           return _this4.elTable.scrollPosition;
         }, function (val) {
-          _this4.scrollPosition = val;
+          // 修复自定义固定列 所有列宽总宽度小于表格宽度时 固定列样式有问题 #65
+          _this4.scrollPosition = _this4.elTable.layout.scrollX ? val : 'none';
         }, {
           immediate: true
         });
@@ -1621,6 +1633,9 @@
             return unWatch();
           });
         }
+        this.elTable = null;
+        this.scroller = null;
+        this.unWatchs = [];
       },
       // 【VirtualColumn调用】更新数据
       updateData: function updateData() {
@@ -2099,7 +2114,7 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-ac4fb61a_0", {
+    inject("data-v-ef78f0d0_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2110,8 +2125,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-ac4fb61a_1", {
-      source: ".is-expanding[data-v-ac4fb61a] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-ac4fb61a] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-ef78f0d0_1", {
+      source: ".is-expanding[data-v-ef78f0d0] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-ef78f0d0] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2124,7 +2139,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-ac4fb61a";
+  var __vue_scope_id__$1 = "data-v-ef78f0d0";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */
@@ -2137,81 +2152,6 @@
     render: __vue_render__$1,
     staticRenderFns: __vue_staticRenderFns__$1
   }, __vue_inject_styles__$1, __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, false, createInjector, undefined, undefined);
-
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
 
   var script = {
     name: 'el-table-virtual-column',
@@ -2585,9 +2525,9 @@
     beforeCreate: function beforeCreate() {
       // 当全局有引入element-ui时，就不用局部再引入了（__VirtualColumnRequire__ 留个开关）
       if (window.__VirtualColumnRequire__ || !this.$ELEMENT) {
-        this.$options.components.ElTableColumn = require('element-ui').TableColumn;
-        this.$options.components.ElCheckbox = require('element-ui').Checkbox;
-        this.$options.components.ElRadio = require('element-ui').Radio;
+        this.$options.components.ElTableColumn = elementUi.TableColumn;
+        this.$options.components.ElCheckbox = elementUi.Checkbox;
+        this.$options.components.ElRadio = elementUi.Radio;
       }
       var type = this.$attrs.type;
       if (['index', 'selection', 'radio', 'tree'].includes(type)) {
@@ -2698,15 +2638,15 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-105377cc_0", {
-      source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n",
+    inject("data-v-26611416_0", {
+      source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-column.vue"],
         "names": [],
-        "mappings": "AAAA;;EAEE,2BAA2B;EAC3B,qBAAqB;EACrB,gBAAgB;AAClB;AACA;EACE,gBAAgB;AAClB;AACA;;EAEE,kBAAkB;AACpB;AACA;EACE,gBAAgB;AAClB;AACA;;EAEE,iBAAiB;AACnB;AACA;;EAEE,4BAA4B;AAC9B;AACA;;EAEE,WAAW;EACX,kBAAkB;EAClB,QAAQ;EACR,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,oBAAoB;AACtB;AACA;EACE,YAAY;EACZ,uDAAuD;AACzD;AACA;EACE,WAAW;EACX,wDAAwD;AAC1D",
+        "mappings": "AAAA;;EAEE,2BAA2B;EAC3B,qBAAqB;EACrB,gBAAgB;AAClB;AACA;EACE,gBAAgB;AAClB;AACA;;EAEE,kBAAkB;AACpB;AACA;EACE,gBAAgB;AAClB;AACA;;EAEE,iBAAiB;AACnB;AACA;;EAEE,4BAA4B;AAC9B;AACA;;EAEE,WAAW;EACX,kBAAkB;EAClB,QAAQ;EACR,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,oBAAoB;AACtB;AACA;EACE,YAAY;EACZ,uDAAuD;AACzD;AACA;EACE,WAAW;EACX,wDAAwD;AAC1D;AACA;;EAEE,aAAa;AACf",
         "file": "el-table-virtual-column.vue",
-        "sourcesContent": [".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n"]
+        "sourcesContent": [".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n"]
       },
       media: undefined
     });

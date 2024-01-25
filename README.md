@@ -416,3 +416,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复自定义固定列如果没有横向滚动条时，仍然显示固定样式
 
 * npm 1.1.4 版本发包
+
+
+### 2024-1-25
+
+* 如果全局没有引入 ElTableColumn，VirtualColumn 按需引入 ElTableColumn 组件
+
+* npm 1.1.5 版本发包

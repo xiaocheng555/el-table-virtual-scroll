@@ -2155,6 +2155,10 @@
 
   var script = {
     name: 'el-table-virtual-column',
+    components: {
+      ElCheckbox: elementUi.Checkbox,
+      ElRadio: elementUi.Radio
+    },
     inject: ['virtualScroll'],
     props: {
       load: {
@@ -2523,11 +2527,10 @@
       }
     },
     beforeCreate: function beforeCreate() {
-      // 当全局有引入element-ui时，就不用局部再引入了（__VirtualColumnRequire__ 留个开关）
-      if (window.__VirtualColumnRequire__ || !this.$ELEMENT) {
+      var globalComponents = this.$root.$options.components;
+      // 当全局有引入ElTableColumn，就不用局部再引入了(修复Duplicate keys detected: 'el-table_1_column_1'. This may cause an update error. #63)
+      if (!globalComponents.ElTableColumn) {
         this.$options.components.ElTableColumn = elementUi.TableColumn;
-        this.$options.components.ElCheckbox = elementUi.Checkbox;
-        this.$options.components.ElRadio = elementUi.Radio;
       }
       var type = this.$attrs.type;
       if (['index', 'selection', 'radio', 'tree'].includes(type)) {
@@ -2638,7 +2641,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-26611416_0", {
+    inject("data-v-2e84fd99_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
       map: {
         "version": 3,

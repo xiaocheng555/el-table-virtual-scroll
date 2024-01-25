@@ -81,6 +81,10 @@ import {
 
 export default {
   name: 'el-table-virtual-column',
+  components: {
+    ElCheckbox: Checkbox,
+    ElRadio: Radio
+  },
   inject: ['virtualScroll'],
   props: {
     load: {
@@ -371,11 +375,10 @@ export default {
     }
   },
   beforeCreate () {
-    // 当全局有引入element-ui时，就不用局部再引入了（__VirtualColumnRequire__ 留个开关）
-    if (window.__VirtualColumnRequire__ || !this.$ELEMENT) {
+    const globalComponents = this.$root.$options.components
+    // 当全局有引入ElTableColumn，就不用局部再引入了(修复Duplicate keys detected: 'el-table_1_column_1'. This may cause an update error. #63)
+    if (!globalComponents.ElTableColumn) {
       this.$options.components.ElTableColumn = TableColumn
-      this.$options.components.ElCheckbox = Checkbox
-      this.$options.components.ElRadio = Radio
     }
 
     const { type } = this.$attrs

@@ -62,7 +62,13 @@
         </span>
         <!-- 有formatter参数的情况 -->
         <template v-else-if="scope.column.formatter">
-          {{scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)}}
+          <!-- formatter结果为VNode的情况 -->
+          <el-table-virtual-column-formatter
+            v-if="isVNode(getFormatterResult(scope))"
+            :v-node="getFormatterResult(scope)"
+          />
+          <!-- formatter结果为String的情况 -->
+          <template v-else>{{ getFormatterResult(scope) }}</template>
         </template>
         <template v-else>
           {{scope.row[scope.column.property]}}
@@ -78,12 +84,14 @@ import {
   Checkbox,
   Radio
 } from 'element-ui'
+import ElTableVirtualColumnFormatter from './el-table-virtual-column-formatter.vue'
 
 export default {
   name: 'el-table-virtual-column',
   components: {
     ElCheckbox: Checkbox,
-    ElRadio: Radio
+    ElRadio: Radio,
+    ElTableVirtualColumnFormatter
   },
   inject: ['virtualScroll'],
   props: {
@@ -103,8 +111,8 @@ export default {
       isCheckedAll: false, // 全选
       isCheckedImn: false, // 控制半选样式
       isTree: false, // 树结构
-      isNested: false // 是否列嵌套
-
+      isNested: false, // 是否列嵌套
+      scopeWeakMap: new WeakMap() // 用于缓存formatter的计算结果
     }
   },
   computed: {
@@ -371,6 +379,21 @@ export default {
         levelMap[i].forEach(row => {
           this.onTreeNodeExpand(row, false)
         })
+      }
+    },
+    // 判断内容是否为VNode
+    isVNode (vNode) {
+      return typeof vNode === 'object' && vNode.constructor?.name === 'VNode'
+    },
+    // 获取formatter结果，相同的scope使用缓存的结果，避免重复调用formatter函数
+    getFormatterResult (scope) {
+      // 尝试获取缓存的formatter结果
+      if (this.scopeWeakMap.has(scope)) return this.scopeWeakMap.get(scope)
+      else {
+        // 生成formatter结果并缓存
+        const formatterResult = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)
+        this.scopeWeakMap.set(scope, formatterResult)
+        return formatterResult
       }
     }
   },

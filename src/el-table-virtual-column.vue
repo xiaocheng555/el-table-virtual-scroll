@@ -111,8 +111,7 @@ export default {
       isCheckedAll: false, // 全选
       isCheckedImn: false, // 控制半选样式
       isTree: false, // 树结构
-      isNested: false, // 是否列嵌套
-      scopeWeakMap: new WeakMap() // 用于缓存formatter的计算结果
+      isNested: false // 是否列嵌套
     }
   },
   computed: {
@@ -388,13 +387,17 @@ export default {
     // 获取formatter结果，相同的scope使用缓存的结果，避免重复调用formatter函数
     getFormatterResult (scope) {
       // 尝试获取缓存的formatter结果
-      if (this.scopeWeakMap.has(scope)) return this.scopeWeakMap.get(scope)
-      else {
-        // 生成formatter结果并缓存
-        const formatterResult = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)
-        this.scopeWeakMap.set(scope, formatterResult)
-        return formatterResult
+      if (typeof WeakMap !== 'undefined') {
+        if (!this.scopeWeakMap) this.scopeWeakMap = new WeakMap()
+        if (this.scopeWeakMap.has(scope)) {
+          return this.scopeWeakMap.get(scope)
+        }
       }
+
+      // 生成formatter结果并缓存
+      const formatterResult = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)
+      this.scopeWeakMap && this.scopeWeakMap.set(scope, formatterResult)
+      return formatterResult
     }
   },
   beforeCreate () {

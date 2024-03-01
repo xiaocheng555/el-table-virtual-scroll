@@ -15,7 +15,7 @@
     "@babel/polyfill": "^7.12.1",
     "core-js": "^3.8.3",
     "el-table-infinite-scroll": "^2.0.0",
-    "el-table-virtual-scroll": "^1.0.25",
+    "el-table-virtual-scroll": "^1.1.6",
     "element-ui": "^2.15.14",
     "highlight.js": "^11.7.0",
     "install": "^0.13.0",

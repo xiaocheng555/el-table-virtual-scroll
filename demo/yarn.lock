@@ -2772,10 +2772,12 @@ el-table-infinite-scroll@^2.0.0:
     element-ui "^2.12.0"
     vue "^2.6.14"
 
-el-table-virtual-scroll@^1.0.25:
-  version "1.0.26"
-  resolved "https://registry.yarnpkg.com/el-table-virtual-scroll/-/el-table-virtual-scroll-1.0.26.tgz#a979689e5d1b10927dca813546bd8f0ed87dc2e1"
-  integrity sha512-JHiQWOwybOQi6LA/JOBV2ishcDF9Cwx+SJEF/ke/zK/x22OesJBd1b2+LrXBEsd4xjzse/b8hwmcTTKv4E1Ctg==
+el-table-virtual-scroll@^1.1.6:
+  version "1.1.6"
+  resolved "https://registry.npmmirror.com/el-table-virtual-scroll/-/el-table-virtual-scroll-1.1.6.tgz#74c39f121057ee2c342aba8a473add4f4b10837f"
+  integrity sha512-YWMueff8dIGqOANdyEzZSRS//xBe2+dcwO/TkhkvMpNydtm1vAwD6ytm5H3D71YLyElJ5s3P/4rnAljoXYqTjw==
+  dependencies:
+    normalize-wheel "^1.0.1"
 
 electron-to-chromium@^1.4.202:
   version "1.4.248"

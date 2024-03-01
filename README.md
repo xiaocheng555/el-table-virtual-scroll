@@ -423,3 +423,12 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 如果全局没有引入 ElTableColumn，VirtualColumn 按需引入 ElTableColumn 组件
 
 * npm 1.1.5 版本发包
+
+
+### 2024-3-1
+
+* formatter参数支持VNode作为返回值（适配jsx写法）
+
+* 修复二次封装的el-table时，cellFixedStyle 获取eltable报错
+
+* npm 1.1.6 版本发包

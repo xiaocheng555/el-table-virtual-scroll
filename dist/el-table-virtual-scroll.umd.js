@@ -336,6 +336,15 @@
       }
     }, e;
   }
+  function _typeof(o) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+      return typeof o;
+    } : function (o) {
+      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+    }, _typeof(o);
+  }
   function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
     try {
       var info = gen[key](arg);
@@ -1053,7 +1062,7 @@
   var TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper'];
   var checkOrder = 0; // 多选：记录多选选项改变的顺序
 
-  var script$1 = {
+  var script$2 = {
     name: 'el-table-virtual-scroll',
     props: {
       // 总数据
@@ -1849,7 +1858,7 @@
         var _this16 = this;
         var column = _ref2.column;
         var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-        var elTable = this.$children[0];
+        var elTable = this.getElTable();
         if (!elTable) return;
         // 右边固定列头部需要加上滚动条宽度-gutterWidth
         var _elTable$layout = elTable.layout,
@@ -2093,7 +2102,7 @@
   }
 
   /* script */
-  var __vue_script__$1 = script$1;
+  var __vue_script__$2 = script$2;
 
   /* template */
   var __vue_render__$1 = function __vue_render__() {
@@ -2112,9 +2121,9 @@
   __vue_render__$1._withStripped = true;
 
   /* style */
-  var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
+  var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-ef78f0d0_0", {
+    inject("data-v-7bf6c1cb_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2125,8 +2134,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-ef78f0d0_1", {
-      source: ".is-expanding[data-v-ef78f0d0] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-ef78f0d0] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-7bf6c1cb_1", {
+      source: ".is-expanding[data-v-7bf6c1cb] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-7bf6c1cb] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2139,25 +2148,60 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-ef78f0d0";
+  var __vue_scope_id__$2 = "data-v-7bf6c1cb";
   /* module identifier */
-  var __vue_module_identifier__$1 = undefined;
+  var __vue_module_identifier__$2 = undefined;
   /* functional template */
-  var __vue_is_functional_template__$1 = false;
+  var __vue_is_functional_template__$2 = false;
   /* style inject SSR */
 
   /* style inject shadow dom */
 
-  var __vue_component__$1 = /*#__PURE__*/normalizeComponent({
+  var __vue_component__$2 = /*#__PURE__*/normalizeComponent({
     render: __vue_render__$1,
     staticRenderFns: __vue_staticRenderFns__$1
-  }, __vue_inject_styles__$1, __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, false, createInjector, undefined, undefined);
+  }, __vue_inject_styles__$2, __vue_script__$2, __vue_scope_id__$2, __vue_is_functional_template__$2, __vue_module_identifier__$2, false, createInjector, undefined, undefined);
+
+  // 此组件仅用于显示VNode
+  var script$1 = {
+    name: 'el-table-virtual-column-formatter',
+    props: {
+      vNode: {
+        type: Object
+      }
+    },
+    render: function render() {
+      return this.vNode;
+    }
+  };
+
+  /* script */
+  var __vue_script__$1 = script$1;
+
+  /* template */
+
+  /* style */
+  var __vue_inject_styles__$1 = undefined;
+  /* scoped */
+  var __vue_scope_id__$1 = undefined;
+  /* module identifier */
+  var __vue_module_identifier__$1 = undefined;
+  /* functional template */
+  var __vue_is_functional_template__$1 = undefined;
+  /* style inject */
+
+  /* style inject SSR */
+
+  /* style inject shadow dom */
+
+  var __vue_component__$1 = /*#__PURE__*/normalizeComponent({}, __vue_inject_styles__$1, __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, false, undefined, undefined, undefined);
 
   var script = {
     name: 'el-table-virtual-column',
     components: {
       ElCheckbox: elementUi.Checkbox,
-      ElRadio: elementUi.Radio
+      ElRadio: elementUi.Radio,
+      ElTableVirtualColumnFormatter: __vue_component__$1
     },
     inject: ['virtualScroll'],
     props: {
@@ -2524,6 +2568,26 @@
             _this8.onTreeNodeExpand(row, false);
           });
         }
+      },
+      // 判断内容是否为VNode
+      isVNode: function isVNode(vNode) {
+        var _vNode$constructor;
+        return _typeof(vNode) === 'object' && ((_vNode$constructor = vNode.constructor) === null || _vNode$constructor === void 0 ? void 0 : _vNode$constructor.name) === 'VNode';
+      },
+      // 获取formatter结果，相同的scope使用缓存的结果，避免重复调用formatter函数
+      getFormatterResult: function getFormatterResult(scope) {
+        // 尝试获取缓存的formatter结果
+        if (typeof WeakMap !== 'undefined') {
+          if (!this.scopeWeakMap) this.scopeWeakMap = new WeakMap();
+          if (this.scopeWeakMap.has(scope)) {
+            return this.scopeWeakMap.get(scope);
+          }
+        }
+
+        // 生成formatter结果并缓存
+        var formatterResult = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index);
+        this.scopeWeakMap && this.scopeWeakMap.set(scope, formatterResult);
+        return formatterResult;
       }
     },
     beforeCreate: function beforeCreate() {
@@ -2630,7 +2694,11 @@
                 return _vm.onRadioChange(scope.row);
               }
             }
-          }, [_c("span")]) : scope.column.type === "v-index" ? _c("span", [_vm._v("\n        " + _vm._s(_vm.getIndex(scope)) + "\n      ")]) : scope.column.formatter ? [_vm._v("\n        " + _vm._s(scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)) + "\n      ")] : [_vm._v("\n        " + _vm._s(scope.row[scope.column.property]) + "\n      ")]]];
+          }, [_c("span")]) : scope.column.type === "v-index" ? _c("span", [_vm._v("\n        " + _vm._s(_vm.getIndex(scope)) + "\n      ")]) : scope.column.formatter ? [_vm.isVNode(_vm.getFormatterResult(scope)) ? _c("el-table-virtual-column-formatter", {
+            attrs: {
+              "v-node": _vm.getFormatterResult(scope)
+            }
+          }) : [_vm._v(_vm._s(_vm.getFormatterResult(scope)))]] : [_vm._v("\n        " + _vm._s(scope.row[scope.column.property]) + "\n      ")]]];
         }
       }], null, true)
     }, "el-table-column", _vm.$attrs, false), _vm.$listeners), [_vm._v(" "), _vm.isNested ? [_vm._t("default")] : _vm._e()], 2);
@@ -2641,7 +2709,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-2e84fd99_0", {
+    inject("data-v-2a444a55_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
       map: {
         "version": 3,
@@ -2670,8 +2738,8 @@
   }, __vue_inject_styles__, __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, false, createInjector, undefined, undefined);
 
   exports.VirtualColumn = __vue_component__;
-  exports.VirtualScroll = __vue_component__$1;
-  exports["default"] = __vue_component__$1;
+  exports.VirtualScroll = __vue_component__$2;
+  exports["default"] = __vue_component__$2;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 

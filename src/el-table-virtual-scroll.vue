@@ -880,7 +880,7 @@ export default {
 
     // 【自定义固定列】设置固定左右样式
     cellFixedStyle ({ column }, isHeader = false) {
-      const elTable = this.$children[0]
+      const elTable = this.getElTable()
       if (!elTable) return
       // 右边固定列头部需要加上滚动条宽度-gutterWidth
       const { gutterWidth: _gutterWidth, scrollY } = elTable.layout

@@ -119,8 +119,10 @@ export default {
       // 使用自定义列，改变列宽度后，需要手动更新table头部
       this.$refs.virtualScroll.doHeaderLayout()
     },
-    formatter(row, column, value) {
-      return `姓名：${value}`
+    formatter(row, column, value, index) {
+      const text = `姓名：${value}`
+      // 需要同时支持string和VNode
+      return index % 2 === 0 ? text : this.$createElement('span', text)
     }
   },
   watch: {

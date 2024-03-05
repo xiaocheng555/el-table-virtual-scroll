@@ -432,3 +432,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复二次封装的el-table时，cellFixedStyle 获取eltable报错
 
 * npm 1.1.6 版本发包
+
+
+### 2024-3-5
+
+* 优化virtual-column组件的formatter实现，避免低版本浏览器调用两次formatter
+
+* npm 1.1.7 版本发包

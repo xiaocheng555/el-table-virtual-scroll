@@ -2196,6 +2196,12 @@
 
   var __vue_component__$1 = /*#__PURE__*/normalizeComponent({}, __vue_inject_styles__$1, __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, false, undefined, undefined, undefined);
 
+  // 用于获取formatter结果的临时对象，不可挂载到vue实例中，否则会导致循环更新的问题
+  var formatterTempObj = {
+    scope: null,
+    // 缓存键 当前scope参数
+    result: null // 缓存值 formatter的调用结果
+  };
   var script = {
     name: 'el-table-virtual-column',
     components: {
@@ -2575,19 +2581,19 @@
         return _typeof(vNode) === 'object' && ((_vNode$constructor = vNode.constructor) === null || _vNode$constructor === void 0 ? void 0 : _vNode$constructor.name) === 'VNode';
       },
       // 获取formatter结果，相同的scope使用缓存的结果，避免重复调用formatter函数
+      // 当前与formatter有关的template的写法会使同一个scope参数被formatter连续使用两次
+      // 后续的formatter调用参数都是一个全新的scope对象
+      // 因此，只需判断当前scope与上一个scope是否相同即可决定是否需要使用缓存
       getFormatterResult: function getFormatterResult(scope) {
-        // 尝试获取缓存的formatter结果
-        if (typeof WeakMap !== 'undefined') {
-          if (!this.scopeWeakMap) this.scopeWeakMap = new WeakMap();
-          if (this.scopeWeakMap.has(scope)) {
-            return this.scopeWeakMap.get(scope);
-          }
+        if (formatterTempObj.scope === scope) {
+          // 获取缓存的formatter调用结果
+          return formatterTempObj.result;
+        } else {
+          // scope不匹配，更新缓存键scope与值result
+          formatterTempObj.scope = scope;
+          formatterTempObj.result = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index);
+          return formatterTempObj.result;
         }
-
-        // 生成formatter结果并缓存
-        var formatterResult = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index);
-        this.scopeWeakMap && this.scopeWeakMap.set(scope, formatterResult);
-        return formatterResult;
       }
     },
     beforeCreate: function beforeCreate() {
@@ -2613,6 +2619,9 @@
     },
     beforeDestroy: function beforeDestroy() {
       this.virtualScroll.removeColumn(this);
+      // 清除formatter相关的缓存
+      formatterTempObj.scope = null;
+      formatterTempObj.result = null;
     }
   };
 
@@ -2709,7 +2718,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-2a444a55_0", {
+    inject("data-v-4f9ff2ec_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
       map: {
         "version": 3,

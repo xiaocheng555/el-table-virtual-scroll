@@ -86,6 +86,12 @@ import {
 } from 'element-ui'
 import ElTableVirtualColumnFormatter from './el-table-virtual-column-formatter.vue'
 
+// 用于获取formatter结果的临时对象，不可挂载到vue实例中，否则会导致循环更新的问题
+const formatterTempObj = {
+  scope: null, // 缓存键 当前scope参数
+  result: null // 缓存值 formatter的调用结果
+}
+
 export default {
   name: 'el-table-virtual-column',
   components: {
@@ -385,19 +391,19 @@ export default {
       return typeof vNode === 'object' && vNode.constructor?.name === 'VNode'
     },
     // 获取formatter结果，相同的scope使用缓存的结果，避免重复调用formatter函数
+    // 当前与formatter有关的template的写法会使同一个scope参数被formatter连续使用两次
+    // 后续的formatter调用参数都是一个全新的scope对象
+    // 因此，只需判断当前scope与上一个scope是否相同即可决定是否需要使用缓存
     getFormatterResult (scope) {
-      // 尝试获取缓存的formatter结果
-      if (typeof WeakMap !== 'undefined') {
-        if (!this.scopeWeakMap) this.scopeWeakMap = new WeakMap()
-        if (this.scopeWeakMap.has(scope)) {
-          return this.scopeWeakMap.get(scope)
-        }
+      if (formatterTempObj.scope === scope) {
+        // 获取缓存的formatter调用结果
+        return formatterTempObj.result
+      } else {
+        // scope不匹配，更新缓存键scope与值result
+        formatterTempObj.scope = scope
+        formatterTempObj.result = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)
+        return formatterTempObj.result
       }
-
-      // 生成formatter结果并缓存
-      const formatterResult = scope.column.formatter(scope.row, scope.column, scope.row[scope.column.property], scope.$index)
-      this.scopeWeakMap && this.scopeWeakMap.set(scope, formatterResult)
-      return formatterResult
     }
   },
   beforeCreate () {
@@ -425,6 +431,9 @@ export default {
   },
   beforeDestroy () {
     this.virtualScroll.removeColumn(this)
+    // 清除formatter相关的缓存
+    formatterTempObj.scope = null
+    formatterTempObj.result = null
   }
 }
 </script>

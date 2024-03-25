@@ -1689,8 +1689,27 @@ var script$2 = {
     },
     // 【多选】兼容表格toggleRowSelection方法
     toggleRowSelection: function toggleRowSelection(row, selected) {
+      if (Array.isArray(row)) {
+        this.toggleRowsSelection(row, selected);
+        return;
+      }
       var val = typeof selected === 'boolean' ? selected : !row.$v_checked;
       this.checkRow(row, val);
+      this.columnVms.forEach(function (vm) {
+        return vm.syncCheckStatus();
+      });
+    },
+    // 【多选】表格切换多个row选中状态
+    toggleRowsSelection: function toggleRowsSelection(rows, selected) {
+      var _this10 = this;
+      var removedRows = [];
+      rows.forEach(function (row) {
+        var val = typeof selected === 'boolean' ? selected : !row.$v_checked;
+        !val && removedRows.push(row);
+        _this10.$set(row, '$v_checked', val);
+        _this10.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined);
+      });
+      this.emitSelectionChange(removedRows);
       this.columnVms.forEach(function (vm) {
         return vm.syncCheckStatus();
       });
@@ -1706,7 +1725,7 @@ var script$2 = {
     },
     // 【多选】更新多选的值
     updateSelectionData: function updateSelectionData(data, oldData) {
-      var _this10 = this;
+      var _this11 = this;
       this.syncSelectionStatus();
       if (data !== oldData) {
         this.oldSelection = [];
@@ -1720,12 +1739,12 @@ var script$2 = {
       this.sortSelection(selection);
       // 新的选中项key map
       var selectionKeyMap = selection.reduce(function (map, dataItem) {
-        map[dataItem[_this10.keyProp]] = true;
+        map[dataItem[_this11.keyProp]] = true;
         return map;
       }, {});
       // 移除的项
       var removedRows = this.oldSelection.reduce(function (rows, row) {
-        if (!(row[_this10.keyProp] in selectionKeyMap)) rows.push(row);
+        if (!(row[_this11.keyProp] in selectionKeyMap)) rows.push(row);
         return rows;
       }, []);
       // 手动删除选中项、新旧项不一致（正常不会发生），触发selection-change事件
@@ -1736,11 +1755,11 @@ var script$2 = {
     },
     // 【多选】多选排序
     sortSelection: function sortSelection(selection) {
-      var _this11 = this;
+      var _this12 = this;
       if (!this.selectionSort) return;
       if (typeof this.selectionSort === 'function') {
         selection.sort(function (a, b) {
-          return _this11.selectionSort(a, b);
+          return _this12.selectionSort(a, b);
         });
       } else {
         selection.sort(function (a, b) {
@@ -1764,26 +1783,26 @@ var script$2 = {
     },
     // 【单选高亮】兼容行高亮
     hackRowHighlight: function hackRowHighlight() {
-      var _this12 = this;
+      var _this13 = this;
       // 兼容el-table的setCurrentRow：重写setCurrentRow方法
       if (this.elTable.__overviewSetCurrentRow) {
         this.elTable.__overviewSetCurrentRow = true;
         var setCurrentRow = this.elTable.setCurrentRow.bind(this.elTable);
         this.elTable.setCurrentRow = function (row) {
-          _this12.elTable.store.states.currentRow = _this12.highlightRow; // 同步表格行高亮的值
-          if (_this12.highlightRow !== row) _this12.highlightRow = row; // 同步highlightRow的值
+          _this13.elTable.store.states.currentRow = _this13.highlightRow; // 同步表格行高亮的值
+          if (_this13.highlightRow !== row) _this13.highlightRow = row; // 同步highlightRow的值
           setCurrentRow(row); // 执行原方法
         };
       }
       // 兼容el-table的currentRowKey属性
       var unWatch = this.$watch(function () {
-        return _this12.elTable.currentRowKey;
+        return _this13.elTable.currentRowKey;
       }, function (val) {
-        if (_this12.elTable.rowKey) {
-          var targetRow = _this12.data.find(function (row) {
-            return val === row[_this12.elTable.rowKey];
+        if (_this13.elTable.rowKey) {
+          var targetRow = _this13.data.find(function (row) {
+            return val === row[_this13.elTable.rowKey];
           });
-          _this12.highlightRow = targetRow;
+          _this13.highlightRow = targetRow;
         }
       }, {
         immediate: true
@@ -1792,45 +1811,45 @@ var script$2 = {
 
       // 监听高亮的事件
       this.onCurrentChange = function (row) {
-        _this12.highlightRow = row;
+        _this13.highlightRow = row;
       };
       this.elTable.$on('current-change', this.onCurrentChange);
     },
     // 【单选高亮】同步表格行高亮的值
     syncRowsHighlight: function syncRowsHighlight() {
-      var _this13 = this;
+      var _this14 = this;
       if (!this.elTable.highlightCurrentRow) return;
       // 必须使用nextTick，不然值同步不上
       this.$nextTick(function () {
-        _this13.elTable.store.states.currentRow = _this13.highlightRow;
+        _this14.elTable.store.states.currentRow = _this14.highlightRow;
       });
     },
     // 【展开行】监听表格expand-change事件
     bindTableExpandEvent: function bindTableExpandEvent() {
-      var _this14 = this;
+      var _this15 = this;
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
       if (!this.isExpandType) return;
       this.onExpandChange = function (row, expandedRows) {
-        _this14.$set(row, '$v_expanded', expandedRows.includes(row));
+        _this15.$set(row, '$v_expanded', expandedRows.includes(row));
       };
       this.elTable.$on('expand-change', this.onExpandChange);
     },
     // 【展开行】设置表格行展开
     setRowsExpanded: function setRowsExpanded() {
-      var _this15 = this;
+      var _this16 = this;
       if (!this.isExpandType) return;
       this.$nextTick(function () {
-        var expandRows = _this15.renderData.filter(function (item) {
+        var expandRows = _this16.renderData.filter(function (item) {
           return item.$v_expanded;
         });
         if (expandRows.length === 0) return;
         expandRows.forEach(function (row) {
-          _this15.elTable.toggleRowExpansion(row, true);
+          _this16.elTable.toggleRowExpansion(row, true);
         });
         // 手动设置列展开时，禁止展开动画
-        _this15.isExpanding = true;
+        _this16.isExpanding = true;
         setTimeout(function () {
-          _this15.isExpanding = false;
+          _this16.isExpanding = false;
         }, 10);
       });
     },
@@ -1848,7 +1867,7 @@ var script$2 = {
     },
     // 【自定义固定列】设置固定左右样式
     cellFixedStyle: function cellFixedStyle(_ref2) {
-      var _this16 = this;
+      var _this17 = this;
       var column = _ref2.column;
       var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       var elTable = this.getElTable();
@@ -1866,7 +1885,7 @@ var script$2 = {
         this.totalRight = 0; // 右边固定定位累加值
         // 清空fixedMap
         setTimeout(function () {
-          _this16.fixedMap = null;
+          _this17.fixedMap = null;
         }, this.clearFixedMapTime);
         var columns = elTable.columns;
         var rightColumns = [];
@@ -1899,10 +1918,10 @@ var script$2 = {
         // 设置右边固定列定位样式（从结尾开始算）
         this.hasFixedRight = rightColumns.length > 0;
         rightColumns.reverse().forEach(function (column) {
-          _this16.fixedMap[column.id] = {
-            right: _this16.totalRight
+          _this17.fixedMap[column.id] = {
+            right: _this17.totalRight
           };
-          _this16.totalRight += column.realWidth || column.width;
+          _this17.totalRight += column.realWidth || column.width;
         });
       }
       var style = this.fixedMap[column.id];
@@ -1948,9 +1967,9 @@ var script$2 = {
     }
   },
   created: function created() {
-    var _this17 = this;
+    var _this18 = this;
     this.$nextTick(function () {
-      _this17.initData();
+      _this18.initData();
     });
   },
   activated: function activated() {
@@ -2116,7 +2135,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-7bf6c1cb_0", {
+  inject("data-v-130b4452_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2127,8 +2146,8 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-7bf6c1cb_1", {
-    source: ".is-expanding[data-v-7bf6c1cb] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-7bf6c1cb] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-130b4452_1", {
+    source: ".is-expanding[data-v-130b4452] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-130b4452] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2141,7 +2160,7 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$2 = "data-v-7bf6c1cb";
+var __vue_scope_id__$2 = "data-v-130b4452";
 /* module identifier */
 var __vue_module_identifier__$2 = undefined;
 /* functional template */

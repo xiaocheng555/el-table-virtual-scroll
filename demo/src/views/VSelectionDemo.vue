@@ -83,9 +83,7 @@ export default {
     },
     toggleSelection (rows) {
       if (rows) {
-        rows.forEach(row => {
-          this.$refs.virtualScroll.toggleRowSelection(row)
-        });
+        this.$refs.virtualScroll.toggleRowSelection(rows)
       } else {
         this.$refs.virtualScroll.clearSelection()
       }

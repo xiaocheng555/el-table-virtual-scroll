@@ -77,7 +77,7 @@ export default {
 | update | 更新，会重新计算实际渲染数据和位置 | - |
 | reset | 重置 | - |
 | clearSelection | 用于多选 `<virtual-column type="selection">`，清空用户的选择 | - |
-| toggleRowSelection | 用于多选 `<virtual-column type="selection">`, 切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中） | row, selected |
+| toggleRowSelection | 用于多选 `<virtual-column type="selection">`, 切换表格行的选中状态，如果使用了第二个参数，则是设置表格行选中与否（selected 为 true 则选中）；如果需要切换多行选中状态，请传入数组，避免造成卡顿 | row|rows, selected |
 | toggleRowExpansion | 用于展开行 `<virtual-column type="expand">`, 切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开）| row, expanded |
 | setCurrentRow | 用于单选 `<virtual-column type="radio">`, 设定某一行为选中行 | row |
 | slowOnMousewheel | 减缓滚轮滚动的速度，slowNum参数为减缓参数，默认为1，数值越大滚动越慢；在mac电脑上，谷歌、火狐浏览器在 `自定义固定列` demo 上快速滚动会有白屏，可以使用该方法减少白屏。请根据实际情况使用，使用不当可能会让表格滚动卡顿。【注意：滚轮滚动有效，拖动滚动条滚动无效】（>=1.0.28版本支持） | slowNum |
@@ -439,3 +439,11 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 优化virtual-column组件的formatter实现，避免低版本浏览器调用两次formatter
 
 * npm 1.1.7 版本发包
+
+
+
+### 2024-3-5
+
+* toggleRowSelection 支持传入数组，避免多次调用toggleRowSelection造成卡顿
+
+* npm 1.1.8 版本发包

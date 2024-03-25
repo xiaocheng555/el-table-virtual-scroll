@@ -731,8 +731,26 @@ export default {
 
     // 【多选】兼容表格toggleRowSelection方法
     toggleRowSelection (row, selected) {
+      if (Array.isArray(row)) {
+        this.toggleRowsSelection(row, selected)
+        return
+      }
+
       const val = typeof selected === 'boolean' ? selected : !row.$v_checked
       this.checkRow(row, val)
+      this.columnVms.forEach(vm => vm.syncCheckStatus())
+    },
+
+    // 【多选】表格切换多个row选中状态
+    toggleRowsSelection (rows, selected) {
+      const removedRows = []
+      rows.forEach(row => {
+        const val = typeof selected === 'boolean' ? selected : !row.$v_checked
+        !val && removedRows.push(row)
+        this.$set(row, '$v_checked', val)
+        this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
+      })
+      this.emitSelectionChange(removedRows)
       this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
 

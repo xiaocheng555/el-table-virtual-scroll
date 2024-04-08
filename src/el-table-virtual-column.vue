@@ -157,7 +157,7 @@ export default {
             if (row.$v_checked) hasUnselectableChecked = true
           }
         })
-        this.virtualScroll.checkAll(val, selectableList)
+        this.virtualScroll.checkAll(val, selectableList, true)
         this.isCheckedAll = val
         // 如果有不可选择的行已经勾选了，此时取消全选，选择框需要设置为半选状态
         if (hasUnselectableChecked && !val) {
@@ -180,7 +180,7 @@ export default {
         if (!isSelectable) return
       }
 
-      this.virtualScroll.checkRow(scope.row, val)
+      this.virtualScroll.checkRow(scope.row, val, true, true)
       this.syncCheckStatus()
     },
     // 是否自定义多选

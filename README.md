@@ -88,6 +88,8 @@ export default {
 | change | 计算完成真实显示的表格行数 | (renderData, start, end)：renderData 真实渲染的数据，start和end指的是渲染的数据在总数据的开始到结束的区间范围 |
 | current-change | 虚拟表格单选选中事件 | currentRow |
 | selection-change | 虚拟表格多选选项发生更改时触发事件 | selectedRows |
+| select | 当用户手动勾选数据行的 Checkbox 时触发的事件 | selection, row, checked |
+| select-all | 当用户手动勾选全选 Checkbox 时触发的事件 | selection, checked |
 
 ## virtual-column 组件
 
@@ -447,3 +449,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * toggleRowSelection 支持传入数组，避免多次调用toggleRowSelection造成卡顿
 
 * npm 1.1.8 版本发包
+
+
+### 2024-4-8
+
+* 支持 `select`, `select-all` 事件
+
+* npm 1.1.9 版本发包

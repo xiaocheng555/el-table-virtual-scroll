@@ -7,6 +7,8 @@
       :item-size="62"
       key-prop="id"
       @change="(virtualList) => tableData = virtualList"
+      @select="onSelect"
+      @select-all="onSelectAll"
       @selection-change="handleSelectionChange">
       <el-table
         :data="tableData"
@@ -91,6 +93,12 @@ export default {
     handleSelectionChange (val) {
       console.log('multipleSelection', val)
       this.multipleSelection = val
+    },
+    onSelect (selection, row, checked) {
+      console.log('select:', selection, row, checked)
+    },
+    onSelectAll (selection, checked) {
+      console.log('select-all:', selection, checked)
     },
     getRowClassName ({row}) {
       if (!this.highlight) return

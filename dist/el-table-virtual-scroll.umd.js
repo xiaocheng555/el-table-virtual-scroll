@@ -1671,21 +1671,33 @@
       checkAll: function checkAll(val) {
         var _this9 = this;
         var rows = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.data;
+        var byUser = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
         var removedRows = [];
         rows.forEach(function (row) {
           if (row.$v_checked) removedRows.push(row);
           _this9.checkRow(row, val, false);
         });
-        this.emitSelectionChange(removedRows);
+        var selection = this.emitSelectionChange(removedRows);
+        if (byUser) {
+          // 当用户手动勾选全选 Checkbox 时触发的事件
+          this.$emit('select-all', selection, val);
+        }
         if (val === false) checkOrder = 0; // 取消全选，则重置checkOrder
       },
       // 【多选】选中某一列
       checkRow: function checkRow(row, val) {
         var emit = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+        var byUser = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
         if (row.$v_checked === val) return;
         this.$set(row, '$v_checked', val);
         this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined);
-        emit && this.emitSelectionChange(val ? [] : [row]);
+        if (emit) {
+          var selection = this.emitSelectionChange(val ? [] : [row]);
+          if (byUser) {
+            // 当用户手动勾选数据行的 Checkbox 时触发的事件
+            this.$emit('select', selection, row, val);
+          }
+        }
       },
       // 【多选】兼容表格clearSelection方法
       clearSelection: function clearSelection() {
@@ -1729,6 +1741,7 @@
         this.sortSelection(selection);
         this.$emit('selection-change', selection, removedRows);
         this.oldSelection = _toConsumableArray(selection);
+        return selection;
       },
       // 【多选】更新多选的值
       updateSelectionData: function updateSelectionData(data, oldData) {
@@ -2142,7 +2155,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-130b4452_0", {
+    inject("data-v-e5fccbea_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2153,8 +2166,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-130b4452_1", {
-      source: ".is-expanding[data-v-130b4452] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-130b4452] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-e5fccbea_1", {
+      source: ".is-expanding[data-v-e5fccbea] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-e5fccbea] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2167,7 +2180,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-130b4452";
+  var __vue_scope_id__$2 = "data-v-e5fccbea";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */
@@ -2290,7 +2303,7 @@
               if (row.$v_checked) hasUnselectableChecked = true;
             }
           });
-          this.virtualScroll.checkAll(val, selectableList);
+          this.virtualScroll.checkAll(val, selectableList, true);
           this.isCheckedAll = val;
           // 如果有不可选择的行已经勾选了，此时取消全选，选择框需要设置为半选状态
           if (hasUnselectableChecked && !val) {
@@ -2311,7 +2324,7 @@
           var isSelectable = this.selectable(scope.row, index);
           if (!isSelectable) return;
         }
-        this.virtualScroll.checkRow(scope.row, val);
+        this.virtualScroll.checkRow(scope.row, val, true, true);
         this.syncCheckStatus();
       },
       // 是否自定义多选
@@ -2737,7 +2750,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-4f9ff2ec_0", {
+    inject("data-v-7c0aba2a_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
       map: {
         "version": 3,

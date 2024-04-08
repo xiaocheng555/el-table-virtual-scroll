@@ -6,6 +6,8 @@
       tooltip-effect="dark"
       style="width: 100%"
       height="400px"
+      @select="onSelect"
+      @select-all="onSelectAll"
       @selection-change="handleSelectionChange">
       <el-table-column
         type="selection"
@@ -59,6 +61,12 @@ import { mockData } from '@/utils'
         console.log('multipleSelection', val, val.map(i => i.id))
 
         this.multipleSelection = val;
+      },
+      onSelect (selection, row, val) {
+        console.log(selection, row, val, 'selection, row')
+      },
+      onSelectAll (selection, ...rest) {
+        console.log(selection, rest, 'onSelectAll')
       }
     }
   }

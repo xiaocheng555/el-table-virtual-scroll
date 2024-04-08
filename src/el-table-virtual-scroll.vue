@@ -703,24 +703,32 @@ export default {
     },
 
     // 【多选】选中所有列
-    checkAll (val, rows = this.data) {
+    checkAll (val, rows = this.data, byUser = false) {
       const removedRows = []
       rows.forEach(row => {
         if (row.$v_checked) removedRows.push(row)
         this.checkRow(row, val, false)
       })
-      this.emitSelectionChange(removedRows)
+      const selection = this.emitSelectionChange(removedRows)
+      if (byUser) { // 当用户手动勾选全选 Checkbox 时触发的事件
+        this.$emit('select-all', selection, val)
+      }
 
       if (val === false) checkOrder = 0 // 取消全选，则重置checkOrder
     },
 
     // 【多选】选中某一列
-    checkRow (row, val, emit = true) {
+    checkRow (row, val, emit = true, byUser = false) {
       if (row.$v_checked === val) return
 
       this.$set(row, '$v_checked', val)
       this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
-      emit && this.emitSelectionChange(val ? [] : [row])
+      if (emit) {
+        const selection = this.emitSelectionChange(val ? [] : [row])
+        if (byUser) { // 当用户手动勾选数据行的 Checkbox 时触发的事件
+          this.$emit('select', selection, row, val)
+        }
+      }
     },
 
     // 【多选】兼容表格clearSelection方法
@@ -755,11 +763,12 @@ export default {
     },
 
     // 【多选】兼容表格selection-change事件
-    emitSelectionChange (removedRows) {
+    emitSelectionChange (removedRows, byUser = false) {
       const selection = this.data.filter(row => row.$v_checked)
       this.sortSelection(selection)
       this.$emit('selection-change', selection, removedRows)
       this.oldSelection = [...selection]
+      return selection
     },
 
     // 【多选】更新多选的值

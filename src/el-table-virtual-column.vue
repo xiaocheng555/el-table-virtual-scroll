@@ -388,7 +388,7 @@ export default {
     },
     // 判断内容是否为VNode
     isVNode (vNode) {
-      return typeof vNode === 'object' && vNode.constructor?.name === 'VNode'
+      return this._vnode.constructor === vNode?.constructor
     },
     // 获取formatter结果，相同的scope使用缓存的结果，避免重复调用formatter函数
     // 当前与formatter有关的template的写法会使同一个scope参数被formatter连续使用两次

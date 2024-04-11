@@ -122,7 +122,7 @@ export default {
     formatter(row, column, value, index) {
       const text = `姓名：${value}`
       // 需要同时支持string和VNode
-      return index % 2 === 0 ? text : this.$createElement('span', text)
+      return index % 2 === 0 ? text : this.$createElement('span', text + '==')
     }
   },
   watch: {

@@ -329,15 +329,6 @@ function _regeneratorRuntime() {
     }
   }, e;
 }
-function _typeof(o) {
-  "@babel/helpers - typeof";
-
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-    return typeof o;
-  } : function (o) {
-    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-  }, _typeof(o);
-}
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
   try {
     var info = gen[key](arg);
@@ -1101,11 +1092,6 @@ var script$2 = {
     rowSpanKey: {
       type: Function
     },
-    // 清除固定列存储值的间隔时间
-    clearFixedMapTime: {
-      type: Number,
-      "default": 2000
-    },
     warn: {
       type: Boolean,
       "default": true
@@ -1212,6 +1198,7 @@ var script$2 = {
       this.scroller.addEventListener('scroll', this.onScroll);
       window.addEventListener('resize', this.onScroll);
       this.bindTableExpandEvent();
+      this.bindTableDragEvent();
       this.hackRowHighlight();
 
       // 初次执行
@@ -1518,10 +1505,22 @@ var script$2 = {
       var _this4 = this;
       // 监听滚动位置
       var unWatch1 = this.$watch(function () {
-        return _this4.elTable.scrollPosition;
-      }, function (val) {
+        return [_this4.elTable.scrollPosition, _this4.elTable.layout.scrollX];
+      }, function (_ref2) {
+        var _ref3 = _slicedToArray(_ref2, 2),
+          pos = _ref3[0],
+          scrollX = _ref3[1];
+        var _ref4 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [],
+          _ref5 = _slicedToArray(_ref4, 2);
+          _ref5[0];
+          var oldScrollX = _ref5[1];
         // 修复自定义固定列 所有列宽总宽度小于表格宽度时 固定列样式有问题 #65
-        _this4.scrollPosition = _this4.elTable.layout.scrollX ? val : 'none';
+        _this4.scrollPosition = _this4.elTable.layout.scrollX ? pos : 'none';
+
+        // 修复element-ui原有bug：当窗口缩放时，x轴滚动条从无到到有，且x轴已滚动到最右侧，右侧固定列
+        if (scrollX && !oldScrollX) {
+          _this4.elTable.syncPostion();
+        }
       }, {
         immediate: true
       });
@@ -1625,6 +1624,7 @@ var script$2 = {
       this.oldSelection = [];
       this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange);
       this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange);
+      this.onHeaderDragend && this.elTable.$off('header-dragend', this.onHeaderDragend);
       this.removeMousewheelEvent && this.removeMousewheelEvent();
       if (this.scroller) {
         this.scroller.removeEventListener('scroll', this.onScroll);
@@ -1837,32 +1837,42 @@ var script$2 = {
         _this14.elTable.store.states.currentRow = _this14.highlightRow;
       });
     },
+    // 监听表格header-dragend事件
+    bindTableDragEvent: function bindTableDragEvent() {
+      var _this15 = this;
+      this.onHeaderDragend = function () {
+        _this15.$nextTick(function () {
+          _this15.hasHeadDrag = true;
+        });
+      };
+      this.elTable.$on('header-dragend', this.onHeaderDragend);
+    },
     // 【展开行】监听表格expand-change事件
     bindTableExpandEvent: function bindTableExpandEvent() {
-      var _this15 = this;
+      var _this16 = this;
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
       if (!this.isExpandType) return;
       this.onExpandChange = function (row, expandedRows) {
-        _this15.$set(row, '$v_expanded', expandedRows.includes(row));
+        _this16.$set(row, '$v_expanded', expandedRows.includes(row));
       };
       this.elTable.$on('expand-change', this.onExpandChange);
     },
     // 【展开行】设置表格行展开
     setRowsExpanded: function setRowsExpanded() {
-      var _this16 = this;
+      var _this17 = this;
       if (!this.isExpandType) return;
       this.$nextTick(function () {
-        var expandRows = _this16.renderData.filter(function (item) {
+        var expandRows = _this17.renderData.filter(function (item) {
           return item.$v_expanded;
         });
         if (expandRows.length === 0) return;
         expandRows.forEach(function (row) {
-          _this16.elTable.toggleRowExpansion(row, true);
+          _this17.elTable.toggleRowExpansion(row, true);
         });
         // 手动设置列展开时，禁止展开动画
-        _this16.isExpanding = true;
+        _this17.isExpanding = true;
         setTimeout(function () {
-          _this16.isExpanding = false;
+          _this17.isExpanding = false;
         }, 10);
       });
     },
@@ -1879,31 +1889,31 @@ var script$2 = {
       return this.cellFixedStyle(data, true);
     },
     // 【自定义固定列】设置固定左右样式
-    cellFixedStyle: function cellFixedStyle(_ref2) {
-      var _this17 = this;
-      var column = _ref2.column;
+    cellFixedStyle: function cellFixedStyle(_ref6) {
+      var _this18 = this;
+      var column = _ref6.column;
       var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       var elTable = this.getElTable();
       if (!elTable) return;
       // 右边固定列头部需要加上滚动条宽度-gutterWidth
       var _elTable$layout = elTable.layout,
         _gutterWidth = _elTable$layout.gutterWidth,
-        scrollY = _elTable$layout.scrollY;
+        scrollY = _elTable$layout.scrollY,
+        bodyWidth = _elTable$layout.bodyWidth;
       var gutterWidth = isHeader && scrollY ? _gutterWidth : 0;
-      // 计算固定样式
-      if (!this.fixedMap || this.isScrollY !== scrollY) {
-        this.isScrollY = scrollY;
+      // 计算固定样式（当列宽度变化时重新计算，其余直接使用缓存值fixedMap）
+      if (!this.fixedMap || this._isScrollY !== scrollY || this._bodyWidth !== bodyWidth || this.hasHeadDrag) {
+        if (this.hasHeadDrag) this.hasHeadDrag = false;
+        this._isScrollY = scrollY;
+        this._bodyWidth = bodyWidth;
         this.fixedMap = {};
         this.totalLeft = 0; // 左边固定定位累加值
         this.totalRight = 0; // 右边固定定位累加值
-        // 清空fixedMap
-        setTimeout(function () {
-          _this17.fixedMap = null;
-        }, this.clearFixedMapTime);
+
         var columns = elTable.columns;
-        var rightColumns = [];
-        var lastLeftColumn;
-        var firstRightColumn;
+        var rightColumns = []; // 右边固定列集合
+        var lastLeftColumn; // 左边固定列的最后一列
+        var firstRightColumn; // 右边固定列的第一列
         for (var i = 0; i < columns.length; i++) {
           var _column = columns[i];
           var isLeft = _column.className && _column.className.includes('virtual-column__fixed-left');
@@ -1926,15 +1936,18 @@ var script$2 = {
         // 设置固定列阴影classname
         var leftClass = ' is-last-column';
         var rightClass = ' is-first-column';
+
+        // 设置左边、右边固定列class
         if (lastLeftColumn && !lastLeftColumn.className.includes(leftClass)) lastLeftColumn.className += leftClass;
         if (firstRightColumn && !firstRightColumn.className.includes(rightClass)) firstRightColumn.className += rightClass;
-        // 设置右边固定列定位样式（从结尾开始算）
+
+        // 设置右边固定列定位样式（从右往左依次）
         this.hasFixedRight = rightColumns.length > 0;
         rightColumns.reverse().forEach(function (column) {
-          _this17.fixedMap[column.id] = {
-            right: _this17.totalRight
+          _this18.fixedMap[column.id] = {
+            right: _this18.totalRight
           };
-          _this17.totalRight += column.realWidth || column.width;
+          _this18.totalRight += column.realWidth || column.width;
         });
       }
       var style = this.fixedMap[column.id];
@@ -1980,9 +1993,9 @@ var script$2 = {
     }
   },
   created: function created() {
-    var _this18 = this;
+    var _this19 = this;
     this.$nextTick(function () {
-      _this18.initData();
+      _this19.initData();
     });
   },
   activated: function activated() {
@@ -2148,7 +2161,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-e5fccbea_0", {
+  inject("data-v-73bf6625_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2159,8 +2172,8 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-e5fccbea_1", {
-    source: ".is-expanding[data-v-e5fccbea] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-e5fccbea] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-73bf6625_1", {
+    source: ".is-expanding[data-v-73bf6625] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-73bf6625] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2173,7 +2186,7 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$2 = "data-v-e5fccbea";
+var __vue_scope_id__$2 = "data-v-73bf6625";
 /* module identifier */
 var __vue_module_identifier__$2 = undefined;
 /* functional template */
@@ -2602,8 +2615,7 @@ var script = {
     },
     // 判断内容是否为VNode
     isVNode: function isVNode(vNode) {
-      var _vNode$constructor;
-      return _typeof(vNode) === 'object' && ((_vNode$constructor = vNode.constructor) === null || _vNode$constructor === void 0 ? void 0 : _vNode$constructor.name) === 'VNode';
+      return this._vnode.constructor === (vNode === null || vNode === void 0 ? void 0 : vNode.constructor);
     },
     // 获取formatter结果，相同的scope使用缓存的结果，避免重复调用formatter函数
     // 当前与formatter有关的template的写法会使同一个scope参数被formatter连续使用两次
@@ -2743,7 +2755,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-7c0aba2a_0", {
+  inject("data-v-8ff72a16_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
     map: {
       "version": 3,

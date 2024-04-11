@@ -456,3 +456,12 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 支持 `select`, `select-all` 事件
 
 * npm 1.1.9 版本发包
+
+
+### 2024-4-11
+
+* 修复resize后固定样式错乱；列拖拽偶尔会有白边
+
+* 修复isVNode在生产判断有误
+
+* npm 1.1.10 版本发包

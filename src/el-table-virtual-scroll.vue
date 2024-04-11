@@ -135,11 +135,6 @@ export default {
     rowSpanKey: {
       type: Function
     },
-    // 清除固定列存储值的间隔时间
-    clearFixedMapTime: {
-      type: Number,
-      default: 2000
-    },
     warn: {
       type: Boolean,
       default: true
@@ -239,6 +234,7 @@ export default {
       this.scroller.addEventListener('scroll', this.onScroll)
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
+      this.bindTableDragEvent()
       this.hackRowHighlight()
 
       // 初次执行
@@ -559,10 +555,17 @@ export default {
     // 监听el-table
     observeElTable () {
       // 监听滚动位置
-      const unWatch1 = this.$watch(() => this.elTable.scrollPosition, (val) => {
-        // 修复自定义固定列 所有列宽总宽度小于表格宽度时 固定列样式有问题 #65
-        this.scrollPosition = this.elTable.layout.scrollX ? val : 'none'
-      }, { immediate: true })
+      const unWatch1 = this.$watch(
+        () => [this.elTable.scrollPosition, this.elTable.layout.scrollX],
+        ([pos, scrollX], [oldPos, oldScrollX] = []) => {
+          // 修复自定义固定列 所有列宽总宽度小于表格宽度时 固定列样式有问题 #65
+          this.scrollPosition = this.elTable.layout.scrollX ? pos : 'none'
+
+          // 修复element-ui原有bug：当窗口缩放时，x轴滚动条从无到到有，且x轴已滚动到最右侧，右侧固定列
+          if (scrollX && !oldScrollX) {
+            this.elTable.syncPostion()
+          }
+        }, { immediate: true })
 
       // 监听表格滚动高度变化（切换v-show时更新）
       const unWatch2 = this.$watch(() => this.elTable.layout.bodyHeight, (val) => {
@@ -666,6 +669,7 @@ export default {
       this.oldSelection = []
       this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
       this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
+      this.onHeaderDragend && this.elTable.$off('header-dragend', this.onHeaderDragend)
       this.removeMousewheelEvent && this.removeMousewheelEvent()
 
       if (this.scroller) {
@@ -861,6 +865,16 @@ export default {
       })
     },
 
+    // 监听表格header-dragend事件
+    bindTableDragEvent () {
+      this.onHeaderDragend = () => {
+        this.$nextTick(() => {
+          this.hasHeadDrag = true
+        })
+      }
+      this.elTable.$on('header-dragend', this.onHeaderDragend)
+    },
+
     // 【展开行】监听表格expand-change事件
     bindTableExpandEvent () {
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
@@ -910,23 +924,21 @@ export default {
       const elTable = this.getElTable()
       if (!elTable) return
       // 右边固定列头部需要加上滚动条宽度-gutterWidth
-      const { gutterWidth: _gutterWidth, scrollY } = elTable.layout
+      const { gutterWidth: _gutterWidth, scrollY, bodyWidth } = elTable.layout
       const gutterWidth = isHeader && scrollY ? _gutterWidth : 0
-      // 计算固定样式
-      if (!this.fixedMap || this.isScrollY !== scrollY) {
-        this.isScrollY = scrollY
+      // 计算固定样式（当列宽度变化时重新计算，其余直接使用缓存值fixedMap）
+      if (!this.fixedMap || this._isScrollY !== scrollY || this._bodyWidth !== bodyWidth || this.hasHeadDrag) {
+        if (this.hasHeadDrag) this.hasHeadDrag = false
+        this._isScrollY = scrollY
+        this._bodyWidth = bodyWidth
         this.fixedMap = {}
         this.totalLeft = 0 // 左边固定定位累加值
         this.totalRight = 0 // 右边固定定位累加值
-        // 清空fixedMap
-        setTimeout(() => {
-          this.fixedMap = null
-        }, this.clearFixedMapTime)
 
         const columns = elTable.columns
-        const rightColumns = []
-        let lastLeftColumn
-        let firstRightColumn
+        const rightColumns = [] // 右边固定列集合
+        let lastLeftColumn // 左边固定列的最后一列
+        let firstRightColumn // 右边固定列的第一列
         for (let i = 0; i < columns.length; i++) {
           const column = columns[i]
           const isLeft = column.className && column.className.includes('virtual-column__fixed-left')
@@ -950,9 +962,12 @@ export default {
         // 设置固定列阴影classname
         const leftClass = ' is-last-column'
         const rightClass = ' is-first-column'
+
+        // 设置左边、右边固定列class
         if (lastLeftColumn && !lastLeftColumn.className.includes(leftClass)) lastLeftColumn.className += leftClass
         if (firstRightColumn && !firstRightColumn.className.includes(rightClass)) firstRightColumn.className += rightClass
-        // 设置右边固定列定位样式（从结尾开始算）
+
+        // 设置右边固定列定位样式（从右往左依次）
         this.hasFixedRight = rightColumns.length > 0
         rightColumns.reverse().forEach(column => {
           this.fixedMap[column.id] = {

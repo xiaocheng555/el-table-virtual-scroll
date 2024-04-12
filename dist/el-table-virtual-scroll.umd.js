@@ -1391,17 +1391,24 @@
               r = mid - 1;
             }
           }
-
-          // 计算渲染内容的开始、结束索引
           start = mid;
-          end = data.length - 1;
-          for (var i = start + 1; i < data.length; i++) {
-            var offsetTop = this.getItemOffsetTop(i);
-            if (offsetTop >= bottom) {
-              end = i;
-              break;
+
+          // 二分法计算可视范围内的结束的最后一个内容
+          l = start;
+          r = data.length - 1;
+          mid = 0;
+          while (l <= r) {
+            mid = Math.floor((l + r) / 2);
+            var _midVal = this.getItemOffsetTop(mid);
+            if (_midVal >= bottom) {
+              var _midNextVal = this.getItemOffsetTop(mid - 1);
+              if (_midNextVal < bottom) break;
+              r = mid - 1;
+            } else {
+              l = mid + 1;
             }
           }
+          end = mid;
         }
         if (this.isRowSpan()) {
           // 计算包含合并行的开始结束区间（⚠️注意：合并行不支持使用斑马纹，因为不能100%确定合并行的开始行是偶数，可能会向上找一直到第一行，导致渲染非常多行，浪费性能）
@@ -1848,9 +1855,12 @@
       bindTableDragEvent: function bindTableDragEvent() {
         var _this15 = this;
         this.onHeaderDragend = function () {
-          _this15.$nextTick(function () {
-            _this15.hasHeadDrag = true;
-          });
+          // 设置状态，用于自定义固定列
+          _this15.hasHeadDrag = true;
+          // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
+          _this15.elTable.doLayout();
+          // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
+          _this15.update();
         };
         this.elTable.$on('header-dragend', this.onHeaderDragend);
       },
@@ -2168,7 +2178,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-73bf6625_0", {
+    inject("data-v-3a7df150_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2179,8 +2189,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-73bf6625_1", {
-      source: ".is-expanding[data-v-73bf6625] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-73bf6625] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-3a7df150_1", {
+      source: ".is-expanding[data-v-3a7df150] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-3a7df150] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2193,7 +2203,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-73bf6625";
+  var __vue_scope_id__$2 = "data-v-3a7df150";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */

@@ -430,17 +430,24 @@ export default {
             r = mid - 1
           }
         }
-
-        // 计算渲染内容的开始、结束索引
         start = mid
-        end = data.length - 1
-        for (let i = start + 1; i < data.length; i++) {
-          const offsetTop = this.getItemOffsetTop(i)
-          if (offsetTop >= bottom) {
-            end = i
-            break
+
+        // 二分法计算可视范围内的结束的最后一个内容
+        l = start
+        r = data.length - 1
+        mid = 0
+        while (l <= r) {
+          mid = Math.floor((l + r) / 2)
+          const midVal = this.getItemOffsetTop(mid)
+          if (midVal >= bottom) {
+            const midNextVal = this.getItemOffsetTop(mid - 1)
+            if (midNextVal < bottom) break
+            r = mid - 1
+          } else {
+            l = mid + 1
           }
         }
+        end = mid
       }
 
       if (this.isRowSpan()) {
@@ -868,9 +875,12 @@ export default {
     // 监听表格header-dragend事件
     bindTableDragEvent () {
       this.onHeaderDragend = () => {
-        this.$nextTick(() => {
-          this.hasHeadDrag = true
-        })
+        // 设置状态，用于自定义固定列
+        this.hasHeadDrag = true
+        // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
+        this.elTable.doLayout()
+        // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
+        this.update()
       }
       this.elTable.$on('header-dragend', this.onHeaderDragend)
     },

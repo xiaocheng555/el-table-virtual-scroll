@@ -476,6 +476,13 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * npm 1.1.11 版本发包
 
 
+### 2024-4-23
+
+* 兼容旧版 element-ui table 组件没有 `syncPostion` 方法
+
+* npm 1.1.12 版本发包
+
+
 
 
 

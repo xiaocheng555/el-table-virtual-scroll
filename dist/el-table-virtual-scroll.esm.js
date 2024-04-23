@@ -1526,7 +1526,7 @@ var script$2 = {
 
         // 修复element-ui原有bug：当窗口缩放时，x轴滚动条从无到到有，且x轴已滚动到最右侧，右侧固定列
         if (scrollX && !oldScrollX) {
-          _this4.elTable.syncPostion();
+          _this4.elTable.syncPostion && _this4.elTable.syncPostion();
         }
       }, {
         immediate: true
@@ -2171,7 +2171,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-3a7df150_0", {
+  inject("data-v-2457bf4c_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2182,8 +2182,8 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-3a7df150_1", {
-    source: ".is-expanding[data-v-3a7df150] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-3a7df150] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-2457bf4c_1", {
+    source: ".is-expanding[data-v-2457bf4c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-2457bf4c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2196,7 +2196,7 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$2 = "data-v-3a7df150";
+var __vue_scope_id__$2 = "data-v-2457bf4c";
 /* module identifier */
 var __vue_module_identifier__$2 = undefined;
 /* functional template */

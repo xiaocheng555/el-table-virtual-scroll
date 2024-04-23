@@ -570,7 +570,7 @@ export default {
 
           // 修复element-ui原有bug：当窗口缩放时，x轴滚动条从无到到有，且x轴已滚动到最右侧，右侧固定列
           if (scrollX && !oldScrollX) {
-            this.elTable.syncPostion()
+            this.elTable.syncPostion && this.elTable.syncPostion()
           }
         }, { immediate: true })
 

@@ -2444,6 +2444,7 @@ var script = {
       return new Promise(function (resolve, reject) {
         // 获取子节点数据并显示
         _this4.$set(row, '$v_loading', true);
+        _this4.$set(row, '$v_hasChildren', true);
         _this4.load && _this4.load(row, resolveFn.bind(_this4));
         function resolveFn(data) {
           if (!Array.isArray(data)) {
@@ -2486,23 +2487,18 @@ var script = {
     // 隐藏子节点
     hideChildNodes: function hideChildNodes(row) {
       this.$set(row, '$v_expanded', false);
+      // 查找所有子孙节点
       var list = this.virtualScroll.getData();
-      var index = list.findIndex(function (item) {
-        return item === row;
-      });
-      if (index === -1) return;
+      var childNodes = this.getChildNodes(row);
+      var start = childNodes.start,
+        end = childNodes.end;
+      if (start === -1) return;
 
-      // 查找当前节点的所有子孙节点
-      var hideNodes = [];
-      for (var i = index + 1; i < list.length; i++) {
-        var curRow = list[i];
-        if ((curRow.$v_level || 1) <= (row.$v_level || 1)) break;
-        hideNodes.push(curRow);
-      }
-      this.$set(row, '$v_hideNodes', hideNodes);
       // 隐藏所有子孙节点
-      var newList = list.filter(function (item) {
-        return !hideNodes.includes(item);
+      this.$set(row, '$v_hideNodes', _toConsumableArray(childNodes));
+      console.log('hideChildNodes');
+      var newList = list.filter(function (row, index) {
+        return index < start || index >= end;
       });
       this.virtualScroll.updateData(newList);
       this.virtualScroll.update();
@@ -2622,6 +2618,99 @@ var script = {
           _this8.onTreeNodeExpand(row, false);
         });
       }
+    },
+    // 删除节点
+    // contain 为false时只删除子节点
+    removeNode: function removeNode(row) {
+      var contain = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var getData = this.virtualScroll.getData;
+      var list = getData();
+      var _this$getChildNodes = this.getChildNodes(row, true, contain),
+        start = _this$getChildNodes.start,
+        end = _this$getChildNodes.end;
+      if (start < 0) return;
+
+      // 删除
+      var newList = list.filter(function (row, index) {
+        return index < start || index >= end;
+      });
+      this.virtualScroll.updateData(newList);
+    },
+    // 重新加载节点
+    // 删除原来子节点，并触发load函数重新加载
+    reloadNode: function reloadNode(row) {
+      this.removeNode(row, false);
+      this.loadChildNodes(row);
+    },
+    /*
+     * 获取子孙节点
+     * contain - 是否包含当前节点
+     * soon - 是否获取所有子孙节点，否则只获取直属子节点
+     */
+    getChildNodes: function getChildNodes(row) {
+      var soon = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var contain = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      var list = this.getAllNodes();
+      var res = [];
+      var index = list.findIndex(function (item) {
+        return item === row;
+      });
+      var level = row.$v_level || 1;
+      if (index === -1) return [];
+      res.start = index + 1;
+      for (var i = res.start; i < list.length; i++) {
+        var curRow = list[i];
+        res.end = i;
+        if ((curRow.$v_level || 1) <= level) break;
+        res.push(curRow);
+      }
+
+      // 筛选出所有直属的子节点
+      if (!soon) {
+        res = res.filter(function (row) {
+          return row.$v_level === level + 1;
+        });
+      }
+
+      // 如果包含当前节点，调整索引和返回值
+      if (contain) {
+        res.start--;
+        res.unshift(row);
+      }
+      return res;
+    },
+    // 获取父节点
+    getParentNodes: function getParentNodes(row) {
+      var list = this.getAllNodes();
+      var res = [];
+      var index = list.findIndex(function (item) {
+        return item === row;
+      });
+      if (index === -1) return [];
+      var level = row.$v_level || 1; // 当前节点的层级
+      for (var i = index - 1; i >= 0; i--) {
+        var curRow = list[i];
+        var curLevel = curRow.$v_level || 1;
+        if (curLevel < level) {
+          level = curRow.$v_level;
+          res.push(curRow);
+        }
+        if (curLevel === 1) break;
+      }
+      return res.reverse();
+    },
+    // 获取所有节点，包含隐藏的节点
+    getAllNodes: function getAllNodes() {
+      var getData = this.virtualScroll.getData;
+      var list = getData();
+      var res = [];
+      list.forEach(function (item) {
+        res.push(item);
+        if (item.$v_hideNodes && item.$v_hideNodes.length) {
+          res.push.apply(res, _toConsumableArray(item.$v_hideNodes));
+        }
+      });
+      return res;
     },
     // 判断内容是否为VNode
     isVNode: function isVNode(vNode) {
@@ -2765,7 +2854,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-8ff72a16_0", {
+  inject("data-v-15934f39_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
     map: {
       "version": 3,

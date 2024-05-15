@@ -13,9 +13,18 @@
         style="width: 100%"
         border
         row-key="id">
-        <virtual-column label="id" prop="id" type="tree" :load="onload"></virtual-column>
+        <virtual-column ref="treeColumn" label="id" prop="id" type="tree" :load="onload"></virtual-column>
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
+        <el-table-column label="操作" width="260">
+          <template slot-scope="{ row }">
+            <el-button type="text" @click="onDel(row)">删除</el-button>
+            <el-button type="text" @click="onEdit(row)">编辑</el-button>
+            <el-button type="text" @click="reload(row)">reload</el-button>
+            <el-button type="text" @click="getChildNodes(row)">子节点</el-button>
+            <el-button type="text" @click="getParentNodes(row)">父节点</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </virtual-scroll>
     <el-button type="primary" @click="refresh">refresh</el-button>
@@ -95,6 +104,24 @@ export default {
         }
         resolve(data)
       }, 1000)
+    },
+    onDel (row) {
+      this.$refs.treeColumn.removeNode(row)
+    },
+    onEdit (row) {
+      row.text =  row.text + '__编辑'
+    },
+    reload (row) {
+      // 重新加载节点；删除原来子节点，并触发load函数重新加载
+      this.$refs.treeColumn.reloadNode(row)
+    },
+    getChildNodes (row) {
+      const nodes = this.$refs.treeColumn.getChildNodes(row)
+      console.log('子节点：', nodes, nodes.map(node => node.id))
+    },
+    getParentNodes (row) {
+      const nodes = this.$refs.treeColumn.getParentNodes(row)
+      console.log('父节点：', nodes, nodes.map(node => node.id))
     }
   },
   created () {

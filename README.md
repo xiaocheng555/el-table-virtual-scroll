@@ -125,6 +125,11 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 | expandPath | 【仅type="tree" 模拟树结构】展开目标路径，keyPath为路径数组，如['key1', 'key2', 'key3']，该方法会展开 key1 -> key2 -> key3 对应的树节点（>=1.0.25版本支持） | keyPath: Array |
 | expandAll | 【仅type="tree" 模拟树结构】展开所有行（>=1.0.25版本支持） | - |
 | unexpandAll | 【仅type="tree" 模拟树结构】收起所有行（>=1.0.25版本支持） | - |
+| removeNode | 【仅type="tree" 模拟树结构】删除节点，所有子节点也会删除（>=1.1.13版本支持） | row |
+| reloadNode | 【仅type="tree" 模拟树结构】重新加载节点（删除所有子节点，并触发load函数重新加载）（>=1.1.13版本支持） | row(必须可见节点) |
+| getChildNodes | 【仅type="tree" 模拟树结构】获取所有子孙节点（>=1.1.13版本支持） | row |
+| getParentNodes | 【仅type="tree" 模拟树结构】获取所有父节点（>=1.1.13版本支持） | row |
+| getAllNodes | 【仅type="tree" 模拟树结构】获取所有节点，包含隐藏的节点（>=1.1.13版本支持） | - |
 
 
 ## el-table-virtual-scroll 组件注意事项
@@ -481,6 +486,15 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 兼容旧版 element-ui table 组件没有 `syncPostion` 方法
 
 * npm 1.1.12 版本发包
+
+
+### 2024-5-15
+
+* 树形表格提供方法：删除节点、重新加载节点、获取子节点、获取父节点、获取所有节点 （removeNode/reloadNode/getChildNodes/getParentNodes/getAllNodes）
+
+* npm 1.1.13 版本发包
+
+
 
 
 

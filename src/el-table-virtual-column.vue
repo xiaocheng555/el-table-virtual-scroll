@@ -247,6 +247,8 @@ export default {
       return new Promise((resolve, reject) => {
         // 获取子节点数据并显示
         this.$set(row, '$v_loading', true)
+        this.$set(row, '$v_hasChildren', true)
+
         this.load && this.load(row, resolveFn.bind(this))
 
         function resolveFn (data) {
@@ -295,20 +297,16 @@ export default {
     // 隐藏子节点
     hideChildNodes (row) {
       this.$set(row, '$v_expanded', false)
+      // 查找所有子孙节点
       const list = this.virtualScroll.getData()
-      const index = list.findIndex(item => item === row)
-      if (index === -1) return
+      const childNodes = this.getChildNodes(row)
+      const { start, end } = childNodes
+      if (start === -1) return
 
-      // 查找当前节点的所有子孙节点
-      const hideNodes = []
-      for (let i = index + 1; i < list.length; i++) {
-        const curRow = list[i]
-        if ((curRow.$v_level || 1) <= (row.$v_level || 1)) break
-        hideNodes.push(curRow)
-      }
-      this.$set(row, '$v_hideNodes', hideNodes)
       // 隐藏所有子孙节点
-      const newList = list.filter(item => !hideNodes.includes(item))
+      this.$set(row, '$v_hideNodes', [...childNodes])
+      console.log('hideChildNodes')
+      const newList = list.filter((row, index) => index < start || index >= end)
       this.virtualScroll.updateData(newList)
       this.virtualScroll.update()
       return []
@@ -385,6 +383,90 @@ export default {
           this.onTreeNodeExpand(row, false)
         })
       }
+    },
+    // 删除节点
+    // contain 为false时只删除子节点
+    removeNode (row, contain = true) {
+      const { getData } = this.virtualScroll
+      const list = getData()
+      const { start, end } = this.getChildNodes(row, true, contain)
+      if (start < 0) return
+
+      // 删除
+      const newList = list.filter((row, index) => index < start || index >= end)
+      this.virtualScroll.updateData(newList)
+    },
+    // 重新加载节点
+    // 删除原来子节点，并触发load函数重新加载
+    reloadNode (row) {
+      this.removeNode(row, false)
+      this.loadChildNodes(row)
+    },
+    /*
+     * 获取子孙节点
+     * contain - 是否包含当前节点
+     * soon - 是否获取所有子孙节点，否则只获取直属子节点
+     */
+    getChildNodes (row, soon = true, contain = false) {
+      const list = this.getAllNodes()
+      let res = []
+
+      const index = list.findIndex(item => item === row)
+      const level = row.$v_level || 1
+      if (index === -1) return []
+      res.start = index + 1
+
+      for (let i = res.start; i < list.length; i++) {
+        const curRow = list[i]
+        res.end = i
+        if ((curRow.$v_level || 1) <= level) break
+        res.push(curRow)
+      }
+
+      // 筛选出所有直属的子节点
+      if (!soon) {
+        res = res.filter(row => row.$v_level === level + 1)
+      }
+
+      // 如果包含当前节点，调整索引和返回值
+      if (contain) {
+        res.start--
+        res.unshift(row)
+      }
+      return res
+    },
+    // 获取父节点
+    getParentNodes (row) {
+      const list = this.getAllNodes()
+      const res = []
+
+      const index = list.findIndex(item => item === row)
+      if (index === -1) return []
+
+      let level = row.$v_level || 1 // 当前节点的层级
+      for (let i = index - 1; i >= 0; i--) {
+        const curRow = list[i]
+        const curLevel = curRow.$v_level || 1
+        if (curLevel < level) {
+          level = curRow.$v_level
+          res.push(curRow)
+        }
+        if (curLevel === 1) break
+      }
+      return res.reverse()
+    },
+    // 获取所有节点，包含隐藏的节点
+    getAllNodes () {
+      const { getData } = this.virtualScroll
+      const list = getData()
+      const res = []
+      list.forEach(item => {
+        res.push(item)
+        if (item.$v_hideNodes && item.$v_hideNodes.length) {
+          res.push(...item.$v_hideNodes)
+        }
+      })
+      return res
     },
     // 判断内容是否为VNode
     isVNode (vNode) {

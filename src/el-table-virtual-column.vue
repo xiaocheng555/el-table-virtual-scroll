@@ -290,23 +290,30 @@ export default {
           ...(row.$v_hideNodes || []),
           ...list.slice(index + 1)
         ])
-        return row.$v_hideNodes
+        const hideNodes = row.$v_hideNodes
+        delete row.$v_hideNodes
+        return hideNodes
       }
       return []
     },
     // 隐藏子节点
     hideChildNodes (row) {
       this.$set(row, '$v_expanded', false)
+
       // 查找所有子孙节点
-      const list = this.virtualScroll.getData()
-      const childNodes = this.getChildNodes(row)
-      const { start, end } = childNodes
-      if (start === -1) return
+      const { getData, keyProp } = this.virtualScroll
+      const list = getData()
+      const childNodes = this.getChildNodes(row, true, true)
+      if (!childNodes.length) return
+
+      const map = {}
+      childNodes.forEach(row => {
+        map[row[keyProp]] = true
+      })
 
       // 隐藏所有子孙节点
-      this.$set(row, '$v_hideNodes', [...childNodes])
-      console.log('hideChildNodes')
-      const newList = list.filter((row, index) => index < start || index >= end)
+      this.$set(row, '$v_hideNodes', childNodes)
+      const newList = list.filter(row => !(row[keyProp] in map))
       this.virtualScroll.updateData(newList)
       this.virtualScroll.update()
       return []
@@ -385,75 +392,145 @@ export default {
       }
     },
     // 删除节点
-    // contain 为false时只删除子节点
-    removeNode (row, contain = true) {
-      const { getData } = this.virtualScroll
-      const list = getData()
-      const { start, end } = this.getChildNodes(row, true, contain)
-      if (start < 0) return
+    // onlyChild：为false是删除传入的row节点，为 true 时只删除row的所有子节点
+    removeNode (row, onlyChild = false) {
+      // 没有子节点，无需删除
+      if (onlyChild && !row.$v_hasChildren) return
 
-      // 删除
-      const newList = list.filter((row, index) => index < start || index >= end)
-      this.virtualScroll.updateData(newList)
+      const { getData } = this.virtualScroll
+      const list = getData().slice()
+      const targetLevel = row.$v_level || 1
+
+      // 查找子节点
+      // match - 是否找到目标节点
+      function find (list, data = { match: false, stop: false }) {
+        for (let i = 0; i < list.length; i++) {
+          if (data.stop) return
+
+          const curRow = list[i]
+          const curLevel = curRow.$v_level || 1
+          const isChild = curLevel > targetLevel
+
+          // 找到子节点，并删除
+          if (data.match && isChild) {
+            list.splice(i, 1)
+            i--
+            continue
+          }
+          // 已经找完子节点，结束
+          if (data.match && !isChild) return (data.stop = true)
+          // 找到目标节点后，开始查找它的子节点
+          if (curRow === row) {
+            // 直接删除目标节点，并结束(不需查询子节点)
+            if (!onlyChild) {
+              list.splice(i, 1)
+              data.stop = true
+              return
+            }
+            // 往下允许查找它的子节点
+            data.match = true
+          }
+
+          // 如果子节点隐藏了，则从隐藏节点里查找
+          const hideNodes = curRow.$v_hideNodes || []
+          if (hideNodes.length) {
+            find(hideNodes, data, true)
+          }
+        }
+      }
+
+      find(list)
+      if (onlyChild) row.$v_hasChildren = false
+      this.virtualScroll.updateData(list)
     },
     // 重新加载节点
     // 删除原来子节点，并触发load函数重新加载
     reloadNode (row) {
-      this.removeNode(row, false)
+      this.removeNode(row, true)
       this.loadChildNodes(row)
     },
     /*
      * 获取子孙节点
-     * contain - 是否包含当前节点
      * soon - 是否获取所有子孙节点，否则只获取直属子节点
+     * visible - 只获取可见的
      */
-    getChildNodes (row, soon = true, contain = false) {
-      const list = this.getAllNodes()
-      let res = []
+    getChildNodes (row, soon = true, visible = false) {
+      const res = []
+      const { getData } = this.virtualScroll
+      const list = getData()
+      const targetLevel = row.$v_level || 1
 
-      const index = list.findIndex(item => item === row)
-      const level = row.$v_level || 1
-      if (index === -1) return []
-      res.start = index + 1
+      // 查找子节点
+      // match - 是否找到目标节点
+      function find (list, data = { match: false, stop: false }) {
+        for (let i = 0; i < list.length; i++) {
+          if (data.stop) return
 
-      for (let i = res.start; i < list.length; i++) {
-        const curRow = list[i]
-        res.end = i
-        if ((curRow.$v_level || 1) <= level) break
-        res.push(curRow)
+          const curRow = list[i]
+          const curLevel = curRow.$v_level || 1
+          const isChild = soon ? curLevel > targetLevel : curLevel - targetLevel === 1
+
+          // 找到子节点
+          if (data.match && isChild) {
+            res.push(curRow)
+          }
+          // 已经找完子节点，结束
+          if (data.match && !isChild) return (data.stop = true)
+          // 找到目标节点后，开始查找它的子节点
+          if (curRow === row) data.match = true
+
+          // 如果子节点隐藏了，则从隐藏节点里查找
+          const hideNodes = curRow.$v_hideNodes || []
+          if (!visible && hideNodes.length) {
+            find(hideNodes, data)
+          }
+        }
       }
 
-      // 筛选出所有直属的子节点
-      if (!soon) {
-        res = res.filter(row => row.$v_level === level + 1)
-      }
+      find(list)
 
-      // 如果包含当前节点，调整索引和返回值
-      if (contain) {
-        res.start--
-        res.unshift(row)
-      }
       return res
     },
+
     // 获取父节点
     getParentNodes (row) {
-      const list = this.getAllNodes()
+      const { getData } = this.virtualScroll
+      const list = getData().slice()
       const res = []
 
-      const index = list.findIndex(item => item === row)
-      if (index === -1) return []
+      // 查找方案：从父节点向子节点一级一级查找，并记录查找路径，找到目标节点后，返回路径上的所有节点
+      function find (list, data = { stop: false }, level = 1) {
+        for (let i = 0; i < list.length; i++) {
+          if (data.stop) return
 
-      let level = row.$v_level || 1 // 当前节点的层级
-      for (let i = index - 1; i >= 0; i--) {
-        const curRow = list[i]
-        const curLevel = curRow.$v_level || 1
-        if (curLevel < level) {
-          level = curRow.$v_level
+          const curRow = list[i]
+          const curLevel = curRow.$v_level || 1
+
+          if (curLevel > level) {
+            level = curLevel
+          } else {
+            // 层级与数组的索引有关联的，相差1
+            res.splice(curLevel - 1)
+          }
+
+          // 找到目标节点后，停止
+          if (curRow === row) {
+            data.stop = true
+            return
+          }
+          // 添加当前节点
           res.push(curRow)
+
+          // 如果子节点隐藏了，则从隐藏节点里查找
+          const hideNodes = curRow.$v_hideNodes || []
+          if (hideNodes.length) {
+            find(hideNodes, data, level)
+          }
         }
-        if (curLevel === 1) break
       }
-      return res.reverse()
+
+      find(list)
+      return res
     },
     // 获取所有节点，包含隐藏的节点
     getAllNodes () {

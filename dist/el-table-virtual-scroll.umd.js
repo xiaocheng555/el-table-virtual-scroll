@@ -2487,25 +2487,32 @@
         });
         if (index > -1) {
           this.virtualScroll.updateData([].concat(_toConsumableArray(list.slice(0, index + 1)), _toConsumableArray(row.$v_hideNodes || []), _toConsumableArray(list.slice(index + 1))));
-          return row.$v_hideNodes;
+          var hideNodes = row.$v_hideNodes;
+          delete row.$v_hideNodes;
+          return hideNodes;
         }
         return [];
       },
       // 隐藏子节点
       hideChildNodes: function hideChildNodes(row) {
         this.$set(row, '$v_expanded', false);
+
         // 查找所有子孙节点
-        var list = this.virtualScroll.getData();
-        var childNodes = this.getChildNodes(row);
-        var start = childNodes.start,
-          end = childNodes.end;
-        if (start === -1) return;
+        var _this$virtualScroll = this.virtualScroll,
+          getData = _this$virtualScroll.getData,
+          keyProp = _this$virtualScroll.keyProp;
+        var list = getData();
+        var childNodes = this.getChildNodes(row, true, true);
+        if (!childNodes.length) return;
+        var map = {};
+        childNodes.forEach(function (row) {
+          map[row[keyProp]] = true;
+        });
 
         // 隐藏所有子孙节点
-        this.$set(row, '$v_hideNodes', _toConsumableArray(childNodes));
-        console.log('hideChildNodes');
-        var newList = list.filter(function (row, index) {
-          return index < start || index >= end;
+        this.$set(row, '$v_hideNodes', childNodes);
+        var newList = list.filter(function (row) {
+          return !(row[keyProp] in map);
         });
         this.virtualScroll.updateData(newList);
         this.virtualScroll.update();
@@ -2520,9 +2527,9 @@
         var expanded = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var doLoad = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
         if (!Array.isArray(expandKeys)) return;
-        var _this$virtualScroll = this.virtualScroll,
-          getData = _this$virtualScroll.getData,
-          keyProp = _this$virtualScroll.keyProp;
+        var _this$virtualScroll2 = this.virtualScroll,
+          getData = _this$virtualScroll2.getData,
+          keyProp = _this$virtualScroll2.keyProp;
         var data = getData();
         var plist = [];
         data.forEach(function (row) {
@@ -2586,9 +2593,9 @@
             return _ref.apply(this, arguments);
           };
         }();
-        var _this$virtualScroll2 = this.virtualScroll,
-          getData = _this$virtualScroll2.getData,
-          keyProp = _this$virtualScroll2.keyProp;
+        var _this$virtualScroll3 = this.virtualScroll,
+          getData = _this$virtualScroll3.getData,
+          keyProp = _this$virtualScroll3.keyProp;
         var data = getData();
         return expand(data, 0);
       },
@@ -2627,84 +2634,150 @@
         }
       },
       // 删除节点
-      // contain 为false时只删除子节点
+      // onlyChild：为false是删除传入的row节点，为 true 时只删除row的所有子节点
       removeNode: function removeNode(row) {
-        var contain = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        var onlyChild = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+        // 没有子节点，无需删除
+        if (onlyChild && !row.$v_hasChildren) return;
         var getData = this.virtualScroll.getData;
-        var list = getData();
-        var _this$getChildNodes = this.getChildNodes(row, true, contain),
-          start = _this$getChildNodes.start,
-          end = _this$getChildNodes.end;
-        if (start < 0) return;
+        var list = getData().slice();
+        var targetLevel = row.$v_level || 1;
 
-        // 删除
-        var newList = list.filter(function (row, index) {
-          return index < start || index >= end;
-        });
-        this.virtualScroll.updateData(newList);
+        // 查找子节点
+        // match - 是否找到目标节点
+        function find(list) {
+          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+            match: false,
+            stop: false
+          };
+          for (var i = 0; i < list.length; i++) {
+            if (data.stop) return;
+            var curRow = list[i];
+            var curLevel = curRow.$v_level || 1;
+            var isChild = curLevel > targetLevel;
+
+            // 找到子节点，并删除
+            if (data.match && isChild) {
+              list.splice(i, 1);
+              i--;
+              continue;
+            }
+            // 已经找完子节点，结束
+            if (data.match && !isChild) return data.stop = true;
+            // 找到目标节点后，开始查找它的子节点
+            if (curRow === row) {
+              // 直接删除目标节点，并结束(不需查询子节点)
+              if (!onlyChild) {
+                list.splice(i, 1);
+                data.stop = true;
+                return;
+              }
+              // 往下允许查找它的子节点
+              data.match = true;
+            }
+
+            // 如果子节点隐藏了，则从隐藏节点里查找
+            var hideNodes = curRow.$v_hideNodes || [];
+            if (hideNodes.length) {
+              find(hideNodes, data, true);
+            }
+          }
+        }
+        find(list);
+        if (onlyChild) row.$v_hasChildren = false;
+        this.virtualScroll.updateData(list);
       },
       // 重新加载节点
       // 删除原来子节点，并触发load函数重新加载
       reloadNode: function reloadNode(row) {
-        this.removeNode(row, false);
+        this.removeNode(row, true);
         this.loadChildNodes(row);
       },
       /*
        * 获取子孙节点
-       * contain - 是否包含当前节点
        * soon - 是否获取所有子孙节点，否则只获取直属子节点
+       * visible - 只获取可见的
        */
       getChildNodes: function getChildNodes(row) {
         var soon = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-        var contain = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-        var list = this.getAllNodes();
+        var visible = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
         var res = [];
-        var index = list.findIndex(function (item) {
-          return item === row;
-        });
-        var level = row.$v_level || 1;
-        if (index === -1) return [];
-        res.start = index + 1;
-        for (var i = res.start; i < list.length; i++) {
-          var curRow = list[i];
-          res.end = i;
-          if ((curRow.$v_level || 1) <= level) break;
-          res.push(curRow);
-        }
+        var getData = this.virtualScroll.getData;
+        var list = getData();
+        var targetLevel = row.$v_level || 1;
 
-        // 筛选出所有直属的子节点
-        if (!soon) {
-          res = res.filter(function (row) {
-            return row.$v_level === level + 1;
-          });
-        }
+        // 查找子节点
+        // match - 是否找到目标节点
+        function find(list) {
+          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+            match: false,
+            stop: false
+          };
+          for (var i = 0; i < list.length; i++) {
+            if (data.stop) return;
+            var curRow = list[i];
+            var curLevel = curRow.$v_level || 1;
+            var isChild = soon ? curLevel > targetLevel : curLevel - targetLevel === 1;
 
-        // 如果包含当前节点，调整索引和返回值
-        if (contain) {
-          res.start--;
-          res.unshift(row);
+            // 找到子节点
+            if (data.match && isChild) {
+              res.push(curRow);
+            }
+            // 已经找完子节点，结束
+            if (data.match && !isChild) return data.stop = true;
+            // 找到目标节点后，开始查找它的子节点
+            if (curRow === row) data.match = true;
+
+            // 如果子节点隐藏了，则从隐藏节点里查找
+            var hideNodes = curRow.$v_hideNodes || [];
+            if (!visible && hideNodes.length) {
+              find(hideNodes, data);
+            }
+          }
         }
+        find(list);
         return res;
       },
       // 获取父节点
       getParentNodes: function getParentNodes(row) {
-        var list = this.getAllNodes();
+        var getData = this.virtualScroll.getData;
+        var list = getData().slice();
         var res = [];
-        var index = list.findIndex(function (item) {
-          return item === row;
-        });
-        if (index === -1) return [];
-        var level = row.$v_level || 1; // 当前节点的层级
-        for (var i = index - 1; i >= 0; i--) {
-          var curRow = list[i];
-          var curLevel = curRow.$v_level || 1;
-          if (curLevel < level) {
-            level = curRow.$v_level;
+
+        // 查找方案：从父节点向子节点一级一级查找，并记录查找路径，找到目标节点后，返回路径上的所有节点
+        function find(list) {
+          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+            stop: false
+          };
+          var level = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+          for (var i = 0; i < list.length; i++) {
+            if (data.stop) return;
+            var curRow = list[i];
+            var curLevel = curRow.$v_level || 1;
+            if (curLevel > level) {
+              level = curLevel;
+            } else {
+              // 层级与数组的索引有关联的，相差1
+              res.splice(curLevel - 1);
+            }
+
+            // 找到目标节点后，停止
+            if (curRow === row) {
+              data.stop = true;
+              return;
+            }
+            // 添加当前节点
             res.push(curRow);
+
+            // 如果子节点隐藏了，则从隐藏节点里查找
+            var hideNodes = curRow.$v_hideNodes || [];
+            if (hideNodes.length) {
+              find(hideNodes, data, level);
+            }
           }
-          if (curLevel === 1) break;
         }
-        return res.reverse();
+        find(list);
+        return res;
       },
       // 获取所有节点，包含隐藏的节点
       getAllNodes: function getAllNodes() {
@@ -2861,7 +2934,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-15934f39_0", {
+    inject("data-v-7da9d5fd_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
       map: {
         "version": 3,

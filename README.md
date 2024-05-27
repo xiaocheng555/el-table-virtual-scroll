@@ -115,7 +115,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 | type    | type="index" 为索引；type="selection" 为多选；type="radio" 为单选；type="expand" 为扩展行；type="tree" 为模拟树结构 | String | 选填 |  |
 | indent | 展示树形数据时，树节点的缩进，type 为 tree 时生效 | Number | — | 16 |
 | load | 加载子节点数据的函数，type 为 tree 时生效 | Function(row, resolve) | — | - |
-| tree-props | 渲染嵌套数据的配置选项，type 为 tree 时生效（>=1.2.0版本支持） | Object | 例如：{ hasChildren: 'hasChildren', children: 'children' } | - |
+| tree-props | 渲染嵌套数据的配置选项，type 为 tree 时生效（>=1.2.0版本支持） | Object | 例如：{ hasChildren: 'hasChildren', children: 'children' }: 当 hasChildren 为true时，显示 children 为子节点，当 hasChildren 为false时，没有子节点，当 hasChildren 为 null/undefined 时，触发load函数加载子节点 | - |
 | vfixed | 固定列（>=1.0.16版本支持）。使用 position: sticky; 来实现固定列，不会生成额外table，滚动更丝滑；使用时，需要设置table的headerCellStyle、cellStyle（注意组件必须按固定列顺序排列最左或最右），参考[demo](https://xiaocheng555.github.io/el-table-virtual-scroll/#/VFixedDemo) | String/Boolean | left/right/true | - |
 
 
@@ -505,7 +505,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 ### 2024-5-16
 
-* `VirtualColumn` 组件 增加 `treeProps` 属性设置
+* `VirtualColumn` 组件 增加 `tree-props` 属性设置
 
 * npm 1.2.0 版本发包
 

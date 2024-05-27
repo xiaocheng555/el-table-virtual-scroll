@@ -2260,7 +2260,10 @@ var script = {
   inject: ['virtualScroll'],
   props: {
     load: {
-      type: Function
+      type: Function,
+      "default": function _default(row, resolve) {
+        resolve([]);
+      }
     },
     indent: {
       type: Number,
@@ -2268,6 +2271,12 @@ var script = {
     },
     selectable: {
       type: Function
+    },
+    treeProps: {
+      type: Object,
+      "default": function _default() {
+        return {};
+      }
     }
   },
   data: function data() {
@@ -2439,12 +2448,27 @@ var script = {
       }))();
     },
     // 加载子节点
+    // force - 强制执行load加载
     loadChildNodes: function loadChildNodes(row) {
       var _this4 = this;
-      return new Promise(function (resolve, reject) {
+      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+      return new Promise(function (resolve) {
         // 获取子节点数据并显示
         _this4.$set(row, '$v_loading', true);
         _this4.$set(row, '$v_hasChildren', true);
+
+        // 显示已有子节点
+        if (!force) {
+          var _this4$treeProps = _this4.treeProps,
+            children = _this4$treeProps.children,
+            hasChildren = _this4$treeProps.hasChildren;
+          if (row[hasChildren] === false) {
+            return resolveFn.call(_this4, []);
+          }
+          if (row[hasChildren]) {
+            return resolveFn.call(_this4, row[children]);
+          }
+        }
         _this4.load && _this4.load(row, resolveFn.bind(_this4));
         function resolveFn(data) {
           if (!Array.isArray(data)) {
@@ -2684,7 +2708,7 @@ var script = {
     // 删除原来子节点，并触发load函数重新加载
     reloadNode: function reloadNode(row) {
       this.removeNode(row, true);
-      this.loadChildNodes(row);
+      this.loadChildNodes(row, true);
     },
     /*
      * 获取子孙节点
@@ -2873,7 +2897,7 @@ var __vue_render__ = function __vue_render__() {
           style: {
             paddingLeft: (scope.row.$v_level - 1) * _vm.indent + "px"
           }
-        }), _vm._v(" "), scope.row.$v_hasChildren !== false ? _c("div", {
+        }), _vm._v(" "), !(scope.row.$v_hasChildren === false || scope.row[_vm.treeProps.hasChildren] === false) ? _c("div", {
           staticClass: "el-table__expand-icon",
           "class": scope.row.$v_expanded ? "el-table__expand-icon--expanded" : "",
           on: {
@@ -2927,7 +2951,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-7da9d5fd_0", {
+  inject("data-v-35e789ed_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
     map: {
       "version": 3,

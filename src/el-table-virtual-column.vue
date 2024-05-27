@@ -29,7 +29,7 @@
       <template v-if="scope.column && scope.column.type === 'v-tree'">
         <span class="el-table__indent" :style="{ paddingLeft: `${(scope.row.$v_level - 1) * indent}px` }"></span>
         <div
-          v-if="(scope.row.$v_hasChildren !== false)"
+          v-if="!(scope.row.$v_hasChildren === false || scope.row[treeProps.hasChildren] === false)"
           class="el-table__expand-icon"
           :class="scope.row.$v_expanded ? 'el-table__expand-icon--expanded' : ''"
           @click="onTreeNodeExpand(scope.row)">
@@ -102,7 +102,10 @@ export default {
   inject: ['virtualScroll'],
   props: {
     load: {
-      type: Function
+      type: Function,
+      default: (row, resolve) => {
+        resolve([])
+      }
     },
     indent: {
       type: Number,
@@ -110,6 +113,12 @@ export default {
     },
     selectable: {
       type: Function
+    },
+    treeProps: {
+      type: Object,
+      default () {
+        return {}
+      }
     }
   },
   data () {
@@ -243,11 +252,23 @@ export default {
       }
     },
     // 加载子节点
-    loadChildNodes (row) {
-      return new Promise((resolve, reject) => {
+    // force - 强制执行load加载
+    loadChildNodes (row, force = false) {
+      return new Promise((resolve) => {
         // 获取子节点数据并显示
         this.$set(row, '$v_loading', true)
         this.$set(row, '$v_hasChildren', true)
+
+        // 显示已有子节点
+        if (!force) {
+          const { children, hasChildren } = this.treeProps
+          if (row[hasChildren] === false) {
+            return resolveFn.call(this, [])
+          }
+          if (row[hasChildren]) {
+            return resolveFn.call(this, row[children])
+          }
+        }
 
         this.load && this.load(row, resolveFn.bind(this))
 
@@ -447,7 +468,7 @@ export default {
     // 删除原来子节点，并触发load函数重新加载
     reloadNode (row) {
       this.removeNode(row, true)
-      this.loadChildNodes(row)
+      this.loadChildNodes(row, true)
     },
     /*
      * 获取子孙节点

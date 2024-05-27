@@ -51,3 +51,49 @@ function getContent () {
   const i = Math.floor(Math.random() * 10)
   return content[i]
 }
+
+export function generateTreeData (count, pre) {
+  const treeData = [];
+
+  for (let i = 1; i <= count; i++) {
+    const doload = Math.random() >= 0.8;
+    const hasChildren = doload ? null : Math.random() >= 0.7
+
+    const id = pre ? `${pre}_${i}` : i
+    let children = null;
+    if (hasChildren) {
+      children = generateTreeData(Math.floor(Math.random() * 5) + 1, id);
+    }
+    const text = getContent()
+    const text2 = getContent()
+    const node = {
+      id: id,
+      text,
+      text2,
+      date: new Date().toLocaleString(),
+      name: '王小虎',
+      province: '上海',
+      city: '普陀区',
+      address: '上海市普陀区金沙江路 1518 弄',
+      zip: 200333,
+      category: '江浙小吃、小吃零食',
+      desc: '荷兰优质淡奶，奶香浓而不腻',
+      shop: '王小虎夫妻店',
+      shopId: '10333',
+      hasChildren,
+      children
+    };
+
+    treeData.push(node);
+  }
+
+  return treeData;
+}
+
+// 生成guid
+export function guid () {
+  function S4 () {
+    return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
+  }
+  return (S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4())
+}

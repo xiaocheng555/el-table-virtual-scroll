@@ -114,6 +114,10 @@ export default {
     selectable: {
       type: Function
     },
+    reserveSelection: {
+      type: Boolean,
+      default: false
+    },
     treeProps: {
       type: Object,
       default () {
@@ -185,10 +189,9 @@ export default {
     },
     // 同步全选、半选框状态
     syncCheckStatus () {
-      const oList = this.virtualScroll.getData()
-      const list = this.virtualScroll.getData(false)
-      const oCheckedLen = oList.filter(row => row.$v_checked === true).length
-      const checkedLen = oList === list ? oCheckedLen : list.filter(row => row.$v_checked === true).length
+      const list = this.virtualScroll.getData(false) // 筛选后的列表或原列表
+      const checkedLen = list.filter(row => row.$v_checked === true).length
+      const selection = this.virtualScroll.getSelection()
 
       if (checkedLen && checkedLen === list.length) {
         // 全部选中
@@ -204,7 +207,7 @@ export default {
         // 没有选中
         this.isCheckedAll = false
       }
-      this.isCheckedImn = !this.isCheckedAll && oCheckedLen > 0
+      this.isCheckedImn = !this.isCheckedAll && selection.length > 0
     },
     // 单选
     onRadioChange (row) {

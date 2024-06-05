@@ -509,6 +509,15 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * npm 1.2.0 版本发包
 
 
+### 2024-6-5
+
+* 支持 el-table 的过滤和筛选功能，调整部分代码（代码改动较多）
+
+* 多选支持 reserve-selection
+
+* npm 1.3.0 版本发包
+
+
 
 
 

@@ -31,8 +31,6 @@ const TableBodyClassNames = [
   '.el-table__fixed .el-table__fixed-body-wrapper' // 左固定表格容器
 ]
 
-let checkOrder = 0 // 多选：记录多选选项改变的顺序
-
 export default {
   name: 'el-table-virtual-scroll',
   props: {
@@ -166,6 +164,8 @@ export default {
       this.scrollPos = [0, 0]
       // 触发scroll
       this.triggleScroll = false
+      // 多选：记录多选选项的顺序
+      this.checkOrder = 0
 
       // 验证ElTable组件
       this.elTable = this.getElTable()
@@ -666,7 +666,7 @@ export default {
         this.$emit('select-all', selection, val)
       }
 
-      if (val === false) checkOrder = 0 // 取消全选，则重置checkOrder
+      if (val === false) this.checkOrder = 0 // 取消全选，则重置checkOrder
     },
 
     // 【多选】选中某一列
@@ -674,7 +674,7 @@ export default {
       if (row.$v_checked === val) return
 
       this.$set(row, '$v_checked', val)
-      this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
+      this.$set(row, '$v_checkedOrder', val ? this.checkOrder++ : undefined)
       if (emit) {
         const selection = this.emitSelectionChange(val ? [] : [row])
         if (byUser) { // 当用户手动勾选数据行的 Checkbox 时触发的事件
@@ -685,42 +685,125 @@ export default {
 
     // 【多选】兼容表格clearSelection方法
     clearSelection () {
+      this.oldSelection = []
       this.checkAll(false)
       this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
 
     // 【多选】兼容表格toggleRowSelection方法
     toggleRowSelection (row, selected) {
-      if (Array.isArray(row)) {
-        this.toggleRowsSelection(row, selected)
-        return
+      if (!Array.isArray(row)) {
+        row = [row]
       }
-
-      const val = typeof selected === 'boolean' ? selected : !row.$v_checked
-      this.checkRow(row, val)
-      this.columnVms.forEach(vm => vm.syncCheckStatus())
+      this.toggleRowsSelection(row, selected)
     },
 
     // 【多选】表格切换多个row选中状态
     toggleRowsSelection (rows, selected) {
+      // reserve-selection 模式用到的变量
+      const oldSelectedMap = {} // 保留值map（旧的选中值）
+      const curSelectedMap = {} // 当前选中值map
+      let toDeleteMap = null // 需删除值map
+      const isReserve = this.isReserveSelection()
+      if (isReserve) {
+        this.oldSelection.forEach(row => {
+          oldSelectedMap[row[this.keyProp]] = true
+        })
+        this.data.forEach(row => {
+          curSelectedMap[row[this.keyProp]] = true
+        })
+      }
+
       const removedRows = []
       rows.forEach(row => {
         const val = typeof selected === 'boolean' ? selected : !row.$v_checked
         !val && removedRows.push(row)
         this.$set(row, '$v_checked', val)
-        this.$set(row, '$v_checkedOrder', val ? checkOrder++ : undefined)
+        this.$set(row, '$v_checkedOrder', val ? this.checkOrder++ : undefined)
+        if (!isReserve) return
+
+        /* 处理reserve-selection 模式 */
+        // 如果row在保留值oldSelection里，且取消选中，则需要将它移除
+        const key = row[this.keyProp]
+        if (key in oldSelectedMap && !val) {
+          if (!toDeleteMap) toDeleteMap = {}
+          toDeleteMap[key] = true
+        }
+        // 如果row不在当前列表里，且为选中，则需要添加在保留值oldSelection里
+        if (!(key in curSelectedMap) && val) {
+          this.oldSelection.push(row)
+        }
       })
+      if (toDeleteMap) {
+        this.oldSelection = this.oldSelection.filter(
+          row => !(row[this.keyProp] in toDeleteMap)
+        )
+      }
+
       this.emitSelectionChange(removedRows)
       this.columnVms.forEach(vm => vm.syncCheckStatus())
     },
 
     // 【多选】兼容表格selection-change事件
-    emitSelectionChange (removedRows, byUser = false) {
-      const selection = this.data.filter(row => row.$v_checked)
+    emitSelectionChange (removedRows) {
+      const isReserve = this.isReserveSelection() // 是否保留旧的值
+      const selection = isReserve ? [...this.oldSelection] : []
+      this.data.forEach(row => {
+        if (row.$v_checked) {
+          selection.push(row)
+        }
+      })
       this.sortSelection(selection)
       this.$emit('selection-change', selection, removedRows)
-      this.oldSelection = [...selection]
+      // 对于 reserve-selection 模式，oldSelection始终保留旧的选中值，不保留当前选中值
+      // 对于 非 reserve-selection 模式，oldSelection始终保留当前选中值
+      if (!isReserve) {
+        this.oldSelection = [...selection]
+      }
       return selection
+    },
+
+    // 【多选】兼容表格 reserve-selection，存储上次选中的值
+    updateSelectionByRowKey (data, oldData = []) {
+      if (!this.elTable) return
+
+      // 将旧的选中值存储到oldSelection中
+      oldData.forEach(row => {
+        if (row.$v_checked) {
+          this.oldSelection.push(row)
+        }
+      })
+      const selectedMap = {}
+      this.oldSelection.forEach(row => {
+        selectedMap[row[this.keyProp]] = true
+      })
+
+      const usedMap = {} // 当前选中值的map
+      data.forEach(row => {
+        const key = row[this.keyProp]
+        if (key in selectedMap) {
+          this.$set(row, '$v_checked', true)
+          usedMap[key] = true
+        }
+      })
+
+      // 从oldSelection中移除当前选中的值
+      this.oldSelection = this.oldSelection.filter(row => !(row[this.keyProp] in usedMap))
+    },
+
+    // 【多选】多选列是否设置了 reserve-selection
+    isReserveSelection () {
+      return this.columnVms.some(vm => vm.reserveSelection && vm.isSelection())
+    },
+
+    // 获取选中值
+    getSelection () {
+      if (this.isReserveSelection()) {
+        const curSelection = this.data.filter(row => row.$v_checked)
+        return [...this.oldSelection, ...curSelection]
+      } else {
+        return this.oldSelection
+      }
     },
 
     // 【多选】更新多选的值
@@ -1025,7 +1108,13 @@ export default {
       } else {
         this.doUpdate()
       }
-      this.updateSelectionData(data, oldData)
+      if (this.isReserveSelection()) {
+        // 保留旧的选中值
+        this.updateSelectionByRowKey(data, oldData)
+      } else {
+        // 对比新旧值，移除删除的选中值
+        this.updateSelectionData(data, oldData)
+      }
       this.onFilterChange()
     },
     virtualized: {

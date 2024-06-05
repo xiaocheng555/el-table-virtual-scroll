@@ -138,6 +138,10 @@ export default {
           path: '/VSelectionDemo'
         },
         {
+          title: '多选 reserve-selection',
+          path: '/VSelectionReserveDemo'
+        },
+        {
           title: '索引',
           path: '/VIndex'
         },

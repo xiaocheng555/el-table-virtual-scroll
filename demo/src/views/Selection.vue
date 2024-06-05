@@ -10,6 +10,7 @@
       height="400"
       @selection-change="handleSelectionChange">
       <el-table-column
+        reserve-selection
         type="selection"
         width="55">
       </el-table-column>
@@ -69,6 +70,7 @@ export default {
       }
     },
     handleSelectionChange(val) {
+      console.log(val, 'val')
       this.multipleSelection = val
     },
     refresh () {

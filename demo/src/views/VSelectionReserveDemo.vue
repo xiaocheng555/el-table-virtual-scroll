@@ -1,5 +1,6 @@
 <template>
   <div>
+    <el-alert type="warning" title="多选支持reserve-selection (>=1.3.0版本) " show-icon></el-alert>
     <virtual-scroll
       v-show="show"
       ref="virtualScroll"
@@ -18,15 +19,10 @@
         style="width: 100%"
         :row-class-name="getRowClassName">
         <!-- 多选 -->
-        <virtual-column width="60" type="selection" :selectable="getSelectable"></virtual-column>
+        <virtual-column width="60" type="selection" :selectable="getSelectable" reserve-selection></virtual-column>
         <el-table-column
           label="id"
           prop="id"
-          width="120">
-        </el-table-column>
-        <el-table-column
-          label="count"
-          prop="count"
           width="120">
         </el-table-column>
         <el-table-column
@@ -51,10 +47,17 @@
         </el-table-column>
       </el-table>
     </virtual-scroll>
+    <el-pagination
+      layout="prev, pager, next"
+      :total="pageTotal"
+      :current-page.sync="currentPage"
+      @current-change="onCurrentChange">
+    </el-pagination>
     <div style="margin-top: 20px">
-      <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
       <el-button @click="toggleSelection()">取消选择</el-button>
-      <el-button @click="refresh()">刷新</el-button>
+      <el-button @click="toggleSelection(multipleSelection[0])">取消选择1个</el-button>
+      <el-button @click="toggleSelection(multipleSelection.slice(0, 2))">取消选择2个</el-button>
+      <el-button @click="onCurrentChange()">刷新</el-button>
       <el-button @click="show = !show">show</el-button>
       <span style="margin-left: 10px;">选中高亮: <el-switch v-model="highlight"></el-switch></span>
     </div>
@@ -73,19 +76,23 @@ export default {
   },
   data () {
     return {
-      list: mockData(0, 2000),
+      list: [],
       tableData: [],
       multipleSelection: [],
       show: true,
-      highlight: false
+      highlight: false,
+      pageTotal: 200,
+      currentPage: 1
     }
   },
   methods: {
-    refresh () {
-      this.list = mockData(0, 2000)
+    onCurrentChange () {
+      const start = (this.currentPage - 1) * this.pageTotal
+      console.log(start, start + this.pageTotal, '==onCurrentChange=')
+      this.list = mockData(start, start + this.pageTotal)
     },
-    getSelectable (row, idx) {
-      return idx > 2
+    getSelectable (row) {
+      return row.id > 2
     },
     toggleSelection (rows) {
       if (rows) {
@@ -116,9 +123,12 @@ export default {
       if (index > -1) {
         this.list.splice(index, 1)
       }
+      // 需要手动移除选项
+      this.$refs.virtualScroll.toggleRowSelection(row, false)
     }
   },
   created () {
+    this.onCurrentChange()
   }
 }
 </script>

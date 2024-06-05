@@ -75,7 +75,6 @@ export default {
 |---------- |-------- |---------- |
 | scrollTo | 滚动到第几行；index - 行数索引值；offset - 偏移位置（>=1.0.25版本支持） | (index: number, offset: number) |
 | update | 更新，会重新计算实际渲染数据和位置 | - |
-| reset | 重置 | - |
 | clearSelection | 用于多选 `<virtual-column type="selection">`，清空用户的选择 | - |
 | toggleRowSelection | 用于多选 `<virtual-column type="selection">`, 切换表格行的选中状态，如果使用了第二个参数，则是设置表格行选中与否（selected 为 true 则选中）；如果需要切换多行选中状态，请传入数组，避免造成卡顿 | row|rows, selected |
 | toggleRowExpansion | 用于展开行 `<virtual-column type="expand">`, 切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开）| row, expanded |

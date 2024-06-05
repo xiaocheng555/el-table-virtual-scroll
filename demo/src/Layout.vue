@@ -159,9 +159,14 @@ export default {
         },
 
         '其他',
+
         {
-          title: '排序&过滤',
+          title: '排序&过滤（旧）',
           path: '/SortDemo'
+        },
+        {
+          title: '排序&过滤（新）',
+          path: '/SortDemo2'
         },
         {
           title: '表尾合计行',

@@ -60,7 +60,7 @@ export default {
   data () {
     return {
       loading: false,
-      list: generateTreeData(100),
+      list: generateTreeData(1000),
       tableData: []
     }
   },

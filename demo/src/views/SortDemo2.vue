@@ -1,5 +1,6 @@
 <template>
   <div>
+    <el-alert type="warning" title="支持 el-table 原有的过滤和筛选功能 (>=1.3.0版本)" show-icon></el-alert>
     <virtual-scroll
       ref="virtualScroll"
       :data="list"
@@ -86,7 +87,7 @@ export default {
     onFilterChange (filters) {
       console.log('filters', filters)
     },
-        filterCount (value, row, column) {
+    filterCount (value, row, column) {
       const property = column['property']
       return row[property] > value
     },

@@ -2,7 +2,7 @@
 export function mockData (start, end) {
   let cate = 1 // 类别
   const list = []
-  for (let i = 0; i < end; i++) {
+  for (let i = start; i < end; i++) {
     const text = getContent()
     const text2 = getContent()
     if (Math.random() > 0.6) cate++

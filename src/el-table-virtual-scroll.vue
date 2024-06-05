@@ -12,80 +12,24 @@
 
 <script>
 import throttle from 'lodash/throttle'
-import normalizeWheel from 'normalize-wheel'
-
-// 判断是否是滚动容器
-function isScroller (el) {
-  const style = window.getComputedStyle(el, null)
-  const scrollValues = ['auto', 'scroll']
-  return scrollValues.includes(style.overflow) || scrollValues.includes(style['overflow-y'])
-}
-
-// 获取父层滚动容器
-function getParentScroller (el) {
-  let parent = el
-  while (parent) {
-    if ([window, document, document.documentElement].includes(parent)) {
-      return window
-    }
-    if (isScroller(parent)) {
-      return parent
-    }
-    parent = parent.parentNode
-  }
-
-  return parent || window
-}
-
-// 获取容器滚动位置
-function getScrollTop (el) {
-  return el === window ? window.pageYOffset : el.scrollTop
-}
-
-// 获取容器高度
-function getOffsetHeight (el) {
-  return el === window ? window.innerHeight : el.offsetHeight
-}
-
-// 滚动到某个位置
-function scrollToY (el, y) {
-  if (el === window) {
-    window.scroll(0, y)
-  } else {
-    el.scrollTop = y
-  }
-}
-
-// 是否为空 undefine or null
-function isEmpty (val) {
-  return typeof val === 'undefined' || val === null
-}
-
-const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('firefox') > -1
-// 设置滚轮速度（完全参考 element-ui > table > handleFixedMousewheel方法）
-function setMousewheelSlow (scroller, slow) {
-  function handler (event) {
-    const data = normalizeWheel(event)
-    if (Math.abs(data.spinY) > 0) {
-      const currentScrollTop = scroller.scrollTop
-      if (data.pixelY < 0 && currentScrollTop !== 0) {
-        event.preventDefault()
-      }
-      if (data.pixelY > 0 && scroller.scrollHeight - scroller.clientHeight > currentScrollTop) {
-        event.preventDefault()
-      }
-      scroller.scrollTop += Math.ceil(data.pixelY / slow)
-    }
-  }
-  const throttleHandler = throttle(handler, 0)
-  scroller.addEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', throttleHandler, { passive: false })
-  return function destory () {
-    scroller.removeEventListener(isFirefox ? 'DOMMouseScroll' : 'mousewheel', throttleHandler)
-  }
-}
+import {
+  isScroller,
+  getParentScroller,
+  getScrollTop,
+  getOffsetHeight,
+  scrollToY,
+  isEmpty,
+  setMousewheelSlow,
+  orderBy,
+  getColumnById
+} from './util'
 
 // 表格body class名称
-const TableBodyClassNames = ['.el-table__body-wrapper', '.el-table__fixed-right .el-table__fixed-body-wrapper', '.el-table__fixed .el-table__fixed-body-wrapper']
+const TableBodyClassNames = [
+  '.el-table__body-wrapper', // 主表格容器
+  '.el-table__fixed-right .el-table__fixed-body-wrapper', // 右固定表格容器
+  '.el-table__fixed .el-table__fixed-body-wrapper' // 左固定表格容器
+]
 
 let checkOrder = 0 // 多选：记录多选选项改变的顺序
 
@@ -169,26 +113,27 @@ export default {
   data () {
     return {
       sizes: {}, // 尺寸映射（依赖响应式）
-      start: 0,
-      end: undefined,
+      start: 0, // 渲染列表开始索引
+      end: undefined, // 渲染列表结束索引
       curRow: null, // 表格单选：选中的行
       oldSelection: [], // 表格多选：选中的行
       isExpanding: false, // 列是否正在展开
       columnVms: [], // virtual-column 组件实例
-      isHideAppend: false,
-      scrollPosition: '',
-      hasFixedRight: false
+      isHideAppend: false, // 是否隐藏append
+      scrollPosition: '', // x轴滚动位置（左、中、右）
+      hasFixedRight: false, // 是否有固定右边的列
+      listData: [] // 未筛选为data源数据，筛选后则为筛选后的数据
     }
   },
   computed: {
     // 计算出每个item（的key值）到滚动容器顶部的距离
-    offsetMap ({ keyProp, itemSize, sizes, data }) {
+    offsetMap ({ keyProp, itemSize, sizes, listData }) {
       if (!this.dynamic) return {}
 
       const res = {}
       let total = 0
-      for (let i = 0; i < data.length; i++) {
-        const key = data[i][keyProp]
+      for (let i = 0; i < listData.length; i++) {
+        const key = listData[i][keyProp]
         if (typeof key === 'undefined') {
           this.warn && console.warn(`data[${i}][${keyProp}] 为 undefined，请确保 keyProp 对应的值不为undefined`)
         }
@@ -219,6 +164,8 @@ export default {
       this.highlightRow = null
       // 滚动位置
       this.scrollPos = [0, 0]
+      // 触发scroll
+      this.triggleScroll = false
 
       // 验证ElTable组件
       this.elTable = this.getElTable()
@@ -235,21 +182,15 @@ export default {
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
       this.bindTableDragEvent()
+      this.bindTableFilterEvent()
+      this.bindTableSortEvent()
+      this.bindTableDestory()
       this.hackRowHighlight()
 
-      // 初次执行
+      // 初次执行 (固定高度的表格布局好后，会触发 bodyHeight 更改（已手动监听，位于 unWatch2代码处），从而触发 onScroll，所以无需手动执行onScroll)
       setTimeout(() => {
-        this.onScroll()
+        !this.triggleScroll && this.onScroll()
       }, 100)
-
-      // 防止el-table绑定key时，重新渲染表格但没有重新初始化<virtual-scroll>组件
-      this.elTable.$on('hook:beforeDestory', () => {
-        this.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁')
-        this.destory()
-        this.$nextTick(() => {
-          this.initData()
-        })
-      })
     },
 
     // 滚轮滚动速度减缓，减少快速滚动白屏
@@ -295,6 +236,7 @@ export default {
     handleScroll (shouldUpdate = true) {
       if (this.disabled) return
       if (!this.scroller) return
+      this.triggleScroll = true
 
       // 【修复】如果使用v-show 进行切换表格会特别卡顿 #30；
       // 【原因】v-show为false时，表格内滚动容器的高度为auto，没有滚动条限制，虚拟滚动计算渲染全部内容
@@ -383,7 +325,7 @@ export default {
         return this.itemSize * index
       }
 
-      const item = this.data[index]
+      const item = this.listData[index]
       if (item) {
         return this.offsetMap[item[this.keyProp]] || 0
       }
@@ -393,7 +335,7 @@ export default {
     // 获取某条数据的尺寸
     getItemSize (index) {
       if (index <= -1) return 0
-      const item = this.data[index]
+      const item = this.listData[index]
       if (item) {
         const key = item[this.keyProp]
         return this.sizes[key] || this.itemSize
@@ -403,7 +345,7 @@ export default {
 
     // 计算只在视图上渲染的数据
     calcRenderData () {
-      const { scroller, data, buffer } = this
+      const { scroller, listData, buffer } = this
       // 计算可视范围顶部、底部
       const toTop = this.getToTop() // 表格到滚动容器的距离
       const top = getScrollTop(scroller) - buffer - toTop
@@ -417,7 +359,7 @@ export default {
       } else {
         // 二分法计算可视范围内的开始的第一个内容
         let l = 0
-        let r = data.length - 1
+        let r = listData.length - 1
         let mid = 0
         while (l <= r) {
           mid = Math.floor((l + r) / 2)
@@ -434,7 +376,7 @@ export default {
 
         // 二分法计算可视范围内的结束的最后一个内容
         l = start
-        r = data.length - 1
+        r = listData.length - 1
         mid = 0
         while (l <= r) {
           mid = Math.floor((l + r) / 2)
@@ -462,9 +404,9 @@ export default {
       this.bottom = bottom
       this.start = start
       this.end = end
-      this.renderData = data.slice(start, end + 1)
-      if (this.start === 0 && this.end > 30 && this.end === this.data.length - 1) {
-        this.warn && console.warn('[el-table-virtual-scroll] 表格数据全部渲染，渲染数量为:' + this.data.length)
+      this.renderData = listData.slice(start, end + 1)
+      if (this.start === 0 && this.end > 30 && this.end === this.listData.length - 1) {
+        this.warn && console.warn('[el-table-virtual-scroll] 表格数据全部渲染，渲染数量为:' + this.listData.length)
       }
     },
 
@@ -478,7 +420,7 @@ export default {
       // 从开始节点向上查找是否有合并行
       let prevKey
       while (start > 0) {
-        const curRow = this.data[start]
+        const curRow = this.listData[start]
         const curkey = this.rowSpanKey(curRow, start)
         // 如果不存在key，说明当前行不属于合并行
         if (isEmpty(curkey)) break
@@ -494,10 +436,10 @@ export default {
       }
 
       // 从末端节点向下查找是否有合并行
-      const len = this.data.length
+      const len = this.listData.length
       prevKey = undefined
       while (end < len) {
-        const curRow = this.data[end]
+        const curRow = this.listData[end]
         const curkey = this.rowSpanKey(curRow, end)
         // 如果不存在key，说明当前行不属于合并行
         if (!curkey) break
@@ -517,7 +459,7 @@ export default {
 
     // 计算位置
     calcPosition () {
-      const last = this.data.length - 1
+      const last = this.listData.length - 1
       // 计算内容总高度
       const wrapHeight = this.getItemOffsetTop(last) + this.getItemSize(last)
       // 计算当前滚动位置需要撑起的高度
@@ -610,8 +552,8 @@ export default {
 
     // 渲染全部数据
     renderAllData () {
-      this.renderData = this.data
-      this.$emit('change', this.data, 0, this.data.length - 1)
+      this.renderData = this.listData
+      this.$emit('change', this.listData, 0, this.listData.length - 1)
 
       this.$nextTick(() => {
         // 清除撑起的高度和位置
@@ -646,7 +588,7 @@ export default {
     // （不太精确：滚动到第n行时，如果周围的表格行计算出真实高度后会更新高度，导致内容坍塌或撑起）
     // offsetY - 偏移量
     scrollTo (index, offsetY = 0, stop = false) {
-      const item = this.data[index]
+      const item = this.listData[index]
       if (item && this.scroller) {
         this.updateSizes()
         this.calcRenderData()
@@ -665,7 +607,7 @@ export default {
       }
     },
 
-    // 【外部调用】重置
+    // 【外部调用】重置 (没用废弃)
     reset () {
       this.sizes = {}
       this.scrollTo(0, 0, false)
@@ -673,12 +615,6 @@ export default {
 
     // 销毁
     destory () {
-      this.oldSelection = []
-      this.onExpandChange && this.elTable.$off('expand-change', this.onExpandChange)
-      this.onCurrentChange && this.elTable.$off('current-change', this.onCurrentChange)
-      this.onHeaderDragend && this.elTable.$off('header-dragend', this.onHeaderDragend)
-      this.removeMousewheelEvent && this.removeMousewheelEvent()
-
       if (this.scroller) {
         this.scroller.removeEventListener('scroll', this.onScroll)
         window.removeEventListener('resize', this.onScroll)
@@ -686,6 +622,10 @@ export default {
       if (this.unWatchs) {
         this.unWatchs.forEach(unWatch => unWatch())
       }
+      if (this.removeMousewheelEvent) {
+        this.removeMousewheelEvent()
+      }
+      this.oldSelection = []
       this.elTable = null
       this.scroller = null
       this.unWatchs = []
@@ -699,8 +639,9 @@ export default {
     },
 
     // 【VirtualColumn调用】获取列表全部数据】
-    getData () {
-      return this.list || this.data
+    // origin - 源数据，非筛选后的数据
+    getData (origin = true) {
+      return this.list || (origin ? this.data : this.listData)
     },
 
     // 【VirtualColumn调用】添加virtual-column实例
@@ -714,7 +655,7 @@ export default {
     },
 
     // 【多选】选中所有列
-    checkAll (val, rows = this.data, byUser = false) {
+    checkAll (val, rows = this.listData, byUser = false) {
       const removedRows = []
       rows.forEach(row => {
         if (row.$v_checked) removedRows.push(row)
@@ -838,29 +779,32 @@ export default {
     // 【单选高亮】兼容行高亮
     hackRowHighlight () {
       // 兼容el-table的setCurrentRow：重写setCurrentRow方法
-      if (this.elTable.__overviewSetCurrentRow) {
-        this.elTable.__overviewSetCurrentRow = true
-        const setCurrentRow = this.elTable.setCurrentRow.bind(this.elTable)
+      if (this.elTable.__setCurrentRow) {
+        this.elTable.__setCurrentRow = true // 只重写一次
+        const originSetCurrentRow = this.elTable.setCurrentRow.bind(this.elTable) // 原方法
         this.elTable.setCurrentRow = (row) => {
           this.elTable.store.states.currentRow = this.highlightRow // 同步表格行高亮的值
           if (this.highlightRow !== row) this.highlightRow = row // 同步highlightRow的值
-          setCurrentRow(row) // 执行原方法
+          originSetCurrentRow(row) // 执行原方法
         }
       }
       // 兼容el-table的currentRowKey属性
       const unWatch = this.$watch(() => this.elTable.currentRowKey, (val) => {
         if (this.elTable.rowKey) {
-          const targetRow = this.data.find(row => val === row[this.elTable.rowKey])
+          const targetRow = this.listData.find(row => val === row[this.elTable.rowKey])
           this.highlightRow = targetRow
         }
       }, { immediate: true })
       this.unWatchs.push(unWatch)
 
       // 监听高亮的事件
-      this.onCurrentChange = (row) => {
+      const onCurrentChange = (row) => {
         this.highlightRow = row
       }
-      this.elTable.$on('current-change', this.onCurrentChange)
+      this.elTable.$on('current-change', onCurrentChange)
+      this.unWatchs.push(() => {
+        this.elTable.$off('current-change', onCurrentChange)
+      })
     },
 
     // 【单选高亮】同步表格行高亮的值
@@ -874,7 +818,7 @@ export default {
 
     // 监听表格header-dragend事件
     bindTableDragEvent () {
-      this.onHeaderDragend = () => {
+      const onHeaderDragend = () => {
         // 设置状态，用于自定义固定列
         this.hasHeadDrag = true
         // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
@@ -882,7 +826,10 @@ export default {
         // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
         this.update()
       }
-      this.elTable.$on('header-dragend', this.onHeaderDragend)
+      this.elTable.$on('header-dragend', onHeaderDragend)
+      this.unWatchs.push(() => {
+        this.elTable.$off('header-dragend', onHeaderDragend)
+      })
     },
 
     // 【展开行】监听表格expand-change事件
@@ -890,10 +837,13 @@ export default {
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
       if (!this.isExpandType) return
 
-      this.onExpandChange = (row, expandedRows) => {
+      const onExpandChange = (row, expandedRows) => {
         this.$set(row, '$v_expanded', expandedRows.includes(row))
       }
-      this.elTable.$on('expand-change', this.onExpandChange)
+      this.elTable.$on('expand-change', onExpandChange)
+      this.unWatchs.push(() => {
+        this.elTable.$off('expand-change', onExpandChange)
+      })
     },
 
     // 【展开行】设置表格行展开
@@ -997,19 +947,86 @@ export default {
       if (!this.elTable) return
       this.fixedMap = null
       this.elTable.$refs.tableHeader.$forceUpdate()
+    },
+
+    // 绑定排序事件
+    bindTableSortEvent () {
+      this.onSortChange = () => {
+        const states = this.elTable.store.states
+        const { sortingColumn } = states
+        const data = this.filterData || this.data // 优先使用过滤后的数据进行排序
+        if (!sortingColumn || typeof sortingColumn.sortable === 'string') {
+          this.listData = data
+        } else {
+          this.listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy)
+        }
+        // 触发更新
+        this.doUpdate()
+        this.syncSelectionStatus()
+      }
+      this.elTable.$on('sort-change', this.onSortChange)
+      this.unWatchs.push(() => {
+        this.elTable.$off('sort-change', this.onSortChange)
+      })
+    },
+    // 绑定筛选事件
+    bindTableFilterEvent () {
+      this.onFilterChange = () => {
+        const states = this.elTable.store.states
+        const { filters } = states
+
+        // 使用原数据进行数据过滤
+        let data = this.data
+        Object.keys(filters).forEach((columnId) => {
+          const values = states.filters[columnId]
+          if (!values || values.length === 0) return
+          const column = getColumnById(states, columnId)
+          if (column && column.filterMethod) {
+            data = data.filter((row) => {
+              return values.some(value => column.filterMethod.call(null, value, row, column))
+            })
+          }
+        })
+
+        // 过滤完之后，手动执行排序
+        const hasFilter = this.data !== data
+        this.filterData = hasFilter ? data : null
+        this.onSortChange()
+      }
+      this.elTable.$on('filter-change', this.onFilterChange)
+      this.unWatchs.push(() => {
+        this.elTable.$off('filter-change', this.onFilterChange)
+      })
+    },
+    // 表格销毁事件
+    bindTableDestory () {
+      const onTableDestory = () => {
+        this.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁')
+        this.destory()
+        this.$nextTick(() => {
+          this.initData()
+        })
+      }
+      // 防止el-table绑定key时，重新渲染表格但没有重新初始化<virtual-scroll>组件
+      this.elTable.$on('hook:beforeDestory', onTableDestory)
+      this.unWatchs.push(() => {
+        this.elTable.$off('hook:beforeDestory', onTableDestory)
+      })
     }
   },
   watch: {
     data (data, oldData) {
+      this.listData = data
+      if (this.list && data !== oldData) {
+        this.list = data
+      }
       if (!this.virtualized) {
         this.renderAllData()
       } else {
         this.doUpdate()
       }
-      if (this.list && data !== oldData) {
-        this.list = data
-      }
       this.updateSelectionData(data, oldData)
+      this.onFilterChange()
     },
     virtualized: {
       immediate: true,
@@ -1026,6 +1043,7 @@ export default {
     }
   },
   created () {
+    this.listData = this.data
     this.$nextTick(() => {
       this.initData()
     })

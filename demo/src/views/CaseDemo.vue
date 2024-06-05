@@ -127,7 +127,6 @@ export default {
   },
   watch: {
     count () {
-      this.$refs.virtualScroll?.reset?.()
       this.fetchData()
     }
   },

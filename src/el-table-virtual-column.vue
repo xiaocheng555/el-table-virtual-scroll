@@ -154,32 +154,19 @@ export default {
     onCheckAllRows (val) {
       val = this.isCheckedImn ? true : val
       if (this.selectable) {
-        const list = this.virtualScroll.getData()
         // 筛选出可选的行
         const selectableList = []
-        let hasUnselectableChecked = false // 是否不可选择的行已经勾选了
+        const list = this.virtualScroll.getData(false)
         list.forEach((row, index) => {
-          const isSelectable = this.selectable(row, index)
-          if (isSelectable) {
-            selectableList.push(row)
-          } else {
-            if (row.$v_checked) hasUnselectableChecked = true
-          }
+          this.selectable(row, index) && selectableList.push(row)
         })
         this.virtualScroll.checkAll(val, selectableList, true)
-        this.isCheckedAll = val
-        // 如果有不可选择的行已经勾选了，此时取消全选，选择框需要设置为半选状态
-        if (hasUnselectableChecked && !val) {
-          this.isCheckedImn = true
-        } else {
-          this.isCheckedImn = false
-        }
-        return
+      } else {
+        this.virtualScroll.checkAll(val)
       }
-
-      this.virtualScroll.checkAll(val)
+      const oList = this.virtualScroll.getData(true)
+      this.isCheckedImn = !val && oList.length > 0
       this.isCheckedAll = val
-      this.isCheckedImn = false
     },
     // 选择表格某行
     onCheckRow (scope, val) {
@@ -198,31 +185,26 @@ export default {
     },
     // 同步全选、半选框状态
     syncCheckStatus () {
-      const list = this.virtualScroll.getData()
-      const checkedLen = list.filter(row => row.$v_checked === true).length
+      const oList = this.virtualScroll.getData()
+      const list = this.virtualScroll.getData(false)
+      const oCheckedLen = oList.filter(row => row.$v_checked === true).length
+      const checkedLen = oList === list ? oCheckedLen : list.filter(row => row.$v_checked === true).length
 
-      // 计算可选行的长度
-      let selectableLen
-      let selectableCheckedLen
-      if (this.selectable) {
-        const selectableList = list.filter((row, index) => this.selectable(row, index))
-        selectableCheckedLen = selectableList.filter(row => row.$v_checked === true).length
-        selectableLen = selectableList.length
-      }
-
-      if (checkedLen === 0) {
-        this.isCheckedAll = false
-        this.isCheckedImn = false
-      } else if (this.selectable && selectableCheckedLen === selectableLen) {
+      if (checkedLen && checkedLen === list.length) {
+        // 全部选中
         this.isCheckedAll = true
-        this.isCheckedImn = false
-      } else if (checkedLen === list.length) {
-        this.isCheckedAll = true
-        this.isCheckedImn = false
+      } else if (checkedLen && this.selectable) {
+        // 可选的全部选中
+        this.isCheckedAll = list.every((row, index) => {
+          const enable = this.selectable(row, index)
+          if (!enable) return true
+          return row.$v_checked
+        })
       } else {
+        // 没有选中
         this.isCheckedAll = false
-        this.isCheckedImn = true
       }
+      this.isCheckedImn = !this.isCheckedAll && oCheckedLen > 0
     },
     // 单选
     onRadioChange (row) {

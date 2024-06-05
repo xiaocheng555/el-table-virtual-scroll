@@ -16,7 +16,7 @@
         row-key="id"
         tooltip-effect="dark"
         style="width: 100%"
-        :row-class-name="getRowClassName">
+        :highlight-selection-row="highlight">
         <!-- 多选 -->
         <virtual-column width="60" type="selection" :selectable="getSelectable"></virtual-column>
         <el-table-column
@@ -103,13 +103,6 @@ export default {
     },
     onSelectAll (selection, checked) {
       console.log('select-all:', selection, checked)
-    },
-    getRowClassName ({row}) {
-      if (!this.highlight) return
-      // 选中行高亮
-      if (row.$v_checked) {
-        return 'selection-row'
-      }
     },
     onDel (row) {
       const index = this.list.findIndex(item => item === row)

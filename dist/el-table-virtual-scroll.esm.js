@@ -1296,10 +1296,11 @@ var script$2 = {
       window.addEventListener('resize', this.onScroll);
       this.bindTableExpandEvent();
       this.bindTableDragEvent();
-      this.bindTableFilterEvent();
       this.bindTableSortEvent();
+      this.bindTableFilterEvent();
       this.bindTableDestory();
       this.hackRowHighlight();
+      this.hackHighlightSelectionRow();
 
       // 初次执行 (固定高度的表格布局好后，会触发 bodyHeight 更改（已手动监听，位于 unWatch2代码处），从而触发 onScroll，所以无需手动执行onScroll)
       setTimeout(function () {
@@ -1767,15 +1768,22 @@ var script$2 = {
       var byUser = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       var removedRows = [];
       rows.forEach(function (row) {
-        if (row.$v_checked) removedRows.push(row);
-        _this9.checkRow(row, val, false);
+        if (row.$v_checked) {
+          removedRows.push(row);
+        }
+        if (row.$v_checked !== val) {
+          _this9.$set(row, '$v_checked', val);
+          _this9.$set(row, '$v_checkedOrder', val ? _this9.checkOrder++ : undefined);
+        }
       });
       var selection = this.emitSelectionChange(removedRows);
       if (byUser) {
         // 当用户手动勾选全选 Checkbox 时触发的事件
         this.$emit('select-all', selection, val);
       }
-      if (val === false) this.checkOrder = 0; // 取消全选，则重置checkOrder
+      if (val === false) {
+        this.checkOrder = 0; // 取消全选，则重置checkOrder
+      }
     },
     // 【多选】选中某一列
     checkRow: function checkRow(row, val) {
@@ -1980,14 +1988,16 @@ var script$2 = {
     hackRowHighlight: function hackRowHighlight() {
       var _this14 = this;
       // 兼容el-table的setCurrentRow：重写setCurrentRow方法
-      if (this.elTable.__setCurrentRow) {
-        this.elTable.__setCurrentRow = true; // 只重写一次
+      if (this.elTable.setCurrentRow.virtual) {
         var originSetCurrentRow = this.elTable.setCurrentRow.bind(this.elTable); // 原方法
-        this.elTable.setCurrentRow = function (row) {
+        var setCurrentRow = function setCurrentRow(row) {
+          // 重写setCurrentRow
           _this14.elTable.store.states.currentRow = _this14.highlightRow; // 同步表格行高亮的值
           if (_this14.highlightRow !== row) _this14.highlightRow = row; // 同步highlightRow的值
           originSetCurrentRow(row); // 执行原方法
         };
+        this.elTable.setCurrentRow = setCurrentRow;
+        setCurrentRow.virtual = true;
       }
       // 兼容el-table的currentRowKey属性
       var unWatch = this.$watch(function () {
@@ -2022,51 +2032,81 @@ var script$2 = {
         _this15.elTable.store.states.currentRow = _this15.highlightRow;
       });
     },
+    // 【多选高亮】兼容多选选中行高亮
+    hackHighlightSelectionRow: function hackHighlightSelectionRow() {
+      var _this16 = this;
+      var onFixedColumnsChange = function onFixedColumnsChange() {
+        if (!_this16.elTable) return;
+        var tableBodyVm = _this16.elTable.$children.filter(function (vm) {
+          return vm.$options.name === 'ElTableBody';
+        });
+        tableBodyVm.forEach(function (vm) {
+          if (vm.getRowClass.virtual) return;
+          // 重写 table-body组件的 getRowClass 方法
+          // 支持多选选中时高亮
+          var originGetRowClass = vm.getRowClass.bind(_this16.elTable);
+          vm.getRowClass = function (row, rowIndex) {
+            var classes = originGetRowClass(row, rowIndex);
+            if (_this16.elTable.highlightSelectionRow && row.$v_checked) {
+              classes.push('selection-row');
+            }
+            return classes;
+          };
+          vm.getRowClass.virtual = true;
+        });
+      };
+      var unWatch = this.$watch(function () {
+        return [_this16.elTable.fixedColumns, _this16.elTable.rightFixedColumns];
+      }, onFixedColumnsChange, {
+        immediate: true
+      });
+      this.unWatchs.push(unWatch);
+    },
     // 监听表格header-dragend事件
     bindTableDragEvent: function bindTableDragEvent() {
-      var _this16 = this;
+      var _this17 = this;
       var onHeaderDragend = function onHeaderDragend() {
         // 设置状态，用于自定义固定列
-        _this16.hasHeadDrag = true;
+        _this17.hasHeadDrag = true;
         // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
-        _this16.elTable.doLayout();
+        _this17.elTable.doLayout();
         // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
-        _this16.update();
+        _this17.update();
       };
       this.elTable.$on('header-dragend', onHeaderDragend);
       this.unWatchs.push(function () {
-        _this16.elTable.$off('header-dragend', onHeaderDragend);
+        _this17.elTable.$off('header-dragend', onHeaderDragend);
       });
     },
     // 【展开行】监听表格expand-change事件
     bindTableExpandEvent: function bindTableExpandEvent() {
-      var _this17 = this;
+      var _this18 = this;
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
       if (!this.isExpandType) return;
       var onExpandChange = function onExpandChange(row, expandedRows) {
-        _this17.$set(row, '$v_expanded', expandedRows.includes(row));
+        _this18.$set(row, '$v_expanded', expandedRows.includes(row));
       };
       this.elTable.$on('expand-change', onExpandChange);
       this.unWatchs.push(function () {
-        _this17.elTable.$off('expand-change', onExpandChange);
+        _this18.elTable.$off('expand-change', onExpandChange);
       });
     },
     // 【展开行】设置表格行展开
     setRowsExpanded: function setRowsExpanded() {
-      var _this18 = this;
+      var _this19 = this;
       if (!this.isExpandType) return;
       this.$nextTick(function () {
-        var expandRows = _this18.renderData.filter(function (item) {
+        var expandRows = _this19.renderData.filter(function (item) {
           return item.$v_expanded;
         });
         if (expandRows.length === 0) return;
         expandRows.forEach(function (row) {
-          _this18.elTable.toggleRowExpansion(row, true);
+          _this19.elTable.toggleRowExpansion(row, true);
         });
         // 手动设置列展开时，禁止展开动画
-        _this18.isExpanding = true;
+        _this19.isExpanding = true;
         setTimeout(function () {
-          _this18.isExpanding = false;
+          _this19.isExpanding = false;
         }, 10);
       });
     },
@@ -2084,7 +2124,7 @@ var script$2 = {
     },
     // 【自定义固定列】设置固定左右样式
     cellFixedStyle: function cellFixedStyle(_ref6) {
-      var _this19 = this;
+      var _this20 = this;
       var column = _ref6.column;
       var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       var elTable = this.getElTable();
@@ -2138,10 +2178,10 @@ var script$2 = {
         // 设置右边固定列定位样式（从右往左依次）
         this.hasFixedRight = rightColumns.length > 0;
         rightColumns.reverse().forEach(function (column) {
-          _this19.fixedMap[column.id] = {
-            right: _this19.totalRight
+          _this20.fixedMap[column.id] = {
+            right: _this20.totalRight
           };
-          _this19.totalRight += column.realWidth || column.width;
+          _this20.totalRight += column.realWidth || column.width;
         });
       }
       var style = this.fixedMap[column.id];
@@ -2161,34 +2201,48 @@ var script$2 = {
     },
     // 绑定排序事件
     bindTableSortEvent: function bindTableSortEvent() {
-      var _this20 = this;
+      var _this21 = this;
       this.onSortChange = function () {
-        var states = _this20.elTable.store.states;
+        var states = _this21.elTable.store.states;
         var sortingColumn = states.sortingColumn;
-        var data = _this20.filterData || _this20.data; // 优先使用过滤后的数据进行排序
+        var data = _this21.filterData || _this21.data; // 优先使用过滤后的数据进行排序
         if (!sortingColumn || typeof sortingColumn.sortable === 'string') {
-          _this20.listData = data;
+          _this21.listData = data;
         } else {
-          _this20.listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy);
+          _this21.listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy);
         }
         // 触发更新
-        _this20.doUpdate();
-        _this20.syncSelectionStatus();
+        _this21.doUpdate();
+        _this21.syncSelectionStatus();
       };
       this.elTable.$on('sort-change', this.onSortChange);
       this.unWatchs.push(function () {
-        _this20.elTable.$off('sort-change', _this20.onSortChange);
+        _this21.elTable.$off('sort-change', _this21.onSortChange);
       });
+
+      // clearSort不会触发sort-change，需要重写clearSort方法，手动触发
+      var originClearSort = this.elTable.clearSort.bind(this.elTable);
+      this.elTable.clearSort = function () {
+        originClearSort.apply(void 0, arguments);
+        _this21.onSortChange();
+      };
+
+      // 此处兼容 default-sort 属性
+      if (this.elTable.defaultSort) {
+        this.$nextTick(function () {
+          _this21.onSortChange();
+        });
+      }
     },
     // 绑定筛选事件
     bindTableFilterEvent: function bindTableFilterEvent() {
-      var _this21 = this;
+      var _this22 = this;
       this.onFilterChange = function () {
-        var states = _this21.elTable.store.states;
+        var states = _this22.elTable.store.states;
         var filters = states.filters;
 
         // 使用原数据进行数据过滤
-        var data = _this21.data;
+        var data = _this22.data;
         Object.keys(filters).forEach(function (columnId) {
           var values = states.filters[columnId];
           if (!values || values.length === 0) return;
@@ -2203,29 +2257,45 @@ var script$2 = {
         });
 
         // 过滤完之后，手动执行排序
-        var hasFilter = _this21.data !== data;
-        _this21.filterData = hasFilter ? data : null;
-        _this21.onSortChange();
+        var hasFilter = _this22.data !== data;
+        _this22.filterData = hasFilter ? data : null;
+        _this22.onSortChange();
       };
       this.elTable.$on('filter-change', this.onFilterChange);
       this.unWatchs.push(function () {
-        _this21.elTable.$off('filter-change', _this21.onFilterChange);
+        _this22.elTable.$off('filter-change', _this22.onFilterChange);
+      });
+
+      // clearFilter不会触发 filter-change，需要重写 clearFilter 方法，手动触发
+      var originClearFilter = this.elTable.clearFilter.bind(this.elTable);
+      this.elTable.clearFilter = function () {
+        originClearFilter.apply(void 0, arguments);
+        _this22.onFilterChange();
+      };
+
+      // init filters
+      // 此处兼容列的 filtered-value 属性
+      var states = this.elTable.store.states;
+      states.columns.forEach(function (column) {
+        if (column.filteredValue && column.filteredValue.length) {
+          _this22.onFilterChange();
+        }
       });
     },
     // 表格销毁事件
     bindTableDestory: function bindTableDestory() {
-      var _this22 = this;
+      var _this23 = this;
       var onTableDestory = function onTableDestory() {
-        _this22.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁');
-        _this22.destory();
-        _this22.$nextTick(function () {
-          _this22.initData();
+        _this23.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁');
+        _this23.destory();
+        _this23.$nextTick(function () {
+          _this23.initData();
         });
       };
       // 防止el-table绑定key时，重新渲染表格但没有重新初始化<virtual-scroll>组件
       this.elTable.$on('hook:beforeDestory', onTableDestory);
       this.unWatchs.push(function () {
-        _this22.elTable.$off('hook:beforeDestory', onTableDestory);
+        _this23.elTable.$off('hook:beforeDestory', onTableDestory);
       });
     }
   },
@@ -2264,10 +2334,10 @@ var script$2 = {
     }
   },
   created: function created() {
-    var _this23 = this;
+    var _this24 = this;
     this.listData = this.data;
     this.$nextTick(function () {
-      _this23.initData();
+      _this24.initData();
     });
   },
   activated: function activated() {
@@ -2433,7 +2503,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-76acbd4c_0", {
+  inject("data-v-41d4df1c_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2444,8 +2514,8 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-76acbd4c_1", {
-    source: ".is-expanding[data-v-76acbd4c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-76acbd4c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-41d4df1c_1", {
+    source: ".is-expanding[data-v-41d4df1c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-41d4df1c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2458,7 +2528,7 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$2 = "data-v-76acbd4c";
+var __vue_scope_id__$2 = "data-v-41d4df1c";
 /* module identifier */
 var __vue_module_identifier__$2 = undefined;
 /* functional template */
@@ -2580,7 +2650,13 @@ var script = {
     // 选择表格所有行
     onCheckAllRows: function onCheckAllRows(val) {
       var _this = this;
-      val = this.isCheckedImn ? true : val;
+      var _this$virtualScroll$e = this.virtualScroll.elTable.selectOnIndeterminate,
+        selectOnIndeterminate = _this$virtualScroll$e === void 0 ? true : _this$virtualScroll$e;
+      if (selectOnIndeterminate) {
+        val = this.isCheckedImn ? true : !this.isCheckedAll;
+      } else {
+        val = this.isCheckedImn ? false : !this.isCheckedAll;
+      }
       if (this.selectable) {
         // 筛选出可选的行
         var selectableList = [];
@@ -2592,8 +2668,8 @@ var script = {
       } else {
         this.virtualScroll.checkAll(val);
       }
-      var oList = this.virtualScroll.getData(true);
-      this.isCheckedImn = !val && oList.length > 0;
+      var selection = this.virtualScroll.getSelection();
+      this.isCheckedImn = !val && selection.length > 0;
       this.isCheckedAll = val;
     },
     // 选择表格某行
@@ -3119,17 +3195,11 @@ var __vue_render__ = function __vue_render__() {
       fn: function fn(scope) {
         return [_vm.$scopedSlots["header"] ? _vm._t("header", null, null, scope) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
           attrs: {
+            value: _vm.isCheckedAll,
             indeterminate: _vm.isCheckedImn
           },
           on: {
             change: _vm.onCheckAllRows
-          },
-          model: {
-            value: _vm.isCheckedAll,
-            callback: function callback($$v) {
-              _vm.isCheckedAll = $$v;
-            },
-            expression: "isCheckedAll"
           }
         }) : [_vm._v("\n        " + _vm._s(scope.column.label) + "\n      ")]]];
       }
@@ -3195,7 +3265,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-9039f606_0", {
+  inject("data-v-5f28f72d_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
     map: {
       "version": 3,

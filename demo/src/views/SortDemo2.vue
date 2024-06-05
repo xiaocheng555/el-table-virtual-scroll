@@ -8,11 +8,16 @@
       key-prop="id"
       @change="(virtualList) => tableData = virtualList">
       <el-table
+        ref="table"
         :data="tableData"
         tooltip-effect="dark"
         style="width: 100%"
         row-key="id"
         height="500px"
+        :default-sort="{
+          prop: 'count',
+          order: 'ascending'
+        }"
         @sort-change="onSortChange"
         @filter-change="onFilterChange">
         <virtual-column width="60" type="selection" :selectable="getSelectable"></virtual-column>
@@ -21,7 +26,7 @@
         <el-table-column label="随机数" prop="count" width="300" sortable column-key="counts"
           :filter-multiple="false" :filters="filters2" :filter-method="filterCount">
         </el-table-column>
-        <el-table-column label="content" prop="text" width="500" column-key="texts" :filters="filters" :filter-method="filterText">
+        <el-table-column label="content" prop="text" width="500" column-key="texts" :filters="filters" :filter-method="filterText" :filtered-value="['红豆']">
         </el-table-column>
         <el-table-column label="日期" width="120">
           <template slot-scope="scope">{{ scope.row.date }}</template>
@@ -38,6 +43,9 @@
     <el-button @click="addMore">addMore</el-button>
     <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
     <el-button @click="toggleSelection()">取消选择</el-button>
+    <el-button @click="clearSort()">clearSort</el-button>
+    <el-button @click="clearFilter()">clearFilter</el-button>
+    <el-button @click="sort()">设置count降序排序</el-button>
   </div>
 </template>
 
@@ -68,24 +76,19 @@ export default {
         { text: '>400', value: 400 },
         { text: '>600', value: 600 },
         { text: '>800', value: 800 }
-      ],
-      filterVal: { // 过滤的值，可以有多个
-        texts: [],
-        counts: []
-      },
-      sortVal: {} // 排序的值，只有一个
+      ]
     }
   },
   methods: {
     getSelectable (row) {
       return row.id > 2
     },
-    onSortChange ({ prop, order }) {
-      console.log(prop, order, 'prop, order')
+    onSortChange (data) {
+      console.log('onSortChange', data)
       // this.list = mockData(0, flag)
     },
     onFilterChange (filters) {
-      console.log('filters', filters)
+      console.log('onFilterChange', filters)
     },
     filterCount (value, row, column) {
       const property = column['property']
@@ -118,6 +121,15 @@ export default {
         this.$refs.virtualScroll.clearSelection()
       }
     },
+    clearSort () {
+      this.$refs.table.clearSort()
+    },
+    clearFilter () {
+      this.$refs.table.clearFilter()
+    },
+    sort () {
+      this.$refs.table.sort('count', 'descending')
+    }
   }
 }
 </script>

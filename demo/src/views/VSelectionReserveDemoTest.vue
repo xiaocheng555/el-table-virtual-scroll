@@ -8,6 +8,8 @@
       tooltip-effect="dark"
       style="width: 100%"
       :row-class-name="getRowClassName"
+      highlight-selection-row
+      :select-on-indeterminate="false"
       @select="onSelect"
       @select-all="onSelectAll"
       @selection-change="handleSelectionChange">

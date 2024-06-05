@@ -24,6 +24,7 @@
         :data="virtualList1"
         stripe
         row-key="id"
+        highlight-selection-row
         height="600">
         <virtual-column type="selection" width="60"></virtual-column>
         <el-table-column label="id" prop="id"></el-table-column>
@@ -69,7 +70,7 @@ export default {
   data () {
     return {
       count: 2000,
-      fixed: undefined,
+      fixed: 'left',
       jumpIndex: 1999,
       loading: false,
       show: false,

@@ -140,9 +140,13 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 * 不支持 Element-UI Table 原有多选、扩展行、索引，请使用 `<virtual-column>` 做兼容，详见demo。
 
-* Element-UI Table 单选高亮 版本>=1.0.26支持
+* Element-UI Table 单选高亮，版本>=1.0.26支持
 
-* 使用 Element-UI Table 排序时，需要做额外兼容，详见demo。
+* Element-UI Table 多选高亮，版本>=1.3.1支持
+
+* 支持 Element-UI Table 排序和筛选，版本>=1.3.1支持
+
+* 支持 Element-UI Table 多选的 `reserve-selection`，版本>=1.3.1支持
 
 
 <!-- ## 贡献者
@@ -516,6 +520,15 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 多选支持 reserve-selection
 
 * npm 1.3.0 版本发包
+
+
+### 2024-6-6
+
+* 兼容 selectOnIndeterminate、highlightSelectionRow、default-sort、filtered-value、clearFilter、clearSort
+
+* 修复全选 bug
+
+* npm 1.3.1 版本发包
 
 
 

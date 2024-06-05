@@ -182,10 +182,11 @@ export default {
       window.addEventListener('resize', this.onScroll)
       this.bindTableExpandEvent()
       this.bindTableDragEvent()
-      this.bindTableFilterEvent()
       this.bindTableSortEvent()
+      this.bindTableFilterEvent()
       this.bindTableDestory()
       this.hackRowHighlight()
+      this.hackHighlightSelectionRow()
 
       // 初次执行 (固定高度的表格布局好后，会触发 bodyHeight 更改（已手动监听，位于 unWatch2代码处），从而触发 onScroll，所以无需手动执行onScroll)
       setTimeout(() => {
@@ -658,15 +659,22 @@ export default {
     checkAll (val, rows = this.listData, byUser = false) {
       const removedRows = []
       rows.forEach(row => {
-        if (row.$v_checked) removedRows.push(row)
-        this.checkRow(row, val, false)
+        if (row.$v_checked) {
+          removedRows.push(row)
+        }
+        if (row.$v_checked !== val) {
+          this.$set(row, '$v_checked', val)
+          this.$set(row, '$v_checkedOrder', val ? this.checkOrder++ : undefined)
+        }
       })
       const selection = this.emitSelectionChange(removedRows)
+
       if (byUser) { // 当用户手动勾选全选 Checkbox 时触发的事件
         this.$emit('select-all', selection, val)
       }
-
-      if (val === false) this.checkOrder = 0 // 取消全选，则重置checkOrder
+      if (val === false) {
+        this.checkOrder = 0 // 取消全选，则重置checkOrder
+      }
     },
 
     // 【多选】选中某一列
@@ -862,14 +870,15 @@ export default {
     // 【单选高亮】兼容行高亮
     hackRowHighlight () {
       // 兼容el-table的setCurrentRow：重写setCurrentRow方法
-      if (this.elTable.__setCurrentRow) {
-        this.elTable.__setCurrentRow = true // 只重写一次
+      if (this.elTable.setCurrentRow.virtual) {
         const originSetCurrentRow = this.elTable.setCurrentRow.bind(this.elTable) // 原方法
-        this.elTable.setCurrentRow = (row) => {
+        const setCurrentRow = (row) => { // 重写setCurrentRow
           this.elTable.store.states.currentRow = this.highlightRow // 同步表格行高亮的值
           if (this.highlightRow !== row) this.highlightRow = row // 同步highlightRow的值
           originSetCurrentRow(row) // 执行原方法
         }
+        this.elTable.setCurrentRow = setCurrentRow
+        setCurrentRow.virtual = true
       }
       // 兼容el-table的currentRowKey属性
       const unWatch = this.$watch(() => this.elTable.currentRowKey, (val) => {
@@ -897,6 +906,36 @@ export default {
       this.$nextTick(() => {
         this.elTable.store.states.currentRow = this.highlightRow
       })
+    },
+
+    // 【多选高亮】兼容多选选中行高亮
+    hackHighlightSelectionRow () {
+      const onFixedColumnsChange = () => {
+        if (!this.elTable) return
+        const tableBodyVm = this.elTable.$children.filter(vm => {
+          return vm.$options.name === 'ElTableBody'
+        })
+        tableBodyVm.forEach(vm => {
+          if (vm.getRowClass.virtual) return
+          // 重写 table-body组件的 getRowClass 方法
+          // 支持多选选中时高亮
+          const originGetRowClass = vm.getRowClass.bind(this.elTable)
+          vm.getRowClass = (row, rowIndex) => {
+            const classes = originGetRowClass(row, rowIndex)
+            if (this.elTable.highlightSelectionRow && row.$v_checked) {
+              classes.push('selection-row')
+            }
+            return classes
+          }
+          vm.getRowClass.virtual = true
+        })
+      }
+      const unWatch = this.$watch(
+        () => [this.elTable.fixedColumns, this.elTable.rightFixedColumns],
+        onFixedColumnsChange,
+        { immediate: true }
+      )
+      this.unWatchs.push(unWatch)
     },
 
     // 监听表格header-dragend事件
@@ -1051,6 +1090,20 @@ export default {
       this.unWatchs.push(() => {
         this.elTable.$off('sort-change', this.onSortChange)
       })
+
+      // clearSort不会触发sort-change，需要重写clearSort方法，手动触发
+      const originClearSort = this.elTable.clearSort.bind(this.elTable)
+      this.elTable.clearSort = (...rest) => {
+        originClearSort(...rest)
+        this.onSortChange()
+      }
+
+      // 此处兼容 default-sort 属性
+      if (this.elTable.defaultSort) {
+        this.$nextTick(() => {
+          this.onSortChange()
+        })
+      }
     },
     // 绑定筛选事件
     bindTableFilterEvent () {
@@ -1079,6 +1132,22 @@ export default {
       this.elTable.$on('filter-change', this.onFilterChange)
       this.unWatchs.push(() => {
         this.elTable.$off('filter-change', this.onFilterChange)
+      })
+
+      // clearFilter不会触发 filter-change，需要重写 clearFilter 方法，手动触发
+      const originClearFilter = this.elTable.clearFilter.bind(this.elTable)
+      this.elTable.clearFilter = (...rest) => {
+        originClearFilter(...rest)
+        this.onFilterChange()
+      }
+
+      // init filters
+      // 此处兼容列的 filtered-value 属性
+      const states = this.elTable.store.states
+      states.columns.forEach(column => {
+        if (column.filteredValue && column.filteredValue.length) {
+          this.onFilterChange()
+        }
       })
     },
     // 表格销毁事件

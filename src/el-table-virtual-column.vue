@@ -10,7 +10,7 @@
         <!-- 多选类型-全选 -->
         <el-checkbox
           v-if="scope.column.type === 'v-selection'"
-          v-model="isCheckedAll"
+          :value="isCheckedAll"
           :indeterminate="isCheckedImn"
           @change="onCheckAllRows">
         </el-checkbox>
@@ -156,7 +156,12 @@ export default {
     },
     // 选择表格所有行
     onCheckAllRows (val) {
-      val = this.isCheckedImn ? true : val
+      const { selectOnIndeterminate = true } = this.virtualScroll.elTable
+      if (selectOnIndeterminate) {
+        val = this.isCheckedImn ? true : !this.isCheckedAll
+      } else {
+        val = this.isCheckedImn ? false : !this.isCheckedAll
+      }
       if (this.selectable) {
         // 筛选出可选的行
         const selectableList = []
@@ -168,8 +173,9 @@ export default {
       } else {
         this.virtualScroll.checkAll(val)
       }
-      const oList = this.virtualScroll.getData(true)
-      this.isCheckedImn = !val && oList.length > 0
+
+      const selection = this.virtualScroll.getSelection()
+      this.isCheckedImn = !val && selection.length > 0
       this.isCheckedAll = val
     },
     // 选择表格某行

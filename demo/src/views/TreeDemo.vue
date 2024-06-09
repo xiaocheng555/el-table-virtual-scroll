@@ -16,8 +16,7 @@
         row-key="id"
         lazy
         :load="onload"
-        :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
-        @expand-change="updateVirtualScroll">
+        :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
         <el-table-column label="id" prop="id"></el-table-column>
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
@@ -96,10 +95,6 @@ export default {
         }
         resolve(data)
       }, 1000)
-    },
-    // 由于树节点（已展开）突然收起时，会出现的当前渲染的表格行不能满屏情况，需要更新virtualList组件，重新计算需要渲染的数据
-    updateVirtualScroll () {
-      this.$refs.virtualScroll.update()
     }
   },
   created () {

@@ -87,10 +87,6 @@ export default {
 
   },
   mounted() {
-    setTimeout(() => {
-      // 针对mac电脑：滚轮滚动速度减缓，减少快速滚动白屏
-      this.$refs.virtualScroll.slowOnMousewheel()
-    })
   }
 }
 </script>

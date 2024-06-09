@@ -36,6 +36,8 @@
     <el-button @click="toggleSelection([list[1], list[2]])">切换第二、第三行的选中状态</el-button>
     <el-button @click="toggleSelection()">取消选择</el-button>
     <el-button @click="show = !show">show</el-button>
+    <el-button @click="clearSort()">clearSort</el-button>
+    <el-button @click="clearFilter()">clearFilter</el-button>
   </div>
 </template>
 
@@ -111,6 +113,12 @@ export default {
       } else {
         this.$refs.table.clearSelection()
       }
+    },
+    clearSort () {
+      this.$refs.table.clearSort()
+    },
+    clearFilter () {
+      this.$refs.table.clearFilter()
     }
   },
   created() {

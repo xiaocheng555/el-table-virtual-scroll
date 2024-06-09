@@ -15,7 +15,7 @@
         style="width: 100%">
         <virtual-column type="expand">
           <template slot-scope="props">
-            <el-form label-position="left" inline class="demo-table-expand">
+            <el-form label-position="left" class="demo-table-expand">
               <el-form-item label="商品名称">
                 <span>{{ props.row.name }}</span>
               </el-form-item>
@@ -33,6 +33,15 @@
               </el-form-item>
               <el-form-item label="店铺地址">
                 <span>{{ props.row.address }}</span>
+              </el-form-item>
+              <el-form-item label="商品描述">
+                <span>{{ props.row.desc }}</span>
+              </el-form-item>
+              <el-form-item label="商品描述">
+                <span>{{ props.row.desc }}</span>
+              </el-form-item>
+              <el-form-item label="商品描述">
+                <span>{{ props.row.desc }}</span>
               </el-form-item>
               <el-form-item label="商品描述">
                 <span>{{ props.row.desc }}</span>
@@ -119,7 +128,6 @@ export default {
       rows.forEach(row => {
         this.$refs.virtualScroll.toggleRowExpansion(row, expanded)
       })
-      this.$refs.virtualScroll.update()
     }
   },
   created () {

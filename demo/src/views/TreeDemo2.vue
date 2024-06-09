@@ -154,10 +154,6 @@ export default {
       row.hideNodes = hideNodes
       // 隐藏所有子孙节点
       this.list = this.list.filter(item => !hideNodes.includes(item))
-    },
-    // 由于树节点（已展开）突然收起时，会出现的当前渲染的表格行不能满屏情况，需要更新virtualList组件，重新计算需要渲染的数据
-    updateVirtualScroll () {
-      this.$refs.virtualScroll.update()
     }
   },
   created () {

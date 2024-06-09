@@ -260,7 +260,7 @@ export default {
       this.calcRenderData()
       // 计算位置
       this.calcPosition()
-      shouldUpdate && this.updatePosition()
+      // shouldUpdate && this.updatePosition()
       // 触发事件
       this.$emit('change', this.renderData, this.start, this.end)
       // 设置表格行展开
@@ -957,10 +957,17 @@ export default {
     // 【展开行】监听表格expand-change事件
     bindTableExpandEvent () {
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
-      if (!this.isExpandType) return
-
       const onExpandChange = (row, expandedRows) => {
-        this.$set(row, '$v_expanded', expandedRows.includes(row))
+        if (this.isExpandType) {
+          this.$set(row, '$v_expanded', expandedRows.includes(row))
+        }
+
+        // 当展开的内容或展开的树收起时，需要更新虚拟滚动组件，避免表格出现一段空白内容
+        if (!row.$v_expanded || expandedRows === false) {
+          setTimeout(() => {
+            this.update()
+          })
+        }
       }
       this.elTable.$on('expand-change', onExpandChange)
       this.unWatchs.push(() => {
@@ -1084,7 +1091,9 @@ export default {
         }
         // 触发更新
         this.doUpdate()
-        this.syncSelectionStatus()
+        this.$nextTick(() => {
+          this.syncSelectionStatus()
+        })
       }
       this.elTable.$on('sort-change', this.onSortChange)
       this.unWatchs.push(() => {
@@ -1175,7 +1184,7 @@ export default {
       if (!this.virtualized) {
         this.renderAllData()
       } else {
-        this.doUpdate()
+        this.onFilterChange && this.onFilterChange()
       }
       if (this.isReserveSelection()) {
         // 保留旧的选中值
@@ -1184,7 +1193,6 @@ export default {
         // 对比新旧值，移除删除的选中值
         this.updateSelectionData(data, oldData)
       }
-      this.onFilterChange()
     },
     virtualized: {
       immediate: true,

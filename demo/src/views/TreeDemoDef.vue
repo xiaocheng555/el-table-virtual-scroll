@@ -16,8 +16,7 @@
         border
         lazy
         :load="(tree, treeNode, resolve) => resolve(tree.children)"
-        :tree-props="{hasChildren: 'children'}"
-        @expand-change="updateVirtualScroll">
+        :tree-props="{hasChildren: 'children'}">
         <el-table-column label="id" prop="id"></el-table-column>
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
@@ -64,6 +63,26 @@ export default {
                 id: i + '_2',
                 text: this.getRandomContent(),
                 text2: this.getRandomContent()
+              },
+              {
+                id: i + '_3',
+                text: this.getRandomContent(),
+                text2: this.getRandomContent()
+              },
+              {
+                id: i + '_4',
+                text: this.getRandomContent(),
+                text2: this.getRandomContent()
+              },
+              {
+                id: i + '_5',
+                text: this.getRandomContent(),
+                text2: this.getRandomContent()
+              },
+              {
+                id: i + '_6',
+                text: this.getRandomContent(),
+                text2: this.getRandomContent()
               }
             ]
           })
@@ -86,10 +105,6 @@ export default {
       ]
       const i = Math.floor(Math.random() * 10)
       return content[i]
-    },
-    // 由于树节点（已展开）突然收起时，会出现的当前渲染的表格行不能满屏情况，需要更新virtualList组件，重新计算需要渲染的数据
-    updateVirtualScroll () {
-      this.$refs.virtualScroll.update()
     }
   },
   created () {

@@ -38,7 +38,7 @@
         </div>
         <span v-else class="el-table__placeholder"></span>
       </template>
-      <slot v-if="$scopedSlots['default']" v-bind="scope"></slot>
+      <slot v-if="$scopedSlots['default']" v-bind="setScope(scope)"></slot>
       <template v-else>
         <!-- 多选类型 -->
         <el-checkbox
@@ -226,6 +226,11 @@ export default {
         return this.$attrs.index(index)
       }
       return index + (add1 ? 1 : 0)
+    },
+    // 设置正确索引值
+    setScope (scope) {
+      scope.$index = this.virtualScroll.start + scope.$index
+      return scope
     },
     // 展开收起事件，返回子节点
     async onTreeNodeExpand (row, expanded = !row.$v_expanded, doLoad = true) {

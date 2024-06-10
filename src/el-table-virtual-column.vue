@@ -438,11 +438,10 @@ export default {
           if (data.match && !isChild) return (data.stop = true)
           // 找到目标节点后，开始查找它的子节点
           if (curRow === row) {
-            // 直接删除目标节点，并结束(不需查询子节点)
+            // 直接删除目标节点
             if (!onlyChild) {
               list.splice(i, 1)
-              data.stop = true
-              return
+              i--
             }
             // 往下允许查找它的子节点
             data.match = true

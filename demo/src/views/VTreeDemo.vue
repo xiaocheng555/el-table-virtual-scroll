@@ -67,7 +67,11 @@ export default {
   methods: {
     onload (row, resolve) {
       setTimeout(() => {
-        if (Math.random() > 0.5) return resolve([])
+        if (Math.random() > 0.5) {
+          row.hasChildren = false
+          return resolve([])
+        }
+        row.hasChildren = true
         resolve(generateTreeData(5, row.id))
       }, 1000)
     },

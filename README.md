@@ -532,5 +532,19 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 
 
+### 2024-6-6
+
+* `<virtual-column>` 兼容$index
+
+* 修复filter过滤时，多选选中会闪一下
+
+* 修复removeNode删除节点时没有一同删除子节点
+
+* 兼容展开行时无需手动调用update
+
+* npm 1.4.0 版本发包
+
+
+
 
 

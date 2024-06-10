@@ -1345,7 +1345,6 @@ var script$2 = {
     },
     // 处理滚动事件
     handleScroll: function handleScroll() {
-      var shouldUpdate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
       if (this.disabled) return;
       if (!this.scroller) return;
       this.triggleScroll = true;
@@ -1370,7 +1369,7 @@ var script$2 = {
       this.calcRenderData();
       // 计算位置
       this.calcPosition();
-      shouldUpdate && this.updatePosition();
+      // shouldUpdate && this.updatePosition()
       // 触发事件
       this.$emit('change', this.renderData, this.start, this.end);
       // 设置表格行展开
@@ -2082,9 +2081,17 @@ var script$2 = {
     bindTableExpandEvent: function bindTableExpandEvent() {
       var _this18 = this;
       // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
-      if (!this.isExpandType) return;
       var onExpandChange = function onExpandChange(row, expandedRows) {
-        _this18.$set(row, '$v_expanded', expandedRows.includes(row));
+        if (_this18.isExpandType) {
+          _this18.$set(row, '$v_expanded', expandedRows.includes(row));
+        }
+
+        // 当展开的内容或展开的树收起时，需要更新虚拟滚动组件，避免表格出现一段空白内容
+        if (!row.$v_expanded || expandedRows === false) {
+          setTimeout(function () {
+            _this18.update();
+          });
+        }
       };
       this.elTable.$on('expand-change', onExpandChange);
       this.unWatchs.push(function () {
@@ -2213,7 +2220,9 @@ var script$2 = {
         }
         // 触发更新
         _this21.doUpdate();
-        _this21.syncSelectionStatus();
+        _this21.$nextTick(function () {
+          _this21.syncSelectionStatus();
+        });
       };
       this.elTable.$on('sort-change', this.onSortChange);
       this.unWatchs.push(function () {
@@ -2308,7 +2317,7 @@ var script$2 = {
       if (!this.virtualized) {
         this.renderAllData();
       } else {
-        this.doUpdate();
+        this.onFilterChange && this.onFilterChange();
       }
       if (this.isReserveSelection()) {
         // 保留旧的选中值
@@ -2317,7 +2326,6 @@ var script$2 = {
         // 对比新旧值，移除删除的选中值
         this.updateSelectionData(_data, oldData);
       }
-      this.onFilterChange();
     },
     virtualized: {
       immediate: true,
@@ -2503,7 +2511,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-41d4df1c_0", {
+  inject("data-v-f4fd0524_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2514,8 +2522,8 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-41d4df1c_1", {
-    source: ".is-expanding[data-v-41d4df1c] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-41d4df1c] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-f4fd0524_1", {
+    source: ".is-expanding[data-v-f4fd0524] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-f4fd0524] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2528,7 +2536,7 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$2 = "data-v-41d4df1c";
+var __vue_scope_id__$2 = "data-v-f4fd0524";
 /* module identifier */
 var __vue_module_identifier__$2 = undefined;
 /* functional template */
@@ -2722,6 +2730,11 @@ var script = {
         return this.$attrs.index(index);
       }
       return index + (add1 ? 1 : 0);
+    },
+    // 设置正确索引值
+    setScope: function setScope(scope) {
+      scope.$index = this.virtualScroll.start + scope.$index;
+      return scope;
     },
     // 展开收起事件，返回子节点
     onTreeNodeExpand: function onTreeNodeExpand(row) {
@@ -3003,11 +3016,10 @@ var script = {
           if (data.match && !isChild) return data.stop = true;
           // 找到目标节点后，开始查找它的子节点
           if (curRow === row) {
-            // 直接删除目标节点，并结束(不需查询子节点)
+            // 直接删除目标节点
             if (!onlyChild) {
               list.splice(i, 1);
-              data.stop = true;
-              return;
+              i--;
             }
             // 往下允许查找它的子节点
             data.match = true;
@@ -3225,7 +3237,7 @@ var __vue_render__ = function __vue_render__() {
           staticClass: "el-icon-arrow-right"
         })]) : _c("span", {
           staticClass: "el-table__placeholder"
-        })] : _vm._e(), _vm._v(" "), _vm.$scopedSlots["default"] ? _vm._t("default", null, null, scope) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
+        })] : _vm._e(), _vm._v(" "), _vm.$scopedSlots["default"] ? _vm._t("default", null, null, _vm.setScope(scope)) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
           attrs: {
             value: scope.row.$v_checked || false,
             disabled: _vm.getDisabled(scope)
@@ -3265,7 +3277,7 @@ __vue_render__._withStripped = true;
 /* style */
 var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-5f28f72d_0", {
+  inject("data-v-74efac31_0", {
     source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
     map: {
       "version": 3,

@@ -532,7 +532,7 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 
 
-### 2024-6-6
+### 2024-6-10
 
 * `<virtual-column>` 兼容$index
 

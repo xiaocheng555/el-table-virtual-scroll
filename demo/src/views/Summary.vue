@@ -1,6 +1,5 @@
 <template>
   <div>
-    <el-alert type="warning" title="在表尾合计行功能中，table组件需使用max-height属性代替height，才会正常显示表尾合计行；" show-icon></el-alert>
     <virtual-scroll
       ref="virtualScroll"
       :data="list"
@@ -11,7 +10,7 @@
         :data="tableData"
         border
         row-key="id"
-        max-height="500px"
+        height="500px"
         show-summary
         :summary-method="getSummaries"
         style="width: 100%">

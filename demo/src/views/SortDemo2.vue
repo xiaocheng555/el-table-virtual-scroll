@@ -26,7 +26,7 @@
         <el-table-column label="随机数" prop="count" width="300" sortable column-key="counts"
           :filter-multiple="false" :filters="filters2" :filter-method="filterCount">
         </el-table-column>
-        <el-table-column label="content" prop="text" width="500" column-key="texts" :filters="filters" :filter-method="filterText" :filtered-value="['红豆']">
+        <el-table-column label="content" prop="text" width="500" column-key="texts" :filters="filters" :filter-method="filterText" :filtered-value="filteredValue">
         </el-table-column>
         <el-table-column label="日期" width="120">
           <template slot-scope="scope">{{ scope.row.date }}</template>
@@ -65,6 +65,7 @@ export default {
     return {
       list: mockData(0, flag),
       tableData: [],
+      filteredValue: [], // ['红豆']
       filters: [
         { text: '红豆', value: '红豆' },
         { text: '明月', value: '明月' },

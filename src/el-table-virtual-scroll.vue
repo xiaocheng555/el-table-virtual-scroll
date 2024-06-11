@@ -1081,6 +1081,7 @@ export default {
     // 绑定排序事件
     bindTableSortEvent () {
       this.onSortChange = () => {
+        if (!this.elTable) return
         const states = this.elTable.store.states
         const { sortingColumn } = states
         const data = this.filterData || this.data // 优先使用过滤后的数据进行排序
@@ -1114,9 +1115,11 @@ export default {
         })
       }
     },
+
     // 绑定筛选事件
     bindTableFilterEvent () {
       this.onFilterChange = () => {
+        if (!this.elTable) return
         const states = this.elTable.store.states
         const { filters } = states
 
@@ -1159,6 +1162,17 @@ export default {
         }
       })
     },
+
+    // 禁用原来的树结构（将children字段改为空）
+    // 场景：row包含children会被当做的树结构，与 virtual-column 的树结构有冲突，所以需要禁用原来的
+    disableOriginTree () {
+      this.$nextTick(() => {
+        if (!this.elTable) return
+        const states = this.elTable.store.states
+        states.childrenColumnName = ''
+      })
+    },
+
     // 表格销毁事件
     bindTableDestory () {
       const onTableDestory = () => {

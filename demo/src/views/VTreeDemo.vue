@@ -77,6 +77,7 @@ export default {
     },
     reload (row) {
       // 重新加载节点；删除原来子节点，并触发load函数重新加载
+      row.hasChildren = null
       this.$refs.treeColumn.reloadNode(row)
     },
     onDel (row) {

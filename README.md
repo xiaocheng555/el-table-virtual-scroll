@@ -545,6 +545,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * npm 1.4.0 版本发包
 
 
+### 2024-6-11
 
+* 修复树结构同时执行两次reloadNode，会加载两次数据
 
+* 修复row包含children会被当做的树结构，与 virtual-column 的树结构有冲突
 
+* npm 1.4.1 版本发包

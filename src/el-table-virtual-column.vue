@@ -253,7 +253,7 @@ export default {
       return new Promise((resolve) => {
         // 获取子节点数据并显示
         this.$set(row, '$v_loading', true)
-        this.$set(row, '$v_hasChildren', true)
+        this.$set(row, '$v_hasChildren', undefined)
 
         // 显示已有子节点
         if (!force) {
@@ -271,8 +271,15 @@ export default {
         function resolveFn (data) {
           if (!Array.isArray(data)) {
             this.$set(row, '$v_loading', false)
+            this.$set(row, '$v_hasChildren', false)
             resolve()
             return
+          }
+
+          // 如果当前节点有子节点，则删除子节点再插入新的子节点
+          // 场景：连续触发两次reloadNode，第一次加载了子节点，第二次加载了新的子节点，需要删除旧的子节点，再插入新的子节点
+          if (row.$v_hasChildren) {
+            this.removeNode(row, true)
           }
 
           this.$set(row, '$v_loading', false)
@@ -282,6 +289,7 @@ export default {
           data.forEach(item => {
             item.$v_level = typeof row.$v_level === 'number' ? row.$v_level + 1 : 2
           })
+
           // 所有子节点插入到当前同级节点下
           const list = this.virtualScroll.getData()
           const index = list.findIndex(item => item === row)
@@ -602,6 +610,7 @@ export default {
       this.virtualScroll.isExpandType = true
     } else if (type === 'v-tree') {
       this.isTree = true
+      this.virtualScroll.disableOriginTree()
     }
   },
   beforeDestroy () {

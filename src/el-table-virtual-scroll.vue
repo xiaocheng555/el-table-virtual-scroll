@@ -98,8 +98,14 @@ export default {
         return this.$children[0]
       }
     },
+    // 是否保持滚动位置
     keepScroll: {
       type: Boolean,
+      default: true
+    },
+    // true 时使用 translateY 来设置偏移位置，false则使用 paddingTop
+    useTranslate: {
+      type: Function,
       default: true
     }
   },
@@ -494,10 +500,13 @@ export default {
         if (el.wrapEl) {
           // 设置高度
           el.wrapEl.style.height = wrapHeight + 'px'
-          // 设置transform撑起高度
-          el.innerEl.style.transform = `translateY(${offsetTop}px)`
-          // 设置paddingTop撑起高度
-          // el.innerEl.style.paddingTop = `${offsetTop}px`
+          if (this.useTranslate) {
+            // 设置transform撑起高度
+            el.innerEl.style.transform = `translateY(${offsetTop}px)`
+          } else {
+            // 设置paddingTop撑起高度
+            el.innerEl.style.paddingTop = `${offsetTop}px`
+          }
         }
       })
     },

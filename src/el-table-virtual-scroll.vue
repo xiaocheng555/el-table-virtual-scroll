@@ -693,7 +693,13 @@ export default {
 
     // 【多选】兼容表格clearSelection方法
     clearSelection () {
+      // 清除旧的选中项
+      this.oldSelection.forEach(row => {
+        this.$set(row, '$v_checked', false)
+      })
       this.oldSelection = []
+
+      // 清除所有选中项
       this.checkAll(false)
       this.columnVms.forEach(vm => vm.syncCheckStatus())
     },

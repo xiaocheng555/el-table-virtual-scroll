@@ -1807,7 +1807,14 @@
       },
       // 【多选】兼容表格clearSelection方法
       clearSelection: function clearSelection() {
+        var _this10 = this;
+        // 清除旧的选中项
+        this.oldSelection.forEach(function (row) {
+          _this10.$set(row, '$v_checked', false);
+        });
         this.oldSelection = [];
+
+        // 清除所有选中项
         this.checkAll(false);
         this.columnVms.forEach(function (vm) {
           return vm.syncCheckStatus();
@@ -1822,7 +1829,7 @@
       },
       // 【多选】表格切换多个row选中状态
       toggleRowsSelection: function toggleRowsSelection(rows, selected) {
-        var _this10 = this;
+        var _this11 = this;
         // reserve-selection 模式用到的变量
         var oldSelectedMap = {}; // 保留值map（旧的选中值）
         var curSelectedMap = {}; // 当前选中值map
@@ -1830,35 +1837,35 @@
         var isReserve = this.isReserveSelection();
         if (isReserve) {
           this.oldSelection.forEach(function (row) {
-            oldSelectedMap[row[_this10.keyProp]] = true;
+            oldSelectedMap[row[_this11.keyProp]] = true;
           });
           this.data.forEach(function (row) {
-            curSelectedMap[row[_this10.keyProp]] = true;
+            curSelectedMap[row[_this11.keyProp]] = true;
           });
         }
         var removedRows = [];
         rows.forEach(function (row) {
           var val = typeof selected === 'boolean' ? selected : !row.$v_checked;
           !val && removedRows.push(row);
-          _this10.$set(row, '$v_checked', val);
-          _this10.$set(row, '$v_checkedOrder', val ? _this10.checkOrder++ : undefined);
+          _this11.$set(row, '$v_checked', val);
+          _this11.$set(row, '$v_checkedOrder', val ? _this11.checkOrder++ : undefined);
           if (!isReserve) return;
 
           /* 处理reserve-selection 模式 */
           // 如果row在保留值oldSelection里，且取消选中，则需要将它移除
-          var key = row[_this10.keyProp];
+          var key = row[_this11.keyProp];
           if (key in oldSelectedMap && !val) {
             if (!toDeleteMap) toDeleteMap = {};
             toDeleteMap[key] = true;
           }
           // 如果row不在当前列表里，且为选中，则需要添加在保留值oldSelection里
           if (!(key in curSelectedMap) && val) {
-            _this10.oldSelection.push(row);
+            _this11.oldSelection.push(row);
           }
         });
         if (toDeleteMap) {
           this.oldSelection = this.oldSelection.filter(function (row) {
-            return !(row[_this10.keyProp] in toDeleteMap);
+            return !(row[_this11.keyProp] in toDeleteMap);
           });
         }
         this.emitSelectionChange(removedRows);
@@ -1886,32 +1893,32 @@
       },
       // 【多选】兼容表格 reserve-selection，存储上次选中的值
       updateSelectionByRowKey: function updateSelectionByRowKey(data) {
-        var _this11 = this;
+        var _this12 = this;
         var oldData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
         if (!this.elTable) return;
 
         // 将旧的选中值存储到oldSelection中
         oldData.forEach(function (row) {
           if (row.$v_checked) {
-            _this11.oldSelection.push(row);
+            _this12.oldSelection.push(row);
           }
         });
         var selectedMap = {};
         this.oldSelection.forEach(function (row) {
-          selectedMap[row[_this11.keyProp]] = true;
+          selectedMap[row[_this12.keyProp]] = true;
         });
         var usedMap = {}; // 当前选中值的map
         data.forEach(function (row) {
-          var key = row[_this11.keyProp];
+          var key = row[_this12.keyProp];
           if (key in selectedMap) {
-            _this11.$set(row, '$v_checked', true);
+            _this12.$set(row, '$v_checked', true);
             usedMap[key] = true;
           }
         });
 
         // 从oldSelection中移除当前选中的值
         this.oldSelection = this.oldSelection.filter(function (row) {
-          return !(row[_this11.keyProp] in usedMap);
+          return !(row[_this12.keyProp] in usedMap);
         });
       },
       // 【多选】多选列是否设置了 reserve-selection
@@ -1933,7 +1940,7 @@
       },
       // 【多选】更新多选的值
       updateSelectionData: function updateSelectionData(data, oldData) {
-        var _this12 = this;
+        var _this13 = this;
         this.syncSelectionStatus();
         if (data !== oldData) {
           this.oldSelection = [];
@@ -1947,12 +1954,12 @@
         this.sortSelection(selection);
         // 新的选中项key map
         var selectionKeyMap = selection.reduce(function (map, dataItem) {
-          map[dataItem[_this12.keyProp]] = true;
+          map[dataItem[_this13.keyProp]] = true;
           return map;
         }, {});
         // 移除的项
         var removedRows = this.oldSelection.reduce(function (rows, row) {
-          if (!(row[_this12.keyProp] in selectionKeyMap)) rows.push(row);
+          if (!(row[_this13.keyProp] in selectionKeyMap)) rows.push(row);
           return rows;
         }, []);
         // 手动删除选中项、新旧项不一致（正常不会发生），触发selection-change事件
@@ -1963,11 +1970,11 @@
       },
       // 【多选】多选排序
       sortSelection: function sortSelection(selection) {
-        var _this13 = this;
+        var _this14 = this;
         if (!this.selectionSort) return;
         if (typeof this.selectionSort === 'function') {
           selection.sort(function (a, b) {
-            return _this13.selectionSort(a, b);
+            return _this14.selectionSort(a, b);
           });
         } else {
           selection.sort(function (a, b) {
@@ -1991,14 +1998,14 @@
       },
       // 【单选高亮】兼容行高亮
       hackRowHighlight: function hackRowHighlight() {
-        var _this14 = this;
+        var _this15 = this;
         // 兼容el-table的setCurrentRow：重写setCurrentRow方法
         if (this.elTable.setCurrentRow.virtual) {
           var originSetCurrentRow = this.elTable.setCurrentRow.bind(this.elTable); // 原方法
           var setCurrentRow = function setCurrentRow(row) {
             // 重写setCurrentRow
-            _this14.elTable.store.states.currentRow = _this14.highlightRow; // 同步表格行高亮的值
-            if (_this14.highlightRow !== row) _this14.highlightRow = row; // 同步highlightRow的值
+            _this15.elTable.store.states.currentRow = _this15.highlightRow; // 同步表格行高亮的值
+            if (_this15.highlightRow !== row) _this15.highlightRow = row; // 同步highlightRow的值
             originSetCurrentRow(row); // 执行原方法
           };
           this.elTable.setCurrentRow = setCurrentRow;
@@ -2006,13 +2013,13 @@
         }
         // 兼容el-table的currentRowKey属性
         var unWatch = this.$watch(function () {
-          return _this14.elTable.currentRowKey;
+          return _this15.elTable.currentRowKey;
         }, function (val) {
-          if (_this14.elTable.rowKey) {
-            var targetRow = _this14.listData.find(function (row) {
-              return val === row[_this14.elTable.rowKey];
+          if (_this15.elTable.rowKey) {
+            var targetRow = _this15.listData.find(function (row) {
+              return val === row[_this15.elTable.rowKey];
             });
-            _this14.highlightRow = targetRow;
+            _this15.highlightRow = targetRow;
           }
         }, {
           immediate: true
@@ -2021,38 +2028,38 @@
 
         // 监听高亮的事件
         var onCurrentChange = function onCurrentChange(row) {
-          _this14.highlightRow = row;
+          _this15.highlightRow = row;
         };
         this.elTable.$on('current-change', onCurrentChange);
         this.unWatchs.push(function () {
-          _this14.elTable.$off('current-change', onCurrentChange);
+          _this15.elTable.$off('current-change', onCurrentChange);
         });
       },
       // 【单选高亮】同步表格行高亮的值
       syncRowsHighlight: function syncRowsHighlight() {
-        var _this15 = this;
+        var _this16 = this;
         if (!this.elTable.highlightCurrentRow) return;
         // 必须使用nextTick，不然值同步不上
         this.$nextTick(function () {
-          _this15.elTable.store.states.currentRow = _this15.highlightRow;
+          _this16.elTable.store.states.currentRow = _this16.highlightRow;
         });
       },
       // 【多选高亮】兼容多选选中行高亮
       hackHighlightSelectionRow: function hackHighlightSelectionRow() {
-        var _this16 = this;
+        var _this17 = this;
         var onFixedColumnsChange = function onFixedColumnsChange() {
-          if (!_this16.elTable) return;
-          var tableBodyVm = _this16.elTable.$children.filter(function (vm) {
+          if (!_this17.elTable) return;
+          var tableBodyVm = _this17.elTable.$children.filter(function (vm) {
             return vm.$options.name === 'ElTableBody';
           });
           tableBodyVm.forEach(function (vm) {
             if (vm.getRowClass.virtual) return;
             // 重写 table-body组件的 getRowClass 方法
             // 支持多选选中时高亮
-            var originGetRowClass = vm.getRowClass.bind(_this16.elTable);
+            var originGetRowClass = vm.getRowClass.bind(_this17.elTable);
             vm.getRowClass = function (row, rowIndex) {
               var classes = originGetRowClass(row, rowIndex);
-              if (_this16.elTable.highlightSelectionRow && row.$v_checked) {
+              if (_this17.elTable.highlightSelectionRow && row.$v_checked) {
                 classes.push('selection-row');
               }
               return classes;
@@ -2061,7 +2068,7 @@
           });
         };
         var unWatch = this.$watch(function () {
-          return [_this16.elTable.fixedColumns, _this16.elTable.rightFixedColumns];
+          return [_this17.elTable.fixedColumns, _this17.elTable.rightFixedColumns];
         }, onFixedColumnsChange, {
           immediate: true
         });
@@ -2069,57 +2076,57 @@
       },
       // 监听表格header-dragend事件
       bindTableDragEvent: function bindTableDragEvent() {
-        var _this17 = this;
+        var _this18 = this;
         var onHeaderDragend = function onHeaderDragend() {
           // 设置状态，用于自定义固定列
-          _this17.hasHeadDrag = true;
+          _this18.hasHeadDrag = true;
           // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
-          _this17.elTable.doLayout();
+          _this18.elTable.doLayout();
           // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
-          _this17.update();
+          _this18.update();
         };
         this.elTable.$on('header-dragend', onHeaderDragend);
         this.unWatchs.push(function () {
-          _this17.elTable.$off('header-dragend', onHeaderDragend);
+          _this18.elTable.$off('header-dragend', onHeaderDragend);
         });
       },
       // 【展开行】监听表格expand-change事件
       bindTableExpandEvent: function bindTableExpandEvent() {
-        var _this18 = this;
+        var _this19 = this;
         // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
         var onExpandChange = function onExpandChange(row, expandedRows) {
-          if (_this18.isExpandType) {
-            _this18.$set(row, '$v_expanded', expandedRows.includes(row));
+          if (_this19.isExpandType) {
+            _this19.$set(row, '$v_expanded', expandedRows.includes(row));
           }
 
           // 当展开的内容或展开的树收起时，需要更新虚拟滚动组件，避免表格出现一段空白内容
           if (!row.$v_expanded || expandedRows === false) {
             setTimeout(function () {
-              _this18.update();
+              _this19.update();
             });
           }
         };
         this.elTable.$on('expand-change', onExpandChange);
         this.unWatchs.push(function () {
-          _this18.elTable.$off('expand-change', onExpandChange);
+          _this19.elTable.$off('expand-change', onExpandChange);
         });
       },
       // 【展开行】设置表格行展开
       setRowsExpanded: function setRowsExpanded() {
-        var _this19 = this;
+        var _this20 = this;
         if (!this.isExpandType) return;
         this.$nextTick(function () {
-          var expandRows = _this19.renderData.filter(function (item) {
+          var expandRows = _this20.renderData.filter(function (item) {
             return item.$v_expanded;
           });
           if (expandRows.length === 0) return;
           expandRows.forEach(function (row) {
-            _this19.elTable.toggleRowExpansion(row, true);
+            _this20.elTable.toggleRowExpansion(row, true);
           });
           // 手动设置列展开时，禁止展开动画
-          _this19.isExpanding = true;
+          _this20.isExpanding = true;
           setTimeout(function () {
-            _this19.isExpanding = false;
+            _this20.isExpanding = false;
           }, 10);
         });
       },
@@ -2137,7 +2144,7 @@
       },
       // 【自定义固定列】设置固定左右样式
       cellFixedStyle: function cellFixedStyle(_ref6) {
-        var _this20 = this;
+        var _this21 = this;
         var column = _ref6.column;
         var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var elTable = this.getElTable();
@@ -2191,10 +2198,10 @@
           // 设置右边固定列定位样式（从右往左依次）
           this.hasFixedRight = rightColumns.length > 0;
           rightColumns.reverse().forEach(function (column) {
-            _this20.fixedMap[column.id] = {
-              right: _this20.totalRight
+            _this21.fixedMap[column.id] = {
+              right: _this21.totalRight
             };
-            _this20.totalRight += column.realWidth || column.width;
+            _this21.totalRight += column.realWidth || column.width;
           });
         }
         var style = this.fixedMap[column.id];
@@ -2214,52 +2221,52 @@
       },
       // 绑定排序事件
       bindTableSortEvent: function bindTableSortEvent() {
-        var _this21 = this;
+        var _this22 = this;
         this.onSortChange = function () {
-          if (!_this21.elTable) return;
-          var states = _this21.elTable.store.states;
+          if (!_this22.elTable) return;
+          var states = _this22.elTable.store.states;
           var sortingColumn = states.sortingColumn;
-          var data = _this21.filterData || _this21.data; // 优先使用过滤后的数据进行排序
+          var data = _this22.filterData || _this22.data; // 优先使用过滤后的数据进行排序
           if (!sortingColumn || typeof sortingColumn.sortable === 'string') {
-            _this21.listData = data;
+            _this22.listData = data;
           } else {
-            _this21.listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy);
+            _this22.listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy);
           }
           // 触发更新
-          _this21.doUpdate();
-          _this21.$nextTick(function () {
-            _this21.syncSelectionStatus();
+          _this22.doUpdate();
+          _this22.$nextTick(function () {
+            _this22.syncSelectionStatus();
           });
         };
         this.elTable.$on('sort-change', this.onSortChange);
         this.unWatchs.push(function () {
-          _this21.elTable.$off('sort-change', _this21.onSortChange);
+          _this22.elTable.$off('sort-change', _this22.onSortChange);
         });
 
         // clearSort不会触发sort-change，需要重写clearSort方法，手动触发
         var originClearSort = this.elTable.clearSort.bind(this.elTable);
         this.elTable.clearSort = function () {
           originClearSort.apply(void 0, arguments);
-          _this21.onSortChange();
+          _this22.onSortChange();
         };
 
         // 此处兼容 default-sort 属性
         if (this.elTable.defaultSort) {
           this.$nextTick(function () {
-            _this21.onSortChange();
+            _this22.onSortChange();
           });
         }
       },
       // 绑定筛选事件
       bindTableFilterEvent: function bindTableFilterEvent() {
-        var _this22 = this;
+        var _this23 = this;
         this.onFilterChange = function () {
-          if (!_this22.elTable) return;
-          var states = _this22.elTable.store.states;
+          if (!_this23.elTable) return;
+          var states = _this23.elTable.store.states;
           var filters = states.filters;
 
           // 使用原数据进行数据过滤
-          var data = _this22.data;
+          var data = _this23.data;
           Object.keys(filters).forEach(function (columnId) {
             var values = states.filters[columnId];
             if (!values || values.length === 0) return;
@@ -2274,20 +2281,20 @@
           });
 
           // 过滤完之后，手动执行排序
-          var hasFilter = _this22.data !== data;
-          _this22.filterData = hasFilter ? data : null;
-          _this22.onSortChange();
+          var hasFilter = _this23.data !== data;
+          _this23.filterData = hasFilter ? data : null;
+          _this23.onSortChange();
         };
         this.elTable.$on('filter-change', this.onFilterChange);
         this.unWatchs.push(function () {
-          _this22.elTable.$off('filter-change', _this22.onFilterChange);
+          _this23.elTable.$off('filter-change', _this23.onFilterChange);
         });
 
         // clearFilter不会触发 filter-change，需要重写 clearFilter 方法，手动触发
         var originClearFilter = this.elTable.clearFilter.bind(this.elTable);
         this.elTable.clearFilter = function () {
           originClearFilter.apply(void 0, arguments);
-          _this22.onFilterChange();
+          _this23.onFilterChange();
         };
 
         // init filters
@@ -2295,34 +2302,34 @@
         var states = this.elTable.store.states;
         states.columns.forEach(function (column) {
           if (column.filteredValue && column.filteredValue.length) {
-            _this22.onFilterChange();
+            _this23.onFilterChange();
           }
         });
       },
       // 禁用原来的树结构（将children字段改为空）
       // 场景：row包含children会被当做的树结构，与 virtual-column 的树结构有冲突，所以需要禁用原来的
       disableOriginTree: function disableOriginTree() {
-        var _this23 = this;
+        var _this24 = this;
         this.$nextTick(function () {
-          if (!_this23.elTable) return;
-          var states = _this23.elTable.store.states;
+          if (!_this24.elTable) return;
+          var states = _this24.elTable.store.states;
           states.childrenColumnName = '';
         });
       },
       // 表格销毁事件
       bindTableDestory: function bindTableDestory() {
-        var _this24 = this;
+        var _this25 = this;
         var onTableDestory = function onTableDestory() {
-          _this24.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁');
-          _this24.destory();
-          _this24.$nextTick(function () {
-            _this24.initData();
+          _this25.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁');
+          _this25.destory();
+          _this25.$nextTick(function () {
+            _this25.initData();
           });
         };
         // 防止el-table绑定key时，重新渲染表格但没有重新初始化<virtual-scroll>组件
         this.elTable.$on('hook:beforeDestory', onTableDestory);
         this.unWatchs.push(function () {
-          _this24.elTable.$off('hook:beforeDestory', onTableDestory);
+          _this25.elTable.$off('hook:beforeDestory', onTableDestory);
         });
       }
     },
@@ -2360,10 +2367,10 @@
       }
     },
     created: function created() {
-      var _this25 = this;
+      var _this26 = this;
       this.listData = this.data;
       this.$nextTick(function () {
-        _this25.initData();
+        _this26.initData();
       });
     },
     activated: function activated() {
@@ -2529,7 +2536,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-dfcb0eec_0", {
+    inject("data-v-5d740ec3_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2540,8 +2547,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-dfcb0eec_1", {
-      source: ".is-expanding[data-v-dfcb0eec] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-dfcb0eec] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-5d740ec3_1", {
+      source: ".is-expanding[data-v-5d740ec3] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-5d740ec3] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2554,7 +2561,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-dfcb0eec";
+  var __vue_scope_id__$2 = "data-v-5d740ec3";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */

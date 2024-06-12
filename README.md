@@ -552,3 +552,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复row包含children会被当做的树结构，与 virtual-column 的树结构有冲突
 
 * npm 1.4.1 版本发包
+
+
+### 2024-6-12
+
+* 修复 clearSelection 未清除旧的选中项
+
+* npm 1.4.2 版本发包

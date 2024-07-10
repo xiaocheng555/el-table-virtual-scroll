@@ -559,3 +559,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复 clearSelection 未清除旧的选中项
 
 * npm 1.4.2 版本发包
+
+
+### 2024-6-12
+
+* 修复使用 <virtual-column> vfixed, 表尾合计行对应的列没有固定
+
+* npm 1.4.3 版本发包

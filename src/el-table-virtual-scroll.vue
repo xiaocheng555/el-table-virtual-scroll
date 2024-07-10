@@ -1074,7 +1074,20 @@ export default {
       const style = this.fixedMap[column.id]
       if (!style) return
       const isFixedRight = 'right' in style
-      return isFixedRight ? { right: style.right + gutterWidth + 'px' } : { left: style.left + 'px' }
+      const curStyle = isFixedRight ? { right: style.right + gutterWidth + 'px' } : { left: style.left + 'px' }
+
+      // 修复 #89 使用 <virtual-column> vfixed, 表尾合计行对应的列没有固定
+      if (elTable.showSummary) {
+        this.$nextTick(() => {
+          const footTh = this.$el.querySelector(`.el-table__footer-wrapper .${column.id}`)
+          if (footTh) {
+            if (curStyle.left) footTh.style.left = curStyle.left
+            if (curStyle.right) footTh.style.right = curStyle.right
+          }
+        })
+      }
+
+      return curStyle
     },
 
     // 【自定义固定列】更新表头布局

@@ -2207,11 +2207,23 @@
         var style = this.fixedMap[column.id];
         if (!style) return;
         var isFixedRight = ('right' in style);
-        return isFixedRight ? {
+        var curStyle = isFixedRight ? {
           right: style.right + gutterWidth + 'px'
         } : {
           left: style.left + 'px'
         };
+
+        // 修复 #89 使用 <virtual-column> vfixed, 表尾合计行对应的列没有固定
+        if (elTable.showSummary) {
+          this.$nextTick(function () {
+            var footTh = _this21.$el.querySelector(".el-table__footer-wrapper .".concat(column.id));
+            if (footTh) {
+              if (curStyle.left) footTh.style.left = curStyle.left;
+              if (curStyle.right) footTh.style.right = curStyle.right;
+            }
+          });
+        }
+        return curStyle;
       },
       // 【自定义固定列】更新表头布局
       doHeaderLayout: function doHeaderLayout() {
@@ -2536,7 +2548,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-5d740ec3_0", {
+    inject("data-v-16780ad2_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2547,8 +2559,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-5d740ec3_1", {
-      source: ".is-expanding[data-v-5d740ec3] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-5d740ec3] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-16780ad2_1", {
+      source: ".is-expanding[data-v-16780ad2] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-16780ad2] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2561,7 +2573,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-5d740ec3";
+  var __vue_scope_id__$2 = "data-v-16780ad2";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */

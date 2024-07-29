@@ -301,7 +301,7 @@ export default {
         // 计算表格行的高度
         let offsetHeight = row.offsetHeight
         // 表格行如果有扩展行，需要加上扩展内容的高度
-        if (row.classList.contains('expanded')) {
+        if (row.classList.contains('expanded') && row.nextSibling && noFirstLevelReg.test(row.nextSibling.className)) {
           offsetHeight += row.nextSibling.offsetHeight
         }
         // 表格行如果有子孙节点，需要加上子孙节点的高度

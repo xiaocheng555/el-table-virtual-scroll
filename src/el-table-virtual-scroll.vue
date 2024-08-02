@@ -172,6 +172,9 @@ export default {
       if (!this.elTable || this.elTable.$options.name !== 'ElTable') {
         throw new Error('未找到 <el-table> 组件. 请确保 <el-table> 组件在虚拟组件内，且 getElTable 方法能获取到正确的 <el-table> 组件！')
       }
+      if (!this.elTable.rowKey) {
+        this.warn && console.warn('[el-table-virtual-scroll]: 建议设置 <el-table> 组件的 rowKey 属性')
+      }
 
       this.scroller = this.getScroller()
       this.observeElTable()
@@ -260,7 +263,7 @@ export default {
       this.calcRenderData()
       // 计算位置
       this.calcPosition()
-      // shouldUpdate && this.updatePosition()
+      shouldUpdate && this.updatePosition()
       // 触发事件
       this.$emit('change', this.renderData, this.start, this.end)
       // 设置表格行展开
@@ -301,7 +304,7 @@ export default {
         // 计算表格行的高度
         let offsetHeight = row.offsetHeight
         // 表格行如果有扩展行，需要加上扩展内容的高度
-        if (row.classList.contains('expanded')) {
+        if (!isTree && row.classList.contains('expanded')) {
           offsetHeight += row.nextSibling.offsetHeight
         }
         // 表格行如果有子孙节点，需要加上子孙节点的高度

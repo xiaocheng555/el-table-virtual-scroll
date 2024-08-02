@@ -1293,6 +1293,9 @@
         if (!this.elTable || this.elTable.$options.name !== 'ElTable') {
           throw new Error('未找到 <el-table> 组件. 请确保 <el-table> 组件在虚拟组件内，且 getElTable 方法能获取到正确的 <el-table> 组件！');
         }
+        if (!this.elTable.rowKey) {
+          this.warn && console.warn('[el-table-virtual-scroll]: 建议设置 <el-table> 组件的 rowKey 属性');
+        }
         this.scroller = this.getScroller();
         this.observeElTable();
 
@@ -1351,6 +1354,7 @@
       },
       // 处理滚动事件
       handleScroll: function handleScroll() {
+        var shouldUpdate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
         if (this.disabled) return;
         if (!this.scroller) return;
         this.triggleScroll = true;
@@ -1375,7 +1379,7 @@
         this.calcRenderData();
         // 计算位置
         this.calcPosition();
-        // shouldUpdate && this.updatePosition()
+        shouldUpdate && this.updatePosition();
         // 触发事件
         this.$emit('change', this.renderData, this.start, this.end);
         // 设置表格行展开
@@ -1414,7 +1418,7 @@
           // 计算表格行的高度
           var offsetHeight = row.offsetHeight;
           // 表格行如果有扩展行，需要加上扩展内容的高度
-          if (row.classList.contains('expanded')) {
+          if (!isTree && row.classList.contains('expanded')) {
             offsetHeight += row.nextSibling.offsetHeight;
           }
           // 表格行如果有子孙节点，需要加上子孙节点的高度
@@ -2548,7 +2552,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-16780ad2_0", {
+    inject("data-v-352fab15_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2559,8 +2563,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-16780ad2_1", {
-      source: ".is-expanding[data-v-16780ad2] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-16780ad2] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-352fab15_1", {
+      source: ".is-expanding[data-v-352fab15] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-352fab15] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2573,7 +2577,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-16780ad2";
+  var __vue_scope_id__$2 = "data-v-352fab15";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */

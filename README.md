@@ -566,3 +566,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复使用 <virtual-column> vfixed, 表尾合计行对应的列没有固定
 
 * npm 1.4.3 版本发包
+
+
+### 2024-8-2
+
+* 修复小bug
+
+* npm 1.4.4 版本发包

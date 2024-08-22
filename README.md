@@ -573,3 +573,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复小bug
 
 * npm 1.4.4 版本发包
+
+
+### 2024-8-22
+
+* 修复表格高度初始为0时，滚动异常
+
+* npm 1.4.5 版本发包

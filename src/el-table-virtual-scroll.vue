@@ -21,7 +21,8 @@ import {
   isEmpty,
   setMousewheelSlow,
   orderBy,
-  getColumnById
+  getColumnById,
+  isNumber
 } from './util'
 
 // 表格body class名称
@@ -219,7 +220,7 @@ export default {
         return el
       }
       // 如果表格是固定高度，则获取表格内的滚动节点，否则获取父层滚动节点
-      if (this.elTable && (this.elTable.height || this.elTable.maxHeight)) {
+      if (this.elTable && (isNumber(this.elTable.height) || isNumber(this.elTable.maxHeight))) {
         this.isInnerScroll = true
         return this.$el.querySelector('.el-table__body-wrapper')
       } else {

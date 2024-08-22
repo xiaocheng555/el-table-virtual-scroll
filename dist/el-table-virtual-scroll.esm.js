@@ -1125,6 +1125,9 @@ var getColumnById = function getColumnById(table, columnId) {
   });
   return column;
 };
+var isNumber = function isNumber(val) {
+  return typeof val === 'number';
+};
 
 // 表格body class名称
 var TableBodyClassNames = ['.el-table__body-wrapper',
@@ -1331,7 +1334,7 @@ var script$2 = {
         return el;
       }
       // 如果表格是固定高度，则获取表格内的滚动节点，否则获取父层滚动节点
-      if (this.elTable && (this.elTable.height || this.elTable.maxHeight)) {
+      if (this.elTable && (isNumber(this.elTable.height) || isNumber(this.elTable.maxHeight))) {
         this.isInnerScroll = true;
         return this.$el.querySelector('.el-table__body-wrapper');
       } else {
@@ -2546,7 +2549,7 @@ __vue_render__$1._withStripped = true;
 /* style */
 var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-352fab15_0", {
+  inject("data-v-9c8992dc_0", {
     source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
     map: {
       "version": 3,
@@ -2557,8 +2560,8 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
       "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
     },
     media: undefined
-  }), inject("data-v-352fab15_1", {
-    source: ".is-expanding[data-v-352fab15] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-352fab15] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+  }), inject("data-v-9c8992dc_1", {
+    source: ".is-expanding[data-v-9c8992dc] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-9c8992dc] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
     map: {
       "version": 3,
       "sources": ["el-table-virtual-scroll.vue"],
@@ -2571,7 +2574,7 @@ var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
   });
 };
 /* scoped */
-var __vue_scope_id__$2 = "data-v-352fab15";
+var __vue_scope_id__$2 = "data-v-9c8992dc";
 /* module identifier */
 var __vue_module_identifier__$2 = undefined;
 /* functional template */

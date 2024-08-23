@@ -145,7 +145,3 @@ export const getColumnById = function (table, columnId) {
   })
   return column
 }
-
-export const isNumber = function (val) {
-  return typeof val === 'number'
-}

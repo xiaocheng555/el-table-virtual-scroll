@@ -580,3 +580,10 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复表格高度初始为0时，滚动异常
 
 * npm 1.4.5 版本发包
+
+
+### 2024-8-23
+
+* 【修复表格高度初始为0时，滚动异常】修复该问题fix引发其他问题
+
+* npm 1.4.6 版本发包

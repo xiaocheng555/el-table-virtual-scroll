@@ -120,7 +120,8 @@ export default {
       isHideAppend: false, // 是否隐藏append
       scrollPosition: '', // x轴滚动位置（左、中、右）
       hasFixedRight: false, // 是否有固定右边的列
-      listData: [] // 未筛选为data源数据，筛选后则为筛选后的数据
+      listData: [], // 未筛选为data源数据，筛选后则为筛选后的数据
+      isTree: false // 是否自定义树形表格
     }
   },
   computed: {
@@ -141,6 +142,25 @@ export default {
         const size = typeof curSize === 'number' ? curSize : itemSize
         total += size
       }
+      return res
+    },
+    // 树节点的 children 映射，通过响应式关联起来，那么children中添加、删除节点会触发treeMap computed，从而监听treeMap更新视图【注：children 添加删除不会触发data watch，data只是浅监听】
+    treeMap ({ data, keyProp, treeProps, isTree }) {
+      if (!isTree || !treeProps) return
+      const res = {}
+      const { children } = treeProps
+      const traverse = (nodes) => {
+        nodes.forEach(node => {
+          const key = node[keyProp]
+          if (typeof key !== 'undefined' && node[children]) {
+            res[key] = node[children]
+            traverse(node[children])
+          }
+        })
+      }
+
+      // 开始遍历树结构
+      traverse(data)
       return res
     }
   },
@@ -183,13 +203,27 @@ export default {
       this.onScroll = !this.throttleTime ? this.handleScroll : throttle(this.handleScroll, this.throttleTime)
       this.scroller.addEventListener('scroll', this.onScroll)
       window.addEventListener('resize', this.onScroll)
-      this.bindTableExpandEvent()
-      this.bindTableDragEvent()
-      this.bindTableSortEvent()
-      this.bindTableFilterEvent()
-      this.bindTableDestory()
-      this.hackRowHighlight()
-      this.hackHighlightSelectionRow()
+
+      // 兼容
+      this.hackTableExpand() // 兼容表格展开行
+      this.hackTableHeaderDrag() // 兼容表格头拖拽
+      this.hackTableSort() // 兼容表格排序
+      this.hackTableFilter() // 兼容表格筛选
+      this.hackRowHighlight() // 兼容单选
+      this.hackSelection() // 兼容多选
+      this.hackCustomTree() // 兼容树形表格
+      this.bindTableDestory() // 绑定表格销毁事件
+
+      // 设置listData，首次updateTreeData会在node上添加$v_tree属性，触发data watch，从而触发 onSortChange，所以defaultSort就无需再次触发
+      this.treeProps = this.elTable.treeProps || { children: 'children', hasChildren: 'hasChildren' }
+      // 此处兼容 default-sort 属性
+      if (this.elTable.defaultSort) {
+        this.$nextTick(() => { // 此处使用nextTick是因为 el-tale的sortingColumn排序数据还没设置好，得等一会
+          this.onSortChange() // onSortChange 会触发updateTreeData
+        })
+      } else {
+        this.updateTreeData()
+      }
 
       // 初次执行 (固定高度的表格布局好后，会触发 bodyHeight 更改（已手动监听，位于 unWatch2代码处），从而触发 onScroll，所以无需手动执行onScroll)
       setTimeout(() => {
@@ -266,8 +300,6 @@ export default {
       shouldUpdate && this.updatePosition()
       // 触发事件
       this.$emit('change', this.renderData, this.start, this.end)
-      // 设置表格行展开
-      this.setRowsExpanded()
       // 同步表格行高亮
       this.syncRowsHighlight()
     },
@@ -289,8 +321,9 @@ export default {
 
       // 处理树形表格(修复树结构懒加载 如果有hasChildren=false的行 行可视区域高度异常 #45)
       const isTree = this.elTable.lazy
+      const isVTree = this.isTree // 自定义树（非el-table的树）
       const noFirstLevelReg = /el-table__row--level-[1-9]\d*/ // 匹配树形表格非一级行
-      if (isTree) {
+      if (!isVTree && isTree) {
         // 筛选出树形表格的一级行，一级行className含有el-table__row--level-0或者不存在层级className
         rows = Array.from(this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')).filter(row => {
           return !noFirstLevelReg.test(row.className)
@@ -304,7 +337,7 @@ export default {
         // 计算表格行的高度
         let offsetHeight = row.offsetHeight
         // 表格行如果有扩展行，需要加上扩展内容的高度
-        if (!isTree && row.classList.contains('expanded')) {
+        if (!isTree && !isVTree && row.classList.contains('expanded')) {
           offsetHeight += row.nextSibling.offsetHeight
         }
         // 表格行如果有子孙节点，需要加上子孙节点的高度
@@ -584,6 +617,9 @@ export default {
 
     // 【外部调用】更新
     update () {
+      if (this.isTree) {
+        this.onFilterChange && this.onFilterChange()
+      }
       // console.log('update')
       this.handleScroll()
     },
@@ -611,6 +647,12 @@ export default {
       }
     },
 
+    // 【外部调用】滚动到对应的行
+    scrollToRow (row, offsetY = 0) {
+      const index = this.listData.findIndex((item) => item === row || item[this.keyProp] === row[this.keyProp])
+      this.scrollTo(index, offsetY)
+    },
+
     // 【外部调用】重置 (没用废弃)
     reset () {
       this.sizes = {}
@@ -633,13 +675,6 @@ export default {
       this.elTable = null
       this.scroller = null
       this.unWatchs = []
-    },
-
-    // 【VirtualColumn调用】更新数据
-    updateData (data = []) {
-      // 先存在list，通过$emit update更新data不是立即执行的（那么拿到的data就是最新），所以先存到list里，拿的就是最新数据
-      this.list = data
-      this.$emit('update:data', this.list)
     },
 
     // 【VirtualColumn调用】获取列表全部数据】
@@ -674,6 +709,7 @@ export default {
 
       if (byUser) { // 当用户手动勾选全选 Checkbox 时触发的事件
         this.$emit('select-all', selection, val)
+        this.elTable.$emit('select-all', selection, val)
       }
       if (val === false) {
         this.checkOrder = 0 // 取消全选，则重置checkOrder
@@ -690,6 +726,7 @@ export default {
         const selection = this.emitSelectionChange(val ? [] : [row])
         if (byUser) { // 当用户手动勾选数据行的 Checkbox 时触发的事件
           this.$emit('select', selection, row, val)
+          this.elTable.$emit('select', selection, row, val)
         }
       }
     },
@@ -715,7 +752,7 @@ export default {
       this.toggleRowsSelection(row, selected)
     },
 
-    // 【多选】表格切换多个row选中状态
+    // 【扩展多选】表格切换多个row选中状态
     toggleRowsSelection (rows, selected) {
       // reserve-selection 模式用到的变量
       const oldSelectedMap = {} // 保留值map（旧的选中值）
@@ -772,6 +809,7 @@ export default {
       })
       this.sortSelection(selection)
       this.$emit('selection-change', selection, removedRows)
+      this.elTable.$emit('selection-change', selection, removedRows)
       // 对于 reserve-selection 模式，oldSelection始终保留旧的选中值，不保留当前选中值
       // 对于 非 reserve-selection 模式，oldSelection始终保留当前选中值
       if (!isReserve) {
@@ -848,6 +886,7 @@ export default {
       // 手动删除选中项、新旧项不一致（正常不会发生），触发selection-change事件
       if (removedRows.length || selection.length !== this.oldSelection.length) {
         this.$emit('selection-change', selection, removedRows)
+        this.elTable.$emit('selection-change', selection, removedRows)
         this.oldSelection = [...selection]
       }
     },
@@ -874,6 +913,7 @@ export default {
     setCurrentRow (row) {
       this.curRow = row
       this.$emit('current-change', row)
+      this.elTable.$emit('current-change', row)
     },
 
     // 【单选高亮】兼容行高亮
@@ -917,8 +957,14 @@ export default {
       })
     },
 
-    // 【多选高亮】兼容多选选中行高亮
-    hackHighlightSelectionRow () {
+    // 使用自定义的树形表格；需禁用原来的树（将children字段改为空）
+    useCustomSelection () {
+      this.isSelection = true
+    },
+
+    // 【多选高亮】兼容多选
+    hackSelection () {
+      // 兼容选中行高亮
       const onFixedColumnsChange = () => {
         if (!this.elTable) return
         const tableBodyVm = this.elTable.$children.filter(vm => {
@@ -945,10 +991,27 @@ export default {
         { immediate: true }
       )
       this.unWatchs.push(unWatch)
+
+      // 兼容多选 toggleRowSelection 方法
+      this.elTable.toggleRowSelection = (row, selected) => {
+        this.toggleRowSelection(row, selected)
+      }
+
+      this.elTable.clearSelection = () => {
+        this.clearSelection()
+      }
+
+      // 【多选】兼容表格 toggleAllSelection 方法
+      this.elTable.toggleAllSelection = () => {
+        const selectionVm = this.columnVms.find(vm => vm.isSelection())
+        if (selectionVm) {
+          selectionVm.onCheckAllRows(!selectionVm.isCheckedAll)
+        }
+      }
     },
 
     // 监听表格header-dragend事件
-    bindTableDragEvent () {
+    hackTableHeaderDrag () {
       const onHeaderDragend = () => {
         // 设置状态，用于自定义固定列
         this.hasHeadDrag = true
@@ -963,53 +1026,68 @@ export default {
       })
     },
 
-    // 【展开行】监听表格expand-change事件
-    bindTableExpandEvent () {
-      // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
-      const onExpandChange = (row, expandedRows) => {
-        if (this.isExpandType) {
-          this.$set(row, '$v_expanded', expandedRows.includes(row))
-        }
+    // 【展开行】使用扩展行
+    useExpandTable () {
+      this.isExpandType = true
+    },
 
-        // 当展开的内容或展开的树收起时，需要更新虚拟滚动组件，避免表格出现一段空白内容
-        if (!row.$v_expanded || expandedRows === false) {
-          setTimeout(() => {
-            this.update()
+    // 【展开行】监听表格expand-change事件
+    hackTableExpand () {
+      if (!this.isExpandType) return
+      const { store } = this.elTable
+
+      // 判断表格行是否渲染扩展行
+      store.isRowExpanded = (row) => {
+        return row.$v_expanded
+      }
+
+      // expandRowKeys 变化时候，设置展开的行
+      store.setExpandRowKeys = () => {
+        const { expandRowKeys } = this.elTable
+        this.listData.forEach(row => {
+          this.$set(row, '$v_expanded', expandRowKeys.includes(row[this.elTable.rowKey]))
+        })
+      }
+
+      // 表格data变化时，更新展开的行
+      store.updateExpandRows = () => {
+        const { defaultExpandAll } = this.elTable
+        if (defaultExpandAll) {
+          // 当设置了默认展开所有行时，直接设置所有行展开
+          this.listData.forEach(row => {
+            this.$set(row, '$v_expanded', true)
           })
         }
       }
-      this.elTable.$on('expand-change', onExpandChange)
-      this.unWatchs.push(() => {
-        this.elTable.$off('expand-change', onExpandChange)
-      })
-    },
 
-    // 【展开行】设置表格行展开
-    setRowsExpanded () {
-      if (!this.isExpandType) return
+      // 外部调动方法 toggleRowExpansion
+      store.toggleRowExpansion = (row, expanded) => {
+        const val = typeof expanded === 'boolean' ? expanded : !row.$v_expanded
+        if (val === Boolean(row.$v_expanded)) return
+        this.$set(row, '$v_expanded', val)
+        // 暂时不做排序，没必要
+        this.elTable.$emit('expand-change', row, this.listData.filter(row => row.$v_expanded))
 
-      this.$nextTick(() => {
-        const expandRows = this.renderData.filter(item => item.$v_expanded)
-        if (expandRows.length === 0) return
-
-        expandRows.forEach(row => {
-          this.elTable.toggleRowExpansion(row, true)
+        if (this.updateExpandeding) return
+        this.updateExpandeding = true
+        this.$nextTick(() => {
+          this.updateExpandeding = false
+          this.update()
         })
-        // 手动设置列展开时，禁止展开动画
-        this.isExpanding = true
-        setTimeout(() => {
-          this.isExpanding = false
-        }, 10)
-      })
+      }
+
+      // 重写expandRows的indexOf，使其能获取正确的展开状态
+      store.states.expandRows.indexOf = (row) => {
+        if (row) {
+          return row.$v_expanded || -1
+        }
+        return -1
+      }
     },
 
-    // 【展开行】切换某一行的展开状态
+    // 【展开行/树】切换某一行的展开状态
     toggleRowExpansion (row, expanded) {
-      const hasVal = typeof expanded === 'boolean'
-      this.$set(row, '$v_expanded', hasVal ? expanded : !row.$v_expanded)
-      if (this.renderData.includes(row)) {
-        this.elTable.toggleRowExpansion(row, expanded)
-      }
+      this.elTable.toggleRowExpansion(row, expanded)
     },
 
     // 【自定义固定列】设置固定左右样式
@@ -1101,16 +1179,17 @@ export default {
     },
 
     // 绑定排序事件
-    bindTableSortEvent () {
+    hackTableSort () {
       this.onSortChange = () => {
         if (!this.elTable) return
         const states = this.elTable.store.states
         const { sortingColumn } = states
         const data = this.filterData || this.data // 优先使用过滤后的数据进行排序
         if (!sortingColumn || typeof sortingColumn.sortable === 'string') {
-          this.listData = data
+          this.updateTreeData(data)
         } else {
-          this.listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy)
+          const listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy)
+          this.updateTreeData(listData)
         }
         // 触发更新
         this.doUpdate()
@@ -1129,17 +1208,19 @@ export default {
         originClearSort(...rest)
         this.onSortChange()
       }
-
-      // 此处兼容 default-sort 属性
-      if (this.elTable.defaultSort) {
-        this.$nextTick(() => {
-          this.onSortChange()
-        })
-      }
     },
 
     // 绑定筛选事件
-    bindTableFilterEvent () {
+    hackTableFilter () {
+      // 拦截el-table内部对树的筛选
+      if (this.isTree) {
+        this.$nextTick(() => {
+          this.elTable.store.execQuery = () => {
+            this.elTable.store.states.data = [...this.elTable.data]
+          }
+        })
+      }
+
       this.onFilterChange = () => {
         if (!this.elTable) return
         const states = this.elTable.store.states
@@ -1185,14 +1266,182 @@ export default {
       })
     },
 
-    // 禁用原来的树结构（将children字段改为空）
+    // 使用自定义的树形表格；需禁用原来的树（将children字段改为空）
     // 场景：row包含children会被当做的树结构，与 virtual-column 的树结构有冲突，所以需要禁用原来的
-    disableOriginTree () {
-      this.$nextTick(() => {
-        if (!this.elTable) return
-        const states = this.elTable.store.states
-        states.childrenColumnName = ''
+    useCustomTree (isTry = true) {
+      this.isTree = true
+      const elTable = this.getElTable()
+      if (elTable) {
+        const states = elTable.store.states
+        states.childrenColumnName = '' // 拦截原来树形表格
+        states.lazyColumnIdentifier = '' // 拦截原来树形懒加载表格
+        elTable.store.updateTreeData = () => {}
+      } else if (isTry) {
+        this.$nextTick(() => {
+          this.useCustomTree(false)
+        })
+      }
+    },
+
+    // 兼容自定义树形表格
+    hackCustomTree () {
+      if (!this.isTree) return
+      // 兼容 el-table 的 expand-row-keys属性
+      const unWatch = this.$watch(() => this.elTable.expandRowKeys, () => {
+        this.expandRowKeysChanged = true
+        this.update()
+        this.expandRowKeysChanged = false
       })
+      this.unWatchs.push(unWatch)
+
+      // 兼容 el-table 的 toggleRowExpansion
+      this.elTable.toggleRowExpansion = (row, expanded) => {
+        const treeState = row.$v_tree
+        if (!treeState) return
+
+        // 展开状态取反
+        if (typeof expanded === 'undefined') {
+          expanded = !treeState.expanded
+        }
+
+        // 状态一致返回
+        if (treeState.expanded === expanded) return
+        treeState.expanded = expanded
+
+        // 防止多次触发update
+        if (this.togglingRowExpansion) return
+
+        this.togglingRowExpansion = true
+        this.$nextTick(() => {
+          this.togglingRowExpansion = false
+          this.update()
+          this.columnVms.forEach(vm => vm.isTree && vm.renderTreeNode())
+        })
+      }
+    },
+
+    // 更新树：将树结构平铺，将展开的节点筛出来，同时对新节点插入$v_tree 记录树节点状态数据
+    updateTreeData (data = this.data) {
+      if (!this.isTree || !this.treeProps) {
+        this.listData = data
+        return
+      }
+      const res = []
+      const { children = 'children' } = this.treeProps
+      const { defaultExpandAll, expandRowKeys, rowKey, indent } = this.elTable
+
+      const getExpanded = (key) => {
+        if (!key) return false
+        return defaultExpandAll || (expandRowKeys && expandRowKeys.indexOf(key) !== -1) || false
+      }
+
+      const traverse = (nodes, parent, level = 0, display = true) => {
+        nodes.forEach(node => {
+          if (display) {
+            res.push(node)
+          }
+
+          let treeState = node.$v_tree || {}
+          if (!node.$v_tree) {
+            // 如果是新节点，添加 $v_tree（$v_tree不设置成响应式，$v_tree值的变更可能会触发data变化，data watch会触发，这是不可控的，会导致updateTreeData多触发一次）
+            node.$v_tree = treeState = {
+              parent,
+              level,
+              expanded: getExpanded(node[rowKey]),
+              loaded: false,
+              loading: false,
+              indent: (level - 1) * indent
+            }
+          } else {
+            // 如果是旧节点
+            // expandRowKeys更改时，旧的节点数据的 expanded（是否展开）以getExpanded方法为准
+            if (this.expandRowKeysChanged) {
+              treeState.expanded = getExpanded(node[rowKey])
+            }
+          }
+
+          if (Array.isArray(node[children])) {
+            // 父节点显示且展开状态时，才显示子节点
+            const childDisplay = display && treeState.expanded
+            traverse(node[children], node, level + 1, childDisplay)
+          }
+        })
+      }
+
+      // 开始遍历树结构
+      traverse(data)
+      this.listData = res
+      // console.log('this.isTree', this.listData, this.listData.map(i => i.id))
+    },
+
+    /*
+     * 【扩展树形表格方法】获取子节点
+     */
+    getChildNodes (row) {
+      const { children = 'children' } = this.treeProps
+      return row[children] || []
+    },
+
+    // 【扩展树形表格方法】获取父节点
+    getParentNode (row) {
+      const treeState = row.$v_tree
+      return treeState && treeState.parent
+    },
+
+    // 【扩展树形表格方法】获取父层所有节点
+    getParentNodes (row) {
+      const res = []
+      let curRow = row
+      while (curRow) {
+        const treeState = curRow.$v_tree
+        if (!treeState || !treeState.parent) break
+        res.unshift(treeState.parent)
+        curRow = treeState.parent
+      }
+      return res
+    },
+
+    // 【扩展树形表格方法】重新加载节点
+    // 删除原来子节点，并触发load函数重新加载
+    async reloadNode (row) {
+      const treeState = row.$v_tree
+      if (!treeState) return
+      const { children = 'children', hasChildren = 'hasChildren' } = this.treeProps
+      row[children] = null
+      row[hasChildren] = true
+      treeState.loaded = false
+      this.update()
+      const vm = this.columnVms.find(vm => vm.isTree)
+      vm && await vm.loadChildNodes(row, true)
+    },
+
+    // 【扩展树形表格方法】收起所有树节点
+    unexpandAllNodes () {
+      const { children } = this.treeProps
+      // 遍历树节点，展开或收起
+      const traverse = (rows) => {
+        rows.forEach(row => {
+          this.toggleRowExpansion(row, false)
+          if (Array.isArray(row[children])) traverse(row[children])
+        })
+      }
+      traverse(this.listData)
+    },
+
+    // 【扩展树形表格方法】展开所有树节点
+    expandAllNodes () {
+      // 遍历树节点，展开或收起
+      const { children, hasChildren = 'hasChildren' } = this.treeProps
+      const traverse = (rows) => {
+        rows.forEach(row => {
+          const treeState = row.$v_tree
+          // 懒加载节点如果未加载则不展开
+          if (row[hasChildren] && !treeState.loaded) return
+          this.toggleRowExpansion(row, true)
+          if (Array.isArray(row[children])) traverse(row[children])
+        })
+      }
+      traverse(this.listData)
     },
 
     // 表格销毁事件
@@ -1214,12 +1463,14 @@ export default {
   watch: {
     data (data, oldData) {
       this.listData = data
+
       if (this.list && data !== oldData) {
         this.list = data
       }
       if (!this.virtualized) {
         this.renderAllData()
       } else {
+        // 筛选数据后会调用update更新视图
         this.onFilterChange && this.onFilterChange()
       }
       if (this.isReserveSelection()) {
@@ -1242,10 +1493,12 @@ export default {
     },
     disabled () {
       this.doUpdate()
+    },
+    treeMap () {
+      this.update()
     }
   },
   created () {
-    this.listData = this.data
     this.$nextTick(() => {
       this.initData()
     })
@@ -1276,12 +1529,12 @@ export default {
 
 <style lang='less' scoped>
 .is-expanding {
-  :deep(.el-table__expand-icon) {
+  /deep/ .el-table__expand-icon {
     transition: none;
   }
 }
 .hide-append {
-  :deep(.el-table__append-wrapper) {
+  /deep/ .el-table__append-wrapper {
     display: none;
   }
 }

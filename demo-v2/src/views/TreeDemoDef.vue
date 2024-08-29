@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-alert type="warning" title="非懒加载的树结构需要写成懒加载的形式，否则树展开后，来回滚动会导致展开树重置为未展开状态" show-icon></el-alert>
+    <el-alert type="warning" title="virtual-column组件设type属性为 tree" show-icon></el-alert>
     <virtual-scroll
       ref="virtualScroll"
       :data="list"
@@ -13,11 +13,9 @@
         height="500px"
         style="width: 100%"
         row-key="id"
-        border
-        lazy
-        :load="(tree, treeNode, resolve) => resolve(tree.children)"
-        :tree-props="{hasChildren: 'children'}">
-        <el-table-column label="id" prop="id"></el-table-column>
+        :indent="20"
+        border>
+        <virtual-column type="tree" label="id" prop="id"></virtual-column>
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
       </el-table>
@@ -26,11 +24,12 @@
 </template>
 
 <script>
-import VirtualScroll from 'el-table-virtual-scroll'
+import VirtualScroll, { VirtualColumn } from '../../../src/index'
 
 export default {
   components: {
-    VirtualScroll
+    VirtualScroll,
+    VirtualColumn
   },
   data () {
     return {

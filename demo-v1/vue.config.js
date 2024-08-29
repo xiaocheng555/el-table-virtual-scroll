@@ -2,7 +2,7 @@ const path = require('path')
 const buildDemoFiles = require('./build/buildDemoFiles.js')
 
 const isProduction = process.env.NODE_ENV === 'production'
-const demoFiles = buildDemoFiles()
+// const demoFiles = buildDemoFiles()
 
 const useLocalLib = !process.env.npm_config_test // 使用本地的库
 const alias = useLocalLib ? {
@@ -11,17 +11,17 @@ const alias = useLocalLib ? {
 
 module.exports = {
   publicPath: isProduction ? '././' : '/',
-  transpileDependencies: true,
-  chainWebpack: config => {
-    config
-      .plugin('define')
-      .tap(args => {
-        args[0]['process.env']['demoFiles'] = demoFiles
-        return args
-      })
-  },
+  // transpileDependencies: true,
+  // chainWebpack: config => {
+  //   config
+  //     .plugin('define')
+  //     .tap(args => {
+  //       args[0]['process.env']['demoFiles'] = demoFiles
+  //       return args
+  //     })
+  // },
   configureWebpack: {
-    devtool: 'source-map',
+    // devtool: 'eval-source-map',
     resolve: {
       alias: {
         ...alias

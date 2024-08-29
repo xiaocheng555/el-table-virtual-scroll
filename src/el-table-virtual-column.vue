@@ -2,6 +2,7 @@
   <el-table-column
     v-bind="$attrs"
     v-on="$listeners"
+    :type="getColumnType()"
     :class-name="getClassName">
     <!-- 列头部 -->
     <template slot="header" slot-scope="scope">
@@ -9,7 +10,7 @@
       <template v-else>
         <!-- 多选类型-全选 -->
         <el-checkbox
-          v-if="scope.column.type === 'v-selection'"
+          v-if="$attrs.type === 'selection'"
           :value="isCheckedAll"
           :indeterminate="isCheckedImn"
           @change="onCheckAllRows">
@@ -26,14 +27,15 @@
     <!-- 列内容 -->
     <template slot-scope="scope">
       <!-- v-tree类型 -->
-      <template v-if="scope.column && scope.column.type === 'v-tree'">
-        <span class="el-table__indent" :style="{ paddingLeft: `${(scope.row.$v_level - 1) * indent}px` }"></span>
+      <template v-if="isTree">
+        <span class="el-table__indent" :style="{ paddingLeft: `${getTreeState(scope.row).level * indent}px` }"></span>
+        <!-- treeNodeKey 用来更新视图的 -->
         <div
-          v-if="!(scope.row.$v_hasChildren === false || scope.row[treeProps.hasChildren] === false)"
+          v-if="canExpand(scope.row) && treeNodeKey"
           class="el-table__expand-icon"
-          :class="scope.row.$v_expanded ? 'el-table__expand-icon--expanded' : ''"
+          :class="getTreeState(scope.row).expanded ? 'el-table__expand-icon--expanded' : ''"
           @click="onTreeNodeExpand(scope.row)">
-          <i class="el-icon-loading" v-if="scope.row.$v_loading"></i>
+          <i class="el-icon-loading" v-if="getTreeState(scope.row).loading"></i>
           <i class="el-icon-arrow-right" v-else></i>
         </div>
         <span v-else class="el-table__placeholder"></span>
@@ -43,22 +45,22 @@
         <!-- 多选类型 -->
         <el-checkbox
           @click.native.stop
-          v-if="scope.column.type === 'v-selection'"
+          v-if="$attrs.type === 'selection'"
           :value="scope.row.$v_checked || false"
           :disabled="getDisabled(scope)"
           @change="onCheckRow(scope, !scope.row.$v_checked)">
         </el-checkbox>
         <!-- 单选类型 -->
         <el-radio
-          v-if="scope.column.type === 'v-radio'"
+          v-if="$attrs.type === 'radio'"
           :label="true"
           :value="virtualScroll.curRow === scope.row"
           @change="onRadioChange(scope.row)">
           <span></span>
         </el-radio>
         <!-- v-index类型 -->
-        <span v-else-if="scope.column.type === 'v-index'">
-          {{getIndex(scope)}}
+        <span v-else-if="$attrs.type === 'index'">
+          {{ getIndex(scope) }}
         </span>
         <!-- 有formatter参数的情况 -->
         <template v-else-if="scope.column.formatter">
@@ -101,28 +103,12 @@ export default {
   },
   inject: ['virtualScroll'],
   props: {
-    load: {
-      type: Function,
-      default: (row, resolve) => {
-        resolve([])
-      }
-    },
-    indent: {
-      type: Number,
-      default: 16
-    },
     selectable: {
       type: Function
     },
     reserveSelection: {
       type: Boolean,
       default: false
-    },
-    treeProps: {
-      type: Object,
-      default () {
-        return {}
-      }
     }
   },
   data () {
@@ -130,7 +116,8 @@ export default {
       isCheckedAll: false, // 全选
       isCheckedImn: false, // 控制半选样式
       isTree: false, // 树结构
-      isNested: false // 是否列嵌套
+      isNested: false, // 是否列嵌套
+      treeNodeKey: 1 // 更新树节点视图
     }
   },
   computed: {
@@ -143,9 +130,17 @@ export default {
       if (vfixed === true || vfixed === '') vfixed = 'left'
       if (vfixed) classnames.push('virtual-column__fixed-' + vfixed)
       return classnames.join(' ')
+    },
+    indent () {
+      return (this.virtualScroll.elTable || {}).indent || 16
     }
   },
   methods: {
+    getColumnType () {
+      const { type } = this.$attrs
+      // 自定义的类型需转为空传到 el-table-column，否则会导致某些bug，如筛选按钮不亮
+      return ['index', 'selection', 'radio', 'tree'].includes(type) ? '' : type
+    },
     // 获取多选禁用状态
     getDisabled (scope) {
       if (this.selectable) {
@@ -191,7 +186,7 @@ export default {
     },
     // 是否自定义多选
     isSelection () {
-      return this.$attrs.type !== 'v-selection'
+      return this.$attrs.type === 'selection'
     },
     // 同步全选、半选框状态
     syncCheckStatus () {
@@ -232,342 +227,68 @@ export default {
       scope.$index = this.virtualScroll.start + scope.$index
       return scope
     },
-    // 展开收起事件，返回子节点
-    async onTreeNodeExpand (row, expanded = !row.$v_expanded, doLoad = true) {
-      if (row.$v_expanded === expanded) return []
-
-      if (expanded) {
-        // 如果已经加载，则显示隐藏的字节点
-        if (row.$v_loaded) {
-          return this.loadOldChildNodes(row)
-        } else if (doLoad) {
-          return this.loadChildNodes(row)
+    // 获取树节点状态
+    getTreeState (row) {
+      return row.$v_tree || {}
+    },
+    // 是否可展开
+    canExpand (row) {
+      const { children = 'children', hasChildren = 'hasChildren' } = this.virtualScroll.treeProps || {}
+      const treeState = row.$v_tree || {}
+      return (row[children] || []).length > 0 || (row[hasChildren] && !treeState.loaded)
+    },
+    // 展开树节点
+    async onTreeNodeExpand (row) {
+      const treeState = row.$v_tree
+      if (treeState) {
+        const { treeProps } = this.virtualScroll
+        const { hasChildren = 'hasChildren' } = treeProps
+        if (treeState.loading) return
+        if (!treeState.expanded && row[hasChildren] && !treeState.loaded) {
+          await this.loadChildNodes(row)
+        } else {
+          treeState.expanded = !treeState.expanded
+          this.renderTreeNode()
+          this.virtualScroll.update()
         }
-      } else {
-        return this.hideChildNodes(row)
+        this.virtualScroll.elTable.$emit('expand-change', row, treeState.expanded)
       }
     },
     // 加载子节点
-    // force - 强制执行load加载
-    loadChildNodes (row, force = false) {
-      return new Promise((resolve) => {
-        // 获取子节点数据并显示
-        this.$set(row, '$v_loading', true)
-        this.$set(row, '$v_hasChildren', undefined)
+    async loadChildNodes (row) {
+      return new Promise(resolve => {
+        const { treeProps } = this.virtualScroll
+        const { load } = this.virtualScroll.elTable
+        if (!load) return resolve()
 
-        // 显示已有子节点
-        if (!force) {
-          const { children, hasChildren } = this.treeProps
-          if (row[hasChildren] === false) {
-            return resolveFn.call(this, [])
-          }
-          if (row[hasChildren]) {
-            return resolveFn.call(this, row[children])
-          }
-        }
-
-        this.load && this.load(row, resolveFn.bind(this))
+        const { children = 'children' } = treeProps
+        const treeState = row.$v_tree
+        treeState.loading = true
+        this.renderTreeNode()
 
         function resolveFn (data) {
           if (!Array.isArray(data)) {
-            this.$set(row, '$v_loading', false)
-            this.$set(row, '$v_hasChildren', false)
+            throw new Error('[ElTable] data must be an array')
+          }
+
+          treeState.loading = false
+          treeState.loaded = true
+          treeState.expanded = true
+          this.renderTreeNode()
+          if (!Array.isArray(data)) {
             resolve()
             return
           }
-
-          // 如果当前节点有子节点，则删除子节点再插入新的子节点
-          // 场景：连续触发两次reloadNode，第一次加载了子节点，第二次加载了新的子节点，需要删除旧的子节点，再插入新的子节点
-          if (row.$v_hasChildren) {
-            this.removeNode(row, true)
-          }
-
-          this.$set(row, '$v_loading', false)
-          this.$set(row, '$v_expanded', true)
-          this.$set(row, '$v_loaded', true)
-          this.$set(row, '$v_hasChildren', !!data.length)
-          data.forEach(item => {
-            item.$v_level = typeof row.$v_level === 'number' ? row.$v_level + 1 : 2
-          })
-
-          // 所有子节点插入到当前同级节点下
-          const list = this.virtualScroll.getData()
-          const index = list.findIndex(item => item === row)
-          if (index > -1) {
-            this.virtualScroll.updateData([
-              ...list.slice(0, index + 1),
-              ...data,
-              ...list.slice(index + 1)
-            ])
-          }
-          resolve(data)
+          this.$set(row, children, data)
+          this.virtualScroll.update()
+          resolve()
         }
+        load(row, treeState, resolveFn.bind(this))
       })
     },
-    // 加载已经加载的子节点
-    loadOldChildNodes (row) {
-      this.$set(row, '$v_expanded', true)
-      const list = this.virtualScroll.getData()
-      const index = list.findIndex(item => item === row)
-      if (index > -1) {
-        this.virtualScroll.updateData([
-          ...list.slice(0, index + 1),
-          ...(row.$v_hideNodes || []),
-          ...list.slice(index + 1)
-        ])
-        const hideNodes = row.$v_hideNodes
-        delete row.$v_hideNodes
-        return hideNodes
-      }
-      return []
-    },
-    // 隐藏子节点
-    hideChildNodes (row) {
-      this.$set(row, '$v_expanded', false)
-
-      // 查找所有子孙节点
-      const { getData, keyProp } = this.virtualScroll
-      const list = getData()
-      const childNodes = this.getChildNodes(row, true, true)
-      if (!childNodes.length) return
-
-      const map = {}
-      childNodes.forEach(row => {
-        map[row[keyProp]] = true
-      })
-
-      // 隐藏所有子孙节点
-      this.$set(row, '$v_hideNodes', childNodes)
-      const newList = list.filter(row => !(row[keyProp] in map))
-      this.virtualScroll.updateData(newList)
-      this.virtualScroll.update()
-      return []
-    },
-    // 展开节点
-    // expandKeys - 展开节点的keys值
-    // expanded - 展开/收起
-    // doLoad - 未加载子节点则执行load函数去加载，已加载则展开
-    expand (expandKeys, expanded = true, doLoad = true) {
-      if (!Array.isArray(expandKeys)) return
-
-      const { getData, keyProp } = this.virtualScroll
-      const data = getData()
-      const plist = []
-      data.forEach((row) => {
-        if (row[keyProp] && expandKeys.includes(row[keyProp])) {
-          plist.push(this.onTreeNodeExpand(row, expanded, doLoad))
-        }
-      })
-      return Promise.all(plist)
-    },
-    // 展开路径
-    expandPath (keyPath) {
-      if (!Array.isArray(keyPath)) return
-
-      // 递归路径，逐层展开节点
-      const expand = async (rows, n) => {
-        if (n === keyPath.length) return keyPath[n - 1]
-        if (!Array.isArray(rows) || !rows.length) return keyPath[n - 1]
-        const targetRow = rows.find(row => row[keyProp] === keyPath[n])
-        if (targetRow) {
-          if (!targetRow.$v_expanded) {
-            rows = await this.onTreeNodeExpand(targetRow, true)
-          }
-          return expand(rows, n + 1)
-        } else {
-          console.warn(`[expandPath] 没有找到 ${keyPath[n]} key值对应的行`)
-          return keyPath[n - 1] // 返回上一个key值
-        }
-      }
-      const { getData, keyProp } = this.virtualScroll
-      const data = getData()
-      return expand(data, 0)
-    },
-    // 展开所有存在的节点
-    expandAll () {
-      // 展开节点（递归）
-      const expandRows = (data) => {
-        if (Array.isArray(data) && data.length) {
-          data.forEach((row) => {
-            this.onTreeNodeExpand(row, true, false)
-            expandRows(row.$v_hideNodes)
-          })
-        }
-      }
-
-      const { getData } = this.virtualScroll
-      const data = getData()
-      expandRows(data)
-    },
-    // 收起所有节点
-    unexpandAll () {
-      const { getData } = this.virtualScroll
-      const data = getData()
-      const levelMap = []
-      data.forEach(row => {
-        const level = row.$v_level || 1
-        !levelMap[level] && (levelMap[level] = [])
-        levelMap[level].push(row)
-      })
-      for (let i = levelMap.length - 1; i >= 0; i--) {
-        if (!levelMap[i]) continue
-        levelMap[i].forEach(row => {
-          this.onTreeNodeExpand(row, false)
-        })
-      }
-    },
-    // 删除节点
-    // onlyChild：为false是删除传入的row节点，为 true 时只删除row的所有子节点
-    removeNode (row, onlyChild = false) {
-      // 没有子节点，无需删除
-      if (onlyChild && !row.$v_hasChildren) return
-
-      const { getData } = this.virtualScroll
-      const list = getData().slice()
-      const targetLevel = row.$v_level || 1
-
-      // 查找子节点
-      // match - 是否找到目标节点
-      function find (list, data = { match: false, stop: false }) {
-        for (let i = 0; i < list.length; i++) {
-          if (data.stop) return
-
-          const curRow = list[i]
-          const curLevel = curRow.$v_level || 1
-          const isChild = curLevel > targetLevel
-
-          // 找到子节点，并删除
-          if (data.match && isChild) {
-            list.splice(i, 1)
-            i--
-            continue
-          }
-          // 已经找完子节点，结束
-          if (data.match && !isChild) return (data.stop = true)
-          // 找到目标节点后，开始查找它的子节点
-          if (curRow === row) {
-            // 直接删除目标节点
-            if (!onlyChild) {
-              list.splice(i, 1)
-              i--
-            }
-            // 往下允许查找它的子节点
-            data.match = true
-          }
-
-          // 如果子节点隐藏了，则从隐藏节点里查找
-          const hideNodes = curRow.$v_hideNodes || []
-          if (hideNodes.length) {
-            find(hideNodes, data, true)
-          }
-        }
-      }
-
-      find(list)
-      if (onlyChild) row.$v_hasChildren = false
-      this.virtualScroll.updateData(list)
-    },
-    // 重新加载节点
-    // 删除原来子节点，并触发load函数重新加载
-    reloadNode (row) {
-      this.removeNode(row, true)
-      this.loadChildNodes(row, true)
-    },
-    /*
-     * 获取子孙节点
-     * soon - 是否获取所有子孙节点，否则只获取直属子节点
-     * visible - 只获取可见的
-     */
-    getChildNodes (row, soon = true, visible = false) {
-      const res = []
-      const { getData } = this.virtualScroll
-      const list = getData()
-      const targetLevel = row.$v_level || 1
-
-      // 查找子节点
-      // match - 是否找到目标节点
-      function find (list, data = { match: false, stop: false }) {
-        for (let i = 0; i < list.length; i++) {
-          if (data.stop) return
-
-          const curRow = list[i]
-          const curLevel = curRow.$v_level || 1
-          const isChild = soon ? curLevel > targetLevel : curLevel - targetLevel === 1
-
-          // 找到子节点
-          if (data.match && isChild) {
-            res.push(curRow)
-          }
-          // 已经找完子节点，结束
-          if (data.match && !isChild) return (data.stop = true)
-          // 找到目标节点后，开始查找它的子节点
-          if (curRow === row) data.match = true
-
-          // 如果子节点隐藏了，则从隐藏节点里查找
-          const hideNodes = curRow.$v_hideNodes || []
-          if (!visible && hideNodes.length) {
-            find(hideNodes, data)
-          }
-        }
-      }
-
-      find(list)
-
-      return res
-    },
-
-    // 获取父节点
-    getParentNodes (row) {
-      const { getData } = this.virtualScroll
-      const list = getData().slice()
-      const res = []
-
-      // 查找方案：从父节点向子节点一级一级查找，并记录查找路径，找到目标节点后，返回路径上的所有节点
-      function find (list, data = { stop: false }, level = 1) {
-        for (let i = 0; i < list.length; i++) {
-          if (data.stop) return
-
-          const curRow = list[i]
-          const curLevel = curRow.$v_level || 1
-
-          if (curLevel > level) {
-            level = curLevel
-          } else {
-            // 层级与数组的索引有关联的，相差1
-            res.splice(curLevel - 1)
-          }
-
-          // 找到目标节点后，停止
-          if (curRow === row) {
-            data.stop = true
-            return
-          }
-          // 添加当前节点
-          res.push(curRow)
-
-          // 如果子节点隐藏了，则从隐藏节点里查找
-          const hideNodes = curRow.$v_hideNodes || []
-          if (hideNodes.length) {
-            find(hideNodes, data, level)
-          }
-        }
-      }
-
-      find(list)
-      return res
-    },
-    // 获取所有节点，包含隐藏的节点
-    getAllNodes () {
-      const { getData } = this.virtualScroll
-      const list = getData()
-      const res = []
-      list.forEach(item => {
-        res.push(item)
-        if (item.$v_hideNodes && item.$v_hideNodes.length) {
-          res.push(...item.$v_hideNodes)
-        }
-      })
-      return res
+    // 由于$v_tree不是响应式数据，$v_tree状态的变更需要手动触发视图的更新
+    renderTreeNode () {
+      this.treeNodeKey = this.treeNodeKey === 1 ? 2 : 1
     },
     // 判断内容是否为VNode
     isVNode (vNode) {
@@ -595,11 +316,6 @@ export default {
     if (!globalComponents.ElTableColumn) {
       this.$options.components.ElTableColumn = TableColumn
     }
-
-    const { type } = this.$attrs
-    if (['index', 'selection', 'radio', 'tree'].includes(type)) {
-      this.$attrs.type = 'v-' + type
-    }
   },
   created () {
     this.isNested = !!this.$slots.default // 是否列嵌套
@@ -607,10 +323,12 @@ export default {
 
     const { type } = this.$attrs
     if (type === 'expand') {
-      this.virtualScroll.isExpandType = true
-    } else if (type === 'v-tree') {
+      this.virtualScroll.useExpandTable()
+    } else if (type === 'tree') {
       this.isTree = true
-      this.virtualScroll.disableOriginTree()
+      this.virtualScroll.useCustomTree()
+    } else if (type === 'selection') {
+      this.virtualScroll.useCustomSelection()
     }
   },
   beforeDestroy () {

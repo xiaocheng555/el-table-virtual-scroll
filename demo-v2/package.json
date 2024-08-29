@@ -1,0 +1,34 @@
+{
+  "name": "vite-project",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@babel/polyfill": "^7.12.1",
+    "core-js": "^3.8.3",
+    "el-table-infinite-scroll": "^2.0.0",
+    "el-table-virtual-scroll": "^1.1.6",
+    "element-ui": "^2.15.14",
+    "highlight.js": "^11.7.0",
+    "install": "^0.13.0",
+    "lodash": "^4.17.21",
+    "vue": "2.6.14",
+    "vue-drag-resize": "^1.5.4",
+    "vue-infinite-loading": "^2.4.5",
+    "vue-infinite-scroll": "^2.0.2",
+    "vue-response-size": "^1.0.0",
+    "vue-router": "^3.6.5",
+    "vue-template-compiler": "2.6.14"
+  },
+  "devDependencies": {
+    "gh-pages": "^4.0.0",
+    "less": "^4.1.3",
+    "less-loader": "^11.0.0",
+    "vite": "^5.4.2",
+    "vite-plugin-vue2": "^1.9.3"
+  }
+}

@@ -1238,7 +1238,9 @@
         // x轴滚动位置（左、中、右）
         hasFixedRight: false,
         // 是否有固定右边的列
-        listData: [] // 未筛选为data源数据，筛选后则为筛选后的数据
+        listData: [],
+        // 未筛选为data源数据，筛选后则为筛选后的数据
+        isTree: false // 是否自定义树形表格
       };
     },
     computed: {
@@ -1261,6 +1263,29 @@
           var size = typeof curSize === 'number' ? curSize : itemSize;
           total += size;
         }
+        return res;
+      },
+      // 树节点的 children 映射，通过响应式关联起来，那么children中添加、删除节点会触发treeMap computed，从而监听treeMap更新视图【注：children 添加删除不会触发data watch，data只是浅监听】
+      treeMap: function treeMap(_ref2) {
+        var data = _ref2.data,
+          keyProp = _ref2.keyProp,
+          treeProps = _ref2.treeProps,
+          isTree = _ref2.isTree;
+        if (!isTree || !treeProps) return;
+        var res = {};
+        var children = treeProps.children;
+        var traverse = function traverse(nodes) {
+          nodes.forEach(function (node) {
+            var key = node[keyProp];
+            if (typeof key !== 'undefined' && node[children]) {
+              res[key] = node[children];
+              traverse(node[children]);
+            }
+          });
+        };
+
+        // 开始遍历树结构
+        traverse(data);
         return res;
       }
     },
@@ -1303,13 +1328,31 @@
         this.onScroll = !this.throttleTime ? this.handleScroll : throttle_1(this.handleScroll, this.throttleTime);
         this.scroller.addEventListener('scroll', this.onScroll);
         window.addEventListener('resize', this.onScroll);
-        this.bindTableExpandEvent();
-        this.bindTableDragEvent();
-        this.bindTableSortEvent();
-        this.bindTableFilterEvent();
-        this.bindTableDestory();
-        this.hackRowHighlight();
-        this.hackHighlightSelectionRow();
+
+        // 兼容
+        this.hackTableExpand(); // 兼容表格展开行
+        this.hackTableHeaderDrag(); // 兼容表格头拖拽
+        this.hackTableSort(); // 兼容表格排序
+        this.hackTableFilter(); // 兼容表格筛选
+        this.hackRowHighlight(); // 兼容单选
+        this.hackSelection(); // 兼容多选
+        this.hackCustomTree(); // 兼容树形表格
+        this.bindTableDestory(); // 绑定表格销毁事件
+
+        // 设置listData，首次updateTreeData会在node上添加$v_tree属性，触发data watch，从而触发 onSortChange，所以defaultSort就无需再次触发
+        this.treeProps = this.elTable.treeProps || {
+          children: 'children',
+          hasChildren: 'hasChildren'
+        };
+        // 此处兼容 default-sort 属性
+        if (this.elTable.defaultSort) {
+          this.$nextTick(function () {
+            // 此处使用nextTick是因为 el-tale的sortingColumn排序数据还没设置好，得等一会
+            _this.onSortChange(); // onSortChange 会触发updateTreeData
+          });
+        } else {
+          this.updateTreeData();
+        }
 
         // 初次执行 (固定高度的表格布局好后，会触发 bodyHeight 更改（已手动监听，位于 unWatch2代码处），从而触发 onScroll，所以无需手动执行onScroll)
         setTimeout(function () {
@@ -1382,8 +1425,6 @@
         shouldUpdate && this.updatePosition();
         // 触发事件
         this.$emit('change', this.renderData, this.start, this.end);
-        // 设置表格行展开
-        this.setRowsExpanded();
         // 同步表格行高亮
         this.syncRowsHighlight();
       },
@@ -1404,8 +1445,9 @@
 
         // 处理树形表格(修复树结构懒加载 如果有hasChildren=false的行 行可视区域高度异常 #45)
         var isTree = this.elTable.lazy;
+        var isVTree = this.isTree; // 自定义树（非el-table的树）
         var noFirstLevelReg = /el-table__row--level-[1-9]\d*/; // 匹配树形表格非一级行
-        if (isTree) {
+        if (!isVTree && isTree) {
           // 筛选出树形表格的一级行，一级行className含有el-table__row--level-0或者不存在层级className
           rows = Array.from(this.$el.querySelectorAll('.el-table__body > tbody > .el-table__row')).filter(function (row) {
             return !noFirstLevelReg.test(row.className);
@@ -1418,7 +1460,7 @@
           // 计算表格行的高度
           var offsetHeight = row.offsetHeight;
           // 表格行如果有扩展行，需要加上扩展内容的高度
-          if (!isTree && row.classList.contains('expanded')) {
+          if (!isTree && !isVTree && row.classList.contains('expanded')) {
             offsetHeight += row.nextSibling.offsetHeight;
           }
           // 表格行如果有子孙节点，需要加上子孙节点的高度
@@ -1615,14 +1657,14 @@
         // 监听滚动位置
         var unWatch1 = this.$watch(function () {
           return [_this4.elTable.scrollPosition, _this4.elTable.layout.scrollX];
-        }, function (_ref2) {
-          var _ref3 = _slicedToArray(_ref2, 2),
-            pos = _ref3[0],
-            scrollX = _ref3[1];
-          var _ref4 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [],
-            _ref5 = _slicedToArray(_ref4, 2);
-            _ref5[0];
-            var oldScrollX = _ref5[1];
+        }, function (_ref3) {
+          var _ref4 = _slicedToArray(_ref3, 2),
+            pos = _ref4[0],
+            scrollX = _ref4[1];
+          var _ref5 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [],
+            _ref6 = _slicedToArray(_ref5, 2);
+            _ref6[0];
+            var oldScrollX = _ref6[1];
           // 修复自定义固定列 所有列宽总宽度小于表格宽度时 固定列样式有问题 #65
           _this4.scrollPosition = _this4.elTable.layout.scrollX ? pos : 'none';
 
@@ -1696,6 +1738,9 @@
       },
       // 【外部调用】更新
       update: function update() {
+        if (this.isTree) {
+          this.onFilterChange && this.onFilterChange();
+        }
         // console.log('update')
         this.handleScroll();
       },
@@ -1723,6 +1768,15 @@
           });
         }
       },
+      // 【外部调用】滚动到对应的行
+      scrollToRow: function scrollToRow(row) {
+        var _this9 = this;
+        var offsetY = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+        var index = this.listData.findIndex(function (item) {
+          return item === row || item[_this9.keyProp] === row[_this9.keyProp];
+        });
+        this.scrollTo(index, offsetY);
+      },
       // 【外部调用】重置 (没用废弃)
       reset: function reset() {
         this.sizes = {};
@@ -1747,13 +1801,6 @@
         this.scroller = null;
         this.unWatchs = [];
       },
-      // 【VirtualColumn调用】更新数据
-      updateData: function updateData() {
-        var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-        // 先存在list，通过$emit update更新data不是立即执行的（那么拿到的data就是最新），所以先存到list里，拿的就是最新数据
-        this.list = data;
-        this.$emit('update:data', this.list);
-      },
       // 【VirtualColumn调用】获取列表全部数据】
       // origin - 源数据，非筛选后的数据
       getData: function getData() {
@@ -1772,7 +1819,7 @@
       },
       // 【多选】选中所有列
       checkAll: function checkAll(val) {
-        var _this9 = this;
+        var _this10 = this;
         var rows = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.listData;
         var byUser = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
         var removedRows = [];
@@ -1781,14 +1828,15 @@
             removedRows.push(row);
           }
           if (row.$v_checked !== val) {
-            _this9.$set(row, '$v_checked', val);
-            _this9.$set(row, '$v_checkedOrder', val ? _this9.checkOrder++ : undefined);
+            _this10.$set(row, '$v_checked', val);
+            _this10.$set(row, '$v_checkedOrder', val ? _this10.checkOrder++ : undefined);
           }
         });
         var selection = this.emitSelectionChange(removedRows);
         if (byUser) {
           // 当用户手动勾选全选 Checkbox 时触发的事件
           this.$emit('select-all', selection, val);
+          this.elTable.$emit('select-all', selection, val);
         }
         if (val === false) {
           this.checkOrder = 0; // 取消全选，则重置checkOrder
@@ -1806,15 +1854,16 @@
           if (byUser) {
             // 当用户手动勾选数据行的 Checkbox 时触发的事件
             this.$emit('select', selection, row, val);
+            this.elTable.$emit('select', selection, row, val);
           }
         }
       },
       // 【多选】兼容表格clearSelection方法
       clearSelection: function clearSelection() {
-        var _this10 = this;
+        var _this11 = this;
         // 清除旧的选中项
         this.oldSelection.forEach(function (row) {
-          _this10.$set(row, '$v_checked', false);
+          _this11.$set(row, '$v_checked', false);
         });
         this.oldSelection = [];
 
@@ -1831,9 +1880,9 @@
         }
         this.toggleRowsSelection(row, selected);
       },
-      // 【多选】表格切换多个row选中状态
+      // 【扩展多选】表格切换多个row选中状态
       toggleRowsSelection: function toggleRowsSelection(rows, selected) {
-        var _this11 = this;
+        var _this12 = this;
         // reserve-selection 模式用到的变量
         var oldSelectedMap = {}; // 保留值map（旧的选中值）
         var curSelectedMap = {}; // 当前选中值map
@@ -1841,35 +1890,35 @@
         var isReserve = this.isReserveSelection();
         if (isReserve) {
           this.oldSelection.forEach(function (row) {
-            oldSelectedMap[row[_this11.keyProp]] = true;
+            oldSelectedMap[row[_this12.keyProp]] = true;
           });
           this.data.forEach(function (row) {
-            curSelectedMap[row[_this11.keyProp]] = true;
+            curSelectedMap[row[_this12.keyProp]] = true;
           });
         }
         var removedRows = [];
         rows.forEach(function (row) {
           var val = typeof selected === 'boolean' ? selected : !row.$v_checked;
           !val && removedRows.push(row);
-          _this11.$set(row, '$v_checked', val);
-          _this11.$set(row, '$v_checkedOrder', val ? _this11.checkOrder++ : undefined);
+          _this12.$set(row, '$v_checked', val);
+          _this12.$set(row, '$v_checkedOrder', val ? _this12.checkOrder++ : undefined);
           if (!isReserve) return;
 
           /* 处理reserve-selection 模式 */
           // 如果row在保留值oldSelection里，且取消选中，则需要将它移除
-          var key = row[_this11.keyProp];
+          var key = row[_this12.keyProp];
           if (key in oldSelectedMap && !val) {
             if (!toDeleteMap) toDeleteMap = {};
             toDeleteMap[key] = true;
           }
           // 如果row不在当前列表里，且为选中，则需要添加在保留值oldSelection里
           if (!(key in curSelectedMap) && val) {
-            _this11.oldSelection.push(row);
+            _this12.oldSelection.push(row);
           }
         });
         if (toDeleteMap) {
           this.oldSelection = this.oldSelection.filter(function (row) {
-            return !(row[_this11.keyProp] in toDeleteMap);
+            return !(row[_this12.keyProp] in toDeleteMap);
           });
         }
         this.emitSelectionChange(removedRows);
@@ -1888,6 +1937,7 @@
         });
         this.sortSelection(selection);
         this.$emit('selection-change', selection, removedRows);
+        this.elTable.$emit('selection-change', selection, removedRows);
         // 对于 reserve-selection 模式，oldSelection始终保留旧的选中值，不保留当前选中值
         // 对于 非 reserve-selection 模式，oldSelection始终保留当前选中值
         if (!isReserve) {
@@ -1897,32 +1947,32 @@
       },
       // 【多选】兼容表格 reserve-selection，存储上次选中的值
       updateSelectionByRowKey: function updateSelectionByRowKey(data) {
-        var _this12 = this;
+        var _this13 = this;
         var oldData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
         if (!this.elTable) return;
 
         // 将旧的选中值存储到oldSelection中
         oldData.forEach(function (row) {
           if (row.$v_checked) {
-            _this12.oldSelection.push(row);
+            _this13.oldSelection.push(row);
           }
         });
         var selectedMap = {};
         this.oldSelection.forEach(function (row) {
-          selectedMap[row[_this12.keyProp]] = true;
+          selectedMap[row[_this13.keyProp]] = true;
         });
         var usedMap = {}; // 当前选中值的map
         data.forEach(function (row) {
-          var key = row[_this12.keyProp];
+          var key = row[_this13.keyProp];
           if (key in selectedMap) {
-            _this12.$set(row, '$v_checked', true);
+            _this13.$set(row, '$v_checked', true);
             usedMap[key] = true;
           }
         });
 
         // 从oldSelection中移除当前选中的值
         this.oldSelection = this.oldSelection.filter(function (row) {
-          return !(row[_this12.keyProp] in usedMap);
+          return !(row[_this13.keyProp] in usedMap);
         });
       },
       // 【多选】多选列是否设置了 reserve-selection
@@ -1944,7 +1994,7 @@
       },
       // 【多选】更新多选的值
       updateSelectionData: function updateSelectionData(data, oldData) {
-        var _this13 = this;
+        var _this14 = this;
         this.syncSelectionStatus();
         if (data !== oldData) {
           this.oldSelection = [];
@@ -1958,27 +2008,28 @@
         this.sortSelection(selection);
         // 新的选中项key map
         var selectionKeyMap = selection.reduce(function (map, dataItem) {
-          map[dataItem[_this13.keyProp]] = true;
+          map[dataItem[_this14.keyProp]] = true;
           return map;
         }, {});
         // 移除的项
         var removedRows = this.oldSelection.reduce(function (rows, row) {
-          if (!(row[_this13.keyProp] in selectionKeyMap)) rows.push(row);
+          if (!(row[_this14.keyProp] in selectionKeyMap)) rows.push(row);
           return rows;
         }, []);
         // 手动删除选中项、新旧项不一致（正常不会发生），触发selection-change事件
         if (removedRows.length || selection.length !== this.oldSelection.length) {
           this.$emit('selection-change', selection, removedRows);
+          this.elTable.$emit('selection-change', selection, removedRows);
           this.oldSelection = _toConsumableArray(selection);
         }
       },
       // 【多选】多选排序
       sortSelection: function sortSelection(selection) {
-        var _this14 = this;
+        var _this15 = this;
         if (!this.selectionSort) return;
         if (typeof this.selectionSort === 'function') {
           selection.sort(function (a, b) {
-            return _this14.selectionSort(a, b);
+            return _this15.selectionSort(a, b);
           });
         } else {
           selection.sort(function (a, b) {
@@ -1999,17 +2050,18 @@
       setCurrentRow: function setCurrentRow(row) {
         this.curRow = row;
         this.$emit('current-change', row);
+        this.elTable.$emit('current-change', row);
       },
       // 【单选高亮】兼容行高亮
       hackRowHighlight: function hackRowHighlight() {
-        var _this15 = this;
+        var _this16 = this;
         // 兼容el-table的setCurrentRow：重写setCurrentRow方法
         if (this.elTable.setCurrentRow.virtual) {
           var originSetCurrentRow = this.elTable.setCurrentRow.bind(this.elTable); // 原方法
           var setCurrentRow = function setCurrentRow(row) {
             // 重写setCurrentRow
-            _this15.elTable.store.states.currentRow = _this15.highlightRow; // 同步表格行高亮的值
-            if (_this15.highlightRow !== row) _this15.highlightRow = row; // 同步highlightRow的值
+            _this16.elTable.store.states.currentRow = _this16.highlightRow; // 同步表格行高亮的值
+            if (_this16.highlightRow !== row) _this16.highlightRow = row; // 同步highlightRow的值
             originSetCurrentRow(row); // 执行原方法
           };
           this.elTable.setCurrentRow = setCurrentRow;
@@ -2017,13 +2069,13 @@
         }
         // 兼容el-table的currentRowKey属性
         var unWatch = this.$watch(function () {
-          return _this15.elTable.currentRowKey;
+          return _this16.elTable.currentRowKey;
         }, function (val) {
-          if (_this15.elTable.rowKey) {
-            var targetRow = _this15.listData.find(function (row) {
-              return val === row[_this15.elTable.rowKey];
+          if (_this16.elTable.rowKey) {
+            var targetRow = _this16.listData.find(function (row) {
+              return val === row[_this16.elTable.rowKey];
             });
-            _this15.highlightRow = targetRow;
+            _this16.highlightRow = targetRow;
           }
         }, {
           immediate: true
@@ -2032,38 +2084,43 @@
 
         // 监听高亮的事件
         var onCurrentChange = function onCurrentChange(row) {
-          _this15.highlightRow = row;
+          _this16.highlightRow = row;
         };
         this.elTable.$on('current-change', onCurrentChange);
         this.unWatchs.push(function () {
-          _this15.elTable.$off('current-change', onCurrentChange);
+          _this16.elTable.$off('current-change', onCurrentChange);
         });
       },
       // 【单选高亮】同步表格行高亮的值
       syncRowsHighlight: function syncRowsHighlight() {
-        var _this16 = this;
+        var _this17 = this;
         if (!this.elTable.highlightCurrentRow) return;
         // 必须使用nextTick，不然值同步不上
         this.$nextTick(function () {
-          _this16.elTable.store.states.currentRow = _this16.highlightRow;
+          _this17.elTable.store.states.currentRow = _this17.highlightRow;
         });
       },
-      // 【多选高亮】兼容多选选中行高亮
-      hackHighlightSelectionRow: function hackHighlightSelectionRow() {
-        var _this17 = this;
+      // 使用自定义的树形表格；需禁用原来的树（将children字段改为空）
+      useCustomSelection: function useCustomSelection() {
+        this.isSelection = true;
+      },
+      // 【多选高亮】兼容多选
+      hackSelection: function hackSelection() {
+        var _this18 = this;
+        // 兼容选中行高亮
         var onFixedColumnsChange = function onFixedColumnsChange() {
-          if (!_this17.elTable) return;
-          var tableBodyVm = _this17.elTable.$children.filter(function (vm) {
+          if (!_this18.elTable) return;
+          var tableBodyVm = _this18.elTable.$children.filter(function (vm) {
             return vm.$options.name === 'ElTableBody';
           });
           tableBodyVm.forEach(function (vm) {
             if (vm.getRowClass.virtual) return;
             // 重写 table-body组件的 getRowClass 方法
             // 支持多选选中时高亮
-            var originGetRowClass = vm.getRowClass.bind(_this17.elTable);
+            var originGetRowClass = vm.getRowClass.bind(_this18.elTable);
             vm.getRowClass = function (row, rowIndex) {
               var classes = originGetRowClass(row, rowIndex);
-              if (_this17.elTable.highlightSelectionRow && row.$v_checked) {
+              if (_this18.elTable.highlightSelectionRow && row.$v_checked) {
                 classes.push('selection-row');
               }
               return classes;
@@ -2072,84 +2129,117 @@
           });
         };
         var unWatch = this.$watch(function () {
-          return [_this17.elTable.fixedColumns, _this17.elTable.rightFixedColumns];
+          return [_this18.elTable.fixedColumns, _this18.elTable.rightFixedColumns];
         }, onFixedColumnsChange, {
           immediate: true
         });
         this.unWatchs.push(unWatch);
+
+        // 兼容多选 toggleRowSelection 方法
+        this.elTable.toggleRowSelection = function (row, selected) {
+          _this18.toggleRowSelection(row, selected);
+        };
+        this.elTable.clearSelection = function () {
+          _this18.clearSelection();
+        };
+
+        // 【多选】兼容表格 toggleAllSelection 方法
+        this.elTable.toggleAllSelection = function () {
+          var selectionVm = _this18.columnVms.find(function (vm) {
+            return vm.isSelection();
+          });
+          if (selectionVm) {
+            selectionVm.onCheckAllRows(!selectionVm.isCheckedAll);
+          }
+        };
       },
       // 监听表格header-dragend事件
-      bindTableDragEvent: function bindTableDragEvent() {
-        var _this18 = this;
+      hackTableHeaderDrag: function hackTableHeaderDrag() {
+        var _this19 = this;
         var onHeaderDragend = function onHeaderDragend() {
           // 设置状态，用于自定义固定列
-          _this18.hasHeadDrag = true;
+          _this19.hasHeadDrag = true;
           // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
-          _this18.elTable.doLayout();
+          _this19.elTable.doLayout();
           // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
-          _this18.update();
+          _this19.update();
         };
         this.elTable.$on('header-dragend', onHeaderDragend);
         this.unWatchs.push(function () {
-          _this18.elTable.$off('header-dragend', onHeaderDragend);
+          _this19.elTable.$off('header-dragend', onHeaderDragend);
         });
       },
+      // 【展开行】使用扩展行
+      useExpandTable: function useExpandTable() {
+        this.isExpandType = true;
+      },
       // 【展开行】监听表格expand-change事件
-      bindTableExpandEvent: function bindTableExpandEvent() {
-        var _this19 = this;
-        // el-table-virtual-column 组件如果设置了type="expand"，则会将this.isExpandType设为true
-        var onExpandChange = function onExpandChange(row, expandedRows) {
-          if (_this19.isExpandType) {
-            _this19.$set(row, '$v_expanded', expandedRows.includes(row));
-          }
+      hackTableExpand: function hackTableExpand() {
+        var _this20 = this;
+        if (!this.isExpandType) return;
+        var store = this.elTable.store;
 
-          // 当展开的内容或展开的树收起时，需要更新虚拟滚动组件，避免表格出现一段空白内容
-          if (!row.$v_expanded || expandedRows === false) {
-            setTimeout(function () {
-              _this19.update();
+        // 判断表格行是否渲染扩展行
+        store.isRowExpanded = function (row) {
+          return row.$v_expanded;
+        };
+
+        // expandRowKeys 变化时候，设置展开的行
+        store.setExpandRowKeys = function () {
+          var expandRowKeys = _this20.elTable.expandRowKeys;
+          _this20.listData.forEach(function (row) {
+            _this20.$set(row, '$v_expanded', expandRowKeys.includes(row[_this20.elTable.rowKey]));
+          });
+        };
+
+        // 表格data变化时，更新展开的行
+        store.updateExpandRows = function () {
+          var defaultExpandAll = _this20.elTable.defaultExpandAll;
+          if (defaultExpandAll) {
+            // 当设置了默认展开所有行时，直接设置所有行展开
+            _this20.listData.forEach(function (row) {
+              _this20.$set(row, '$v_expanded', true);
             });
           }
         };
-        this.elTable.$on('expand-change', onExpandChange);
-        this.unWatchs.push(function () {
-          _this19.elTable.$off('expand-change', onExpandChange);
-        });
-      },
-      // 【展开行】设置表格行展开
-      setRowsExpanded: function setRowsExpanded() {
-        var _this20 = this;
-        if (!this.isExpandType) return;
-        this.$nextTick(function () {
-          var expandRows = _this20.renderData.filter(function (item) {
-            return item.$v_expanded;
+
+        // 外部调动方法 toggleRowExpansion
+        store.toggleRowExpansion = function (row, expanded) {
+          var val = typeof expanded === 'boolean' ? expanded : !row.$v_expanded;
+          if (val === Boolean(row.$v_expanded)) return;
+          _this20.$set(row, '$v_expanded', val);
+          // 暂时不做排序，没必要
+          _this20.elTable.$emit('expand-change', row, _this20.listData.filter(function (row) {
+            return row.$v_expanded;
+          }));
+          if (_this20.updateExpandeding) return;
+          _this20.updateExpandeding = true;
+          _this20.$nextTick(function () {
+            _this20.updateExpandeding = false;
+            _this20.update();
           });
-          if (expandRows.length === 0) return;
-          expandRows.forEach(function (row) {
-            _this20.elTable.toggleRowExpansion(row, true);
-          });
-          // 手动设置列展开时，禁止展开动画
-          _this20.isExpanding = true;
-          setTimeout(function () {
-            _this20.isExpanding = false;
-          }, 10);
-        });
+        };
+
+        // 重写expandRows的indexOf，使其能获取正确的展开状态
+        store.states.expandRows.indexOf = function (row) {
+          if (row) {
+            return row.$v_expanded || -1;
+          }
+          return -1;
+        };
       },
-      // 【展开行】切换某一行的展开状态
+      // 【展开行/树】切换某一行的展开状态
       toggleRowExpansion: function toggleRowExpansion(row, expanded) {
-        var hasVal = typeof expanded === 'boolean';
-        this.$set(row, '$v_expanded', hasVal ? expanded : !row.$v_expanded);
-        if (this.renderData.includes(row)) {
-          this.elTable.toggleRowExpansion(row, expanded);
-        }
+        this.elTable.toggleRowExpansion(row, expanded);
       },
       // 【自定义固定列】设置固定左右样式
       headerCellFixedStyle: function headerCellFixedStyle(data) {
         return this.cellFixedStyle(data, true);
       },
       // 【自定义固定列】设置固定左右样式
-      cellFixedStyle: function cellFixedStyle(_ref6) {
+      cellFixedStyle: function cellFixedStyle(_ref7) {
         var _this21 = this;
-        var column = _ref6.column;
+        var column = _ref7.column;
         var isHeader = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var elTable = this.getElTable();
         if (!elTable) return;
@@ -2236,7 +2326,7 @@
         this.elTable.$refs.tableHeader.$forceUpdate();
       },
       // 绑定排序事件
-      bindTableSortEvent: function bindTableSortEvent() {
+      hackTableSort: function hackTableSort() {
         var _this22 = this;
         this.onSortChange = function () {
           if (!_this22.elTable) return;
@@ -2244,9 +2334,10 @@
           var sortingColumn = states.sortingColumn;
           var data = _this22.filterData || _this22.data; // 优先使用过滤后的数据进行排序
           if (!sortingColumn || typeof sortingColumn.sortable === 'string') {
-            _this22.listData = data;
+            _this22.updateTreeData(data);
           } else {
-            _this22.listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy);
+            var listData = orderBy(data, states.sortProp, states.sortOrder, sortingColumn.sortMethod, sortingColumn.sortBy);
+            _this22.updateTreeData(listData);
           }
           // 触发更新
           _this22.doUpdate();
@@ -2265,17 +2356,18 @@
           originClearSort.apply(void 0, arguments);
           _this22.onSortChange();
         };
-
-        // 此处兼容 default-sort 属性
-        if (this.elTable.defaultSort) {
-          this.$nextTick(function () {
-            _this22.onSortChange();
-          });
-        }
       },
       // 绑定筛选事件
-      bindTableFilterEvent: function bindTableFilterEvent() {
+      hackTableFilter: function hackTableFilter() {
         var _this23 = this;
+        // 拦截el-table内部对树的筛选
+        if (this.isTree) {
+          this.$nextTick(function () {
+            _this23.elTable.store.execQuery = function () {
+              _this23.elTable.store.states.data = _toConsumableArray(_this23.elTable.data);
+            };
+          });
+        }
         this.onFilterChange = function () {
           if (!_this23.elTable) return;
           var states = _this23.elTable.store.states;
@@ -2322,30 +2414,231 @@
           }
         });
       },
-      // 禁用原来的树结构（将children字段改为空）
+      // 使用自定义的树形表格；需禁用原来的树（将children字段改为空）
       // 场景：row包含children会被当做的树结构，与 virtual-column 的树结构有冲突，所以需要禁用原来的
-      disableOriginTree: function disableOriginTree() {
+      useCustomTree: function useCustomTree() {
         var _this24 = this;
-        this.$nextTick(function () {
-          if (!_this24.elTable) return;
-          var states = _this24.elTable.store.states;
-          states.childrenColumnName = '';
+        var isTry = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+        this.isTree = true;
+        var elTable = this.getElTable();
+        if (elTable) {
+          var states = elTable.store.states;
+          states.childrenColumnName = ''; // 拦截原来树形表格
+          states.lazyColumnIdentifier = ''; // 拦截原来树形懒加载表格
+          elTable.store.updateTreeData = function () {};
+        } else if (isTry) {
+          this.$nextTick(function () {
+            _this24.useCustomTree(false);
+          });
+        }
+      },
+      // 兼容自定义树形表格
+      hackCustomTree: function hackCustomTree() {
+        var _this25 = this;
+        if (!this.isTree) return;
+        // 兼容 el-table 的 expand-row-keys属性
+        var unWatch = this.$watch(function () {
+          return _this25.elTable.expandRowKeys;
+        }, function () {
+          _this25.expandRowKeysChanged = true;
+          _this25.update();
+          _this25.expandRowKeysChanged = false;
         });
+        this.unWatchs.push(unWatch);
+
+        // 兼容 el-table 的 toggleRowExpansion
+        this.elTable.toggleRowExpansion = function (row, expanded) {
+          var treeState = row.$v_tree;
+          if (!treeState) return;
+
+          // 展开状态取反
+          if (typeof expanded === 'undefined') {
+            expanded = !treeState.expanded;
+          }
+
+          // 状态一致返回
+          if (treeState.expanded === expanded) return;
+          treeState.expanded = expanded;
+
+          // 防止多次触发update
+          if (_this25.togglingRowExpansion) return;
+          _this25.togglingRowExpansion = true;
+          _this25.$nextTick(function () {
+            _this25.togglingRowExpansion = false;
+            _this25.update();
+            _this25.columnVms.forEach(function (vm) {
+              return vm.isTree && vm.renderTreeNode();
+            });
+          });
+        };
+      },
+      // 更新树：将树结构平铺，将展开的节点筛出来，同时对新节点插入$v_tree 记录树节点状态数据
+      updateTreeData: function updateTreeData() {
+        var _this26 = this;
+        var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.data;
+        if (!this.isTree || !this.treeProps) {
+          this.listData = data;
+          return;
+        }
+        var res = [];
+        var _this$treeProps$child = this.treeProps.children,
+          children = _this$treeProps$child === void 0 ? 'children' : _this$treeProps$child;
+        var _this$elTable = this.elTable,
+          defaultExpandAll = _this$elTable.defaultExpandAll,
+          expandRowKeys = _this$elTable.expandRowKeys,
+          rowKey = _this$elTable.rowKey,
+          indent = _this$elTable.indent;
+        var getExpanded = function getExpanded(key) {
+          if (!key) return false;
+          return defaultExpandAll || expandRowKeys && expandRowKeys.indexOf(key) !== -1 || false;
+        };
+        var traverse = function traverse(nodes, parent) {
+          var level = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+          var display = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+          nodes.forEach(function (node) {
+            if (display) {
+              res.push(node);
+            }
+            var treeState = node.$v_tree || {};
+            if (!node.$v_tree) {
+              // 如果是新节点，添加 $v_tree（$v_tree不设置成响应式，$v_tree值的变更可能会触发data变化，data watch会触发，这是不可控的，会导致updateTreeData多触发一次）
+              node.$v_tree = treeState = {
+                parent: parent,
+                level: level,
+                expanded: getExpanded(node[rowKey]),
+                loaded: false,
+                loading: false,
+                indent: (level - 1) * indent
+              };
+            } else {
+              // 如果是旧节点
+              // expandRowKeys更改时，旧的节点数据的 expanded（是否展开）以getExpanded方法为准
+              if (_this26.expandRowKeysChanged) {
+                treeState.expanded = getExpanded(node[rowKey]);
+              }
+            }
+            if (Array.isArray(node[children])) {
+              // 父节点显示且展开状态时，才显示子节点
+              var childDisplay = display && treeState.expanded;
+              traverse(node[children], node, level + 1, childDisplay);
+            }
+          });
+        };
+
+        // 开始遍历树结构
+        traverse(data);
+        this.listData = res;
+        // console.log('this.isTree', this.listData, this.listData.map(i => i.id))
+      },
+      /*
+       * 【扩展树形表格方法】获取子节点
+       */
+      getChildNodes: function getChildNodes(row) {
+        var _this$treeProps$child2 = this.treeProps.children,
+          children = _this$treeProps$child2 === void 0 ? 'children' : _this$treeProps$child2;
+        return row[children] || [];
+      },
+      // 【扩展树形表格方法】获取父节点
+      getParentNode: function getParentNode(row) {
+        var treeState = row.$v_tree;
+        return treeState && treeState.parent;
+      },
+      // 【扩展树形表格方法】获取父层所有节点
+      getParentNodes: function getParentNodes(row) {
+        var res = [];
+        var curRow = row;
+        while (curRow) {
+          var treeState = curRow.$v_tree;
+          if (!treeState || !treeState.parent) break;
+          res.unshift(treeState.parent);
+          curRow = treeState.parent;
+        }
+        return res;
+      },
+      // 【扩展树形表格方法】重新加载节点
+      // 删除原来子节点，并触发load函数重新加载
+      reloadNode: function reloadNode(row) {
+        var _this27 = this;
+        return _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+          var treeState, _this27$treeProps, _this27$treeProps$chi, children, _this27$treeProps$has, hasChildren, vm;
+          return _regeneratorRuntime().wrap(function _callee$(_context) {
+            while (1) switch (_context.prev = _context.next) {
+              case 0:
+                treeState = row.$v_tree;
+                if (treeState) {
+                  _context.next = 3;
+                  break;
+                }
+                return _context.abrupt("return");
+              case 3:
+                _this27$treeProps = _this27.treeProps, _this27$treeProps$chi = _this27$treeProps.children, children = _this27$treeProps$chi === void 0 ? 'children' : _this27$treeProps$chi, _this27$treeProps$has = _this27$treeProps.hasChildren, hasChildren = _this27$treeProps$has === void 0 ? 'hasChildren' : _this27$treeProps$has;
+                row[children] = null;
+                row[hasChildren] = true;
+                treeState.loaded = false;
+                _this27.update();
+                vm = _this27.columnVms.find(function (vm) {
+                  return vm.isTree;
+                });
+                _context.t0 = vm;
+                if (!_context.t0) {
+                  _context.next = 13;
+                  break;
+                }
+                _context.next = 13;
+                return vm.loadChildNodes(row, true);
+              case 13:
+              case "end":
+                return _context.stop();
+            }
+          }, _callee);
+        }))();
+      },
+      // 【扩展树形表格方法】收起所有树节点
+      unexpandAllNodes: function unexpandAllNodes() {
+        var _this28 = this;
+        var children = this.treeProps.children;
+        // 遍历树节点，展开或收起
+        var traverse = function traverse(rows) {
+          rows.forEach(function (row) {
+            _this28.toggleRowExpansion(row, false);
+            if (Array.isArray(row[children])) traverse(row[children]);
+          });
+        };
+        traverse(this.listData);
+      },
+      // 【扩展树形表格方法】展开所有树节点
+      expandAllNodes: function expandAllNodes() {
+        var _this29 = this;
+        // 遍历树节点，展开或收起
+        var _this$treeProps = this.treeProps,
+          children = _this$treeProps.children,
+          _this$treeProps$hasCh = _this$treeProps.hasChildren,
+          hasChildren = _this$treeProps$hasCh === void 0 ? 'hasChildren' : _this$treeProps$hasCh;
+        var traverse = function traverse(rows) {
+          rows.forEach(function (row) {
+            var treeState = row.$v_tree;
+            // 懒加载节点如果未加载则不展开
+            if (row[hasChildren] && !treeState.loaded) return;
+            _this29.toggleRowExpansion(row, true);
+            if (Array.isArray(row[children])) traverse(row[children]);
+          });
+        };
+        traverse(this.listData);
       },
       // 表格销毁事件
       bindTableDestory: function bindTableDestory() {
-        var _this25 = this;
+        var _this30 = this;
         var onTableDestory = function onTableDestory() {
-          _this25.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁');
-          _this25.destory();
-          _this25.$nextTick(function () {
-            _this25.initData();
+          _this30.warn && console.warn('<el-table> 组件销毁时，建议将 <el-table-virtual-scroll> 组件一同销毁');
+          _this30.destory();
+          _this30.$nextTick(function () {
+            _this30.initData();
           });
         };
         // 防止el-table绑定key时，重新渲染表格但没有重新初始化<virtual-scroll>组件
         this.elTable.$on('hook:beforeDestory', onTableDestory);
         this.unWatchs.push(function () {
-          _this25.elTable.$off('hook:beforeDestory', onTableDestory);
+          _this30.elTable.$off('hook:beforeDestory', onTableDestory);
         });
       }
     },
@@ -2358,6 +2651,7 @@
         if (!this.virtualized) {
           this.renderAllData();
         } else {
+          // 筛选数据后会调用update更新视图
           this.onFilterChange && this.onFilterChange();
         }
         if (this.isReserveSelection()) {
@@ -2380,19 +2674,21 @@
       },
       disabled: function disabled() {
         this.doUpdate();
+      },
+      treeMap: function treeMap() {
+        this.update();
       }
     },
     created: function created() {
-      var _this26 = this;
-      this.listData = this.data;
+      var _this31 = this;
       this.$nextTick(function () {
-        _this26.initData();
+        _this31.initData();
       });
     },
     activated: function activated() {
-      var _this$elTable;
+      var _this$elTable2;
       this.isDeactivated = false;
-      ((_this$elTable = this.elTable) === null || _this$elTable === void 0 ? void 0 : _this$elTable.fit) === false && this.restoreScroll();
+      ((_this$elTable2 = this.elTable) === null || _this$elTable2 === void 0 ? void 0 : _this$elTable2.fit) === false && this.restoreScroll();
     },
     deactivated: function deactivated() {
       this.isDeactivated = true;
@@ -2552,7 +2848,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-69d3e86f_0", {
+    inject("data-v-9a2da248_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2563,21 +2859,21 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-69d3e86f_1", {
-      source: ".is-expanding[data-v-69d3e86f] :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append[data-v-69d3e86f] :deep(.el-table__append-wrapper) {\n  display: none;\n}\n",
+    }), inject("data-v-9a2da248_1", {
+      source: ".is-expanding[data-v-9a2da248] .el-table__expand-icon {\n  transition: none;\n}\n.hide-append[data-v-9a2da248] .el-table__append-wrapper {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
         "names": [],
         "mappings": "AAAA;EACE,gBAAgB;AAClB;AACA;EACE,aAAa;AACf",
         "file": "el-table-virtual-scroll.vue",
-        "sourcesContent": [".is-expanding :deep(.el-table__expand-icon) {\n  transition: none;\n}\n.hide-append :deep(.el-table__append-wrapper) {\n  display: none;\n}\n"]
+        "sourcesContent": [".is-expanding /deep/ .el-table__expand-icon {\n  transition: none;\n}\n.hide-append /deep/ .el-table__append-wrapper {\n  display: none;\n}\n"]
       },
       media: undefined
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-69d3e86f";
+  var __vue_scope_id__$2 = "data-v-9a2da248";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */
@@ -2640,28 +2936,12 @@
     },
     inject: ['virtualScroll'],
     props: {
-      load: {
-        type: Function,
-        "default": function _default(row, resolve) {
-          resolve([]);
-        }
-      },
-      indent: {
-        type: Number,
-        "default": 16
-      },
       selectable: {
         type: Function
       },
       reserveSelection: {
         type: Boolean,
         "default": false
-      },
-      treeProps: {
-        type: Object,
-        "default": function _default() {
-          return {};
-        }
       }
     },
     data: function data() {
@@ -2672,7 +2952,9 @@
         // 控制半选样式
         isTree: false,
         // 树结构
-        isNested: false // 是否列嵌套
+        isNested: false,
+        // 是否列嵌套
+        treeNodeKey: 1 // 更新树节点视图
       };
     },
     computed: {
@@ -2685,9 +2967,17 @@
         if (vfixed === true || vfixed === '') vfixed = 'left';
         if (vfixed) classnames.push('virtual-column__fixed-' + vfixed);
         return classnames.join(' ');
+      },
+      indent: function indent() {
+        return (this.virtualScroll.elTable || {}).indent || 16;
       }
     },
     methods: {
+      getColumnType: function getColumnType() {
+        var type = this.$attrs.type;
+        // 自定义的类型需转为空传到 el-table-column，否则会导致某些bug，如筛选按钮不亮
+        return ['index', 'selection', 'radio', 'tree'].includes(type) ? '' : type;
+      },
       // 获取多选禁用状态
       getDisabled: function getDisabled(scope) {
         if (this.selectable) {
@@ -2733,7 +3023,7 @@
       },
       // 是否自定义多选
       isSelection: function isSelection() {
-        return this.$attrs.type !== 'v-selection';
+        return this.$attrs.type === 'selection';
       },
       // 同步全选、半选框状态
       syncCheckStatus: function syncCheckStatus() {
@@ -2777,44 +3067,57 @@
         scope.$index = this.virtualScroll.start + scope.$index;
         return scope;
       },
-      // 展开收起事件，返回子节点
+      // 获取树节点状态
+      getTreeState: function getTreeState(row) {
+        return row.$v_tree || {};
+      },
+      // 是否可展开
+      canExpand: function canExpand(row) {
+        var _ref = this.virtualScroll.treeProps || {},
+          _ref$children = _ref.children,
+          children = _ref$children === void 0 ? 'children' : _ref$children,
+          _ref$hasChildren = _ref.hasChildren,
+          hasChildren = _ref$hasChildren === void 0 ? 'hasChildren' : _ref$hasChildren;
+        var treeState = row.$v_tree || {};
+        return (row[children] || []).length > 0 || row[hasChildren] && !treeState.loaded;
+      },
+      // 展开树节点
       onTreeNodeExpand: function onTreeNodeExpand(row) {
-        var _arguments = arguments,
-          _this3 = this;
+        var _this3 = this;
         return _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-          var expanded, doLoad;
+          var treeState, treeProps, _treeProps$hasChildre, hasChildren;
           return _regeneratorRuntime().wrap(function _callee$(_context) {
             while (1) switch (_context.prev = _context.next) {
               case 0:
-                expanded = _arguments.length > 1 && _arguments[1] !== undefined ? _arguments[1] : !row.$v_expanded;
-                doLoad = _arguments.length > 2 && _arguments[2] !== undefined ? _arguments[2] : true;
-                if (!(row.$v_expanded === expanded)) {
-                  _context.next = 4;
+                treeState = row.$v_tree;
+                if (!treeState) {
+                  _context.next = 15;
                   break;
                 }
-                return _context.abrupt("return", []);
-              case 4:
-                if (!expanded) {
-                  _context.next = 13;
+                treeProps = _this3.virtualScroll.treeProps;
+                _treeProps$hasChildre = treeProps.hasChildren, hasChildren = _treeProps$hasChildre === void 0 ? 'hasChildren' : _treeProps$hasChildre;
+                if (!treeState.loading) {
+                  _context.next = 6;
                   break;
                 }
-                if (!row.$v_loaded) {
-                  _context.next = 9;
-                  break;
-                }
-                return _context.abrupt("return", _this3.loadOldChildNodes(row));
-              case 9:
-                if (!doLoad) {
+                return _context.abrupt("return");
+              case 6:
+                if (!(!treeState.expanded && row[hasChildren] && !treeState.loaded)) {
                   _context.next = 11;
                   break;
                 }
-                return _context.abrupt("return", _this3.loadChildNodes(row));
-              case 11:
+                _context.next = 9;
+                return _this3.loadChildNodes(row);
+              case 9:
                 _context.next = 14;
                 break;
-              case 13:
-                return _context.abrupt("return", _this3.hideChildNodes(row));
+              case 11:
+                treeState.expanded = !treeState.expanded;
+                _this3.renderTreeNode();
+                _this3.virtualScroll.update();
               case 14:
+                _this3.virtualScroll.elTable.$emit('expand-change', row, treeState.expanded);
+              case 15:
               case "end":
                 return _context.stop();
             }
@@ -2822,373 +3125,49 @@
         }))();
       },
       // 加载子节点
-      // force - 强制执行load加载
       loadChildNodes: function loadChildNodes(row) {
         var _this4 = this;
-        var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-        return new Promise(function (resolve) {
-          // 获取子节点数据并显示
-          _this4.$set(row, '$v_loading', true);
-          _this4.$set(row, '$v_hasChildren', undefined);
-
-          // 显示已有子节点
-          if (!force) {
-            var _this4$treeProps = _this4.treeProps,
-              children = _this4$treeProps.children,
-              hasChildren = _this4$treeProps.hasChildren;
-            if (row[hasChildren] === false) {
-              return resolveFn.call(_this4, []);
-            }
-            if (row[hasChildren]) {
-              return resolveFn.call(_this4, row[children]);
-            }
-          }
-          _this4.load && _this4.load(row, resolveFn.bind(_this4));
-          function resolveFn(data) {
-            if (!Array.isArray(data)) {
-              this.$set(row, '$v_loading', false);
-              this.$set(row, '$v_hasChildren', false);
-              resolve();
-              return;
-            }
-
-            // 如果当前节点有子节点，则删除子节点再插入新的子节点
-            // 场景：连续触发两次reloadNode，第一次加载了子节点，第二次加载了新的子节点，需要删除旧的子节点，再插入新的子节点
-            if (row.$v_hasChildren) {
-              this.removeNode(row, true);
-            }
-            this.$set(row, '$v_loading', false);
-            this.$set(row, '$v_expanded', true);
-            this.$set(row, '$v_loaded', true);
-            this.$set(row, '$v_hasChildren', !!data.length);
-            data.forEach(function (item) {
-              item.$v_level = typeof row.$v_level === 'number' ? row.$v_level + 1 : 2;
-            });
-
-            // 所有子节点插入到当前同级节点下
-            var list = this.virtualScroll.getData();
-            var index = list.findIndex(function (item) {
-              return item === row;
-            });
-            if (index > -1) {
-              this.virtualScroll.updateData([].concat(_toConsumableArray(list.slice(0, index + 1)), _toConsumableArray(data), _toConsumableArray(list.slice(index + 1))));
-            }
-            resolve(data);
-          }
-        });
-      },
-      // 加载已经加载的子节点
-      loadOldChildNodes: function loadOldChildNodes(row) {
-        this.$set(row, '$v_expanded', true);
-        var list = this.virtualScroll.getData();
-        var index = list.findIndex(function (item) {
-          return item === row;
-        });
-        if (index > -1) {
-          this.virtualScroll.updateData([].concat(_toConsumableArray(list.slice(0, index + 1)), _toConsumableArray(row.$v_hideNodes || []), _toConsumableArray(list.slice(index + 1))));
-          var hideNodes = row.$v_hideNodes;
-          delete row.$v_hideNodes;
-          return hideNodes;
-        }
-        return [];
-      },
-      // 隐藏子节点
-      hideChildNodes: function hideChildNodes(row) {
-        this.$set(row, '$v_expanded', false);
-
-        // 查找所有子孙节点
-        var _this$virtualScroll = this.virtualScroll,
-          getData = _this$virtualScroll.getData,
-          keyProp = _this$virtualScroll.keyProp;
-        var list = getData();
-        var childNodes = this.getChildNodes(row, true, true);
-        if (!childNodes.length) return;
-        var map = {};
-        childNodes.forEach(function (row) {
-          map[row[keyProp]] = true;
-        });
-
-        // 隐藏所有子孙节点
-        this.$set(row, '$v_hideNodes', childNodes);
-        var newList = list.filter(function (row) {
-          return !(row[keyProp] in map);
-        });
-        this.virtualScroll.updateData(newList);
-        this.virtualScroll.update();
-        return [];
-      },
-      // 展开节点
-      // expandKeys - 展开节点的keys值
-      // expanded - 展开/收起
-      // doLoad - 未加载子节点则执行load函数去加载，已加载则展开
-      expand: function expand(expandKeys) {
-        var _this5 = this;
-        var expanded = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-        var doLoad = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-        if (!Array.isArray(expandKeys)) return;
-        var _this$virtualScroll2 = this.virtualScroll,
-          getData = _this$virtualScroll2.getData,
-          keyProp = _this$virtualScroll2.keyProp;
-        var data = getData();
-        var plist = [];
-        data.forEach(function (row) {
-          if (row[keyProp] && expandKeys.includes(row[keyProp])) {
-            plist.push(_this5.onTreeNodeExpand(row, expanded, doLoad));
-          }
-        });
-        return Promise.all(plist);
-      },
-      // 展开路径
-      expandPath: function expandPath(keyPath) {
-        var _this6 = this;
-        if (!Array.isArray(keyPath)) return;
-
-        // 递归路径，逐层展开节点
-        var expand = /*#__PURE__*/function () {
-          var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(rows, n) {
-            var targetRow;
-            return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-              while (1) switch (_context2.prev = _context2.next) {
-                case 0:
-                  if (!(n === keyPath.length)) {
-                    _context2.next = 2;
-                    break;
+        return _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+          return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+            while (1) switch (_context2.prev = _context2.next) {
+              case 0:
+                return _context2.abrupt("return", new Promise(function (resolve) {
+                  var treeProps = _this4.virtualScroll.treeProps;
+                  var load = _this4.virtualScroll.elTable.load;
+                  if (!load) return resolve();
+                  var _treeProps$children = treeProps.children,
+                    children = _treeProps$children === void 0 ? 'children' : _treeProps$children;
+                  var treeState = row.$v_tree;
+                  treeState.loading = true;
+                  _this4.renderTreeNode();
+                  function resolveFn(data) {
+                    if (!Array.isArray(data)) {
+                      throw new Error('[ElTable] data must be an array');
+                    }
+                    treeState.loading = false;
+                    treeState.loaded = true;
+                    treeState.expanded = true;
+                    this.renderTreeNode();
+                    if (!Array.isArray(data)) {
+                      resolve();
+                      return;
+                    }
+                    this.$set(row, children, data);
+                    this.virtualScroll.update();
+                    resolve();
                   }
-                  return _context2.abrupt("return", keyPath[n - 1]);
-                case 2:
-                  if (!(!Array.isArray(rows) || !rows.length)) {
-                    _context2.next = 4;
-                    break;
-                  }
-                  return _context2.abrupt("return", keyPath[n - 1]);
-                case 4:
-                  targetRow = rows.find(function (row) {
-                    return row[keyProp] === keyPath[n];
-                  });
-                  if (!targetRow) {
-                    _context2.next = 13;
-                    break;
-                  }
-                  if (targetRow.$v_expanded) {
-                    _context2.next = 10;
-                    break;
-                  }
-                  _context2.next = 9;
-                  return _this6.onTreeNodeExpand(targetRow, true);
-                case 9:
-                  rows = _context2.sent;
-                case 10:
-                  return _context2.abrupt("return", expand(rows, n + 1));
-                case 13:
-                  console.warn("[expandPath] \u6CA1\u6709\u627E\u5230 ".concat(keyPath[n], " key\u503C\u5BF9\u5E94\u7684\u884C"));
-                  return _context2.abrupt("return", keyPath[n - 1]);
-                case 15:
-                case "end":
-                  return _context2.stop();
-              }
-            }, _callee2);
-          }));
-          return function expand(_x, _x2) {
-            return _ref.apply(this, arguments);
-          };
-        }();
-        var _this$virtualScroll3 = this.virtualScroll,
-          getData = _this$virtualScroll3.getData,
-          keyProp = _this$virtualScroll3.keyProp;
-        var data = getData();
-        return expand(data, 0);
+                  load(row, treeState, resolveFn.bind(_this4));
+                }));
+              case 1:
+              case "end":
+                return _context2.stop();
+            }
+          }, _callee2);
+        }))();
       },
-      // 展开所有存在的节点
-      expandAll: function expandAll() {
-        var _this7 = this;
-        // 展开节点（递归）
-        var expandRows = function expandRows(data) {
-          if (Array.isArray(data) && data.length) {
-            data.forEach(function (row) {
-              _this7.onTreeNodeExpand(row, true, false);
-              expandRows(row.$v_hideNodes);
-            });
-          }
-        };
-        var getData = this.virtualScroll.getData;
-        var data = getData();
-        expandRows(data);
-      },
-      // 收起所有节点
-      unexpandAll: function unexpandAll() {
-        var _this8 = this;
-        var getData = this.virtualScroll.getData;
-        var data = getData();
-        var levelMap = [];
-        data.forEach(function (row) {
-          var level = row.$v_level || 1;
-          !levelMap[level] && (levelMap[level] = []);
-          levelMap[level].push(row);
-        });
-        for (var i = levelMap.length - 1; i >= 0; i--) {
-          if (!levelMap[i]) continue;
-          levelMap[i].forEach(function (row) {
-            _this8.onTreeNodeExpand(row, false);
-          });
-        }
-      },
-      // 删除节点
-      // onlyChild：为false是删除传入的row节点，为 true 时只删除row的所有子节点
-      removeNode: function removeNode(row) {
-        var onlyChild = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-        // 没有子节点，无需删除
-        if (onlyChild && !row.$v_hasChildren) return;
-        var getData = this.virtualScroll.getData;
-        var list = getData().slice();
-        var targetLevel = row.$v_level || 1;
-
-        // 查找子节点
-        // match - 是否找到目标节点
-        function find(list) {
-          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
-            match: false,
-            stop: false
-          };
-          for (var i = 0; i < list.length; i++) {
-            if (data.stop) return;
-            var curRow = list[i];
-            var curLevel = curRow.$v_level || 1;
-            var isChild = curLevel > targetLevel;
-
-            // 找到子节点，并删除
-            if (data.match && isChild) {
-              list.splice(i, 1);
-              i--;
-              continue;
-            }
-            // 已经找完子节点，结束
-            if (data.match && !isChild) return data.stop = true;
-            // 找到目标节点后，开始查找它的子节点
-            if (curRow === row) {
-              // 直接删除目标节点
-              if (!onlyChild) {
-                list.splice(i, 1);
-                i--;
-              }
-              // 往下允许查找它的子节点
-              data.match = true;
-            }
-
-            // 如果子节点隐藏了，则从隐藏节点里查找
-            var hideNodes = curRow.$v_hideNodes || [];
-            if (hideNodes.length) {
-              find(hideNodes, data, true);
-            }
-          }
-        }
-        find(list);
-        if (onlyChild) row.$v_hasChildren = false;
-        this.virtualScroll.updateData(list);
-      },
-      // 重新加载节点
-      // 删除原来子节点，并触发load函数重新加载
-      reloadNode: function reloadNode(row) {
-        this.removeNode(row, true);
-        this.loadChildNodes(row, true);
-      },
-      /*
-       * 获取子孙节点
-       * soon - 是否获取所有子孙节点，否则只获取直属子节点
-       * visible - 只获取可见的
-       */
-      getChildNodes: function getChildNodes(row) {
-        var soon = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-        var visible = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-        var res = [];
-        var getData = this.virtualScroll.getData;
-        var list = getData();
-        var targetLevel = row.$v_level || 1;
-
-        // 查找子节点
-        // match - 是否找到目标节点
-        function find(list) {
-          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
-            match: false,
-            stop: false
-          };
-          for (var i = 0; i < list.length; i++) {
-            if (data.stop) return;
-            var curRow = list[i];
-            var curLevel = curRow.$v_level || 1;
-            var isChild = soon ? curLevel > targetLevel : curLevel - targetLevel === 1;
-
-            // 找到子节点
-            if (data.match && isChild) {
-              res.push(curRow);
-            }
-            // 已经找完子节点，结束
-            if (data.match && !isChild) return data.stop = true;
-            // 找到目标节点后，开始查找它的子节点
-            if (curRow === row) data.match = true;
-
-            // 如果子节点隐藏了，则从隐藏节点里查找
-            var hideNodes = curRow.$v_hideNodes || [];
-            if (!visible && hideNodes.length) {
-              find(hideNodes, data);
-            }
-          }
-        }
-        find(list);
-        return res;
-      },
-      // 获取父节点
-      getParentNodes: function getParentNodes(row) {
-        var getData = this.virtualScroll.getData;
-        var list = getData().slice();
-        var res = [];
-
-        // 查找方案：从父节点向子节点一级一级查找，并记录查找路径，找到目标节点后，返回路径上的所有节点
-        function find(list) {
-          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
-            stop: false
-          };
-          var level = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
-          for (var i = 0; i < list.length; i++) {
-            if (data.stop) return;
-            var curRow = list[i];
-            var curLevel = curRow.$v_level || 1;
-            if (curLevel > level) {
-              level = curLevel;
-            } else {
-              // 层级与数组的索引有关联的，相差1
-              res.splice(curLevel - 1);
-            }
-
-            // 找到目标节点后，停止
-            if (curRow === row) {
-              data.stop = true;
-              return;
-            }
-            // 添加当前节点
-            res.push(curRow);
-
-            // 如果子节点隐藏了，则从隐藏节点里查找
-            var hideNodes = curRow.$v_hideNodes || [];
-            if (hideNodes.length) {
-              find(hideNodes, data, level);
-            }
-          }
-        }
-        find(list);
-        return res;
-      },
-      // 获取所有节点，包含隐藏的节点
-      getAllNodes: function getAllNodes() {
-        var getData = this.virtualScroll.getData;
-        var list = getData();
-        var res = [];
-        list.forEach(function (item) {
-          res.push(item);
-          if (item.$v_hideNodes && item.$v_hideNodes.length) {
-            res.push.apply(res, _toConsumableArray(item.$v_hideNodes));
-          }
-        });
-        return res;
+      // 由于$v_tree不是响应式数据，$v_tree状态的变更需要手动触发视图的更新
+      renderTreeNode: function renderTreeNode() {
+        this.treeNodeKey = this.treeNodeKey === 1 ? 2 : 1;
       },
       // 判断内容是否为VNode
       isVNode: function isVNode(vNode) {
@@ -3216,20 +3195,18 @@
       if (!globalComponents.ElTableColumn) {
         this.$options.components.ElTableColumn = elementUi.TableColumn;
       }
-      var type = this.$attrs.type;
-      if (['index', 'selection', 'radio', 'tree'].includes(type)) {
-        this.$attrs.type = 'v-' + type;
-      }
     },
     created: function created() {
       this.isNested = !!this.$slots["default"]; // 是否列嵌套
       this.virtualScroll.addColumn(this);
       var type = this.$attrs.type;
       if (type === 'expand') {
-        this.virtualScroll.isExpandType = true;
-      } else if (type === 'v-tree') {
+        this.virtualScroll.useExpandTable();
+      } else if (type === 'tree') {
         this.isTree = true;
-        this.virtualScroll.disableOriginTree();
+        this.virtualScroll.useCustomTree();
+      } else if (type === 'selection') {
+        this.virtualScroll.useCustomSelection();
       }
     },
     beforeDestroy: function beforeDestroy() {
@@ -3250,12 +3227,13 @@
     var _c = _vm._self._c || _h;
     return _c("el-table-column", _vm._g(_vm._b({
       attrs: {
+        type: _vm.getColumnType(),
         "class-name": _vm.getClassName
       },
       scopedSlots: _vm._u([{
         key: "header",
         fn: function fn(scope) {
-          return [_vm.$scopedSlots["header"] ? _vm._t("header", null, null, scope) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
+          return [_vm.$scopedSlots["header"] ? _vm._t("header", null, null, scope) : [_vm.$attrs.type === "selection" ? _c("el-checkbox", {
             attrs: {
               value: _vm.isCheckedAll,
               indeterminate: _vm.isCheckedImn
@@ -3268,26 +3246,26 @@
       }, {
         key: "default",
         fn: function fn(scope) {
-          return [scope.column && scope.column.type === "v-tree" ? [_c("span", {
+          return [_vm.isTree ? [_c("span", {
             staticClass: "el-table__indent",
             style: {
-              paddingLeft: (scope.row.$v_level - 1) * _vm.indent + "px"
+              paddingLeft: _vm.getTreeState(scope.row).level * _vm.indent + "px"
             }
-          }), _vm._v(" "), !(scope.row.$v_hasChildren === false || scope.row[_vm.treeProps.hasChildren] === false) ? _c("div", {
+          }), _vm._v(" "), _vm.canExpand(scope.row) && _vm.treeNodeKey ? _c("div", {
             staticClass: "el-table__expand-icon",
-            "class": scope.row.$v_expanded ? "el-table__expand-icon--expanded" : "",
+            "class": _vm.getTreeState(scope.row).expanded ? "el-table__expand-icon--expanded" : "",
             on: {
               click: function click($event) {
                 return _vm.onTreeNodeExpand(scope.row);
               }
             }
-          }, [scope.row.$v_loading ? _c("i", {
+          }, [_vm.getTreeState(scope.row).loading ? _c("i", {
             staticClass: "el-icon-loading"
           }) : _c("i", {
             staticClass: "el-icon-arrow-right"
           })]) : _c("span", {
             staticClass: "el-table__placeholder"
-          })] : _vm._e(), _vm._v(" "), _vm.$scopedSlots["default"] ? _vm._t("default", null, null, _vm.setScope(scope)) : [scope.column.type === "v-selection" ? _c("el-checkbox", {
+          })] : _vm._e(), _vm._v(" "), _vm.$scopedSlots["default"] ? _vm._t("default", null, null, _vm.setScope(scope)) : [_vm.$attrs.type === "selection" ? _c("el-checkbox", {
             attrs: {
               value: scope.row.$v_checked || false,
               disabled: _vm.getDisabled(scope)
@@ -3302,7 +3280,7 @@
                 $event.stopPropagation();
               }
             }
-          }) : _vm._e(), _vm._v(" "), scope.column.type === "v-radio" ? _c("el-radio", {
+          }) : _vm._e(), _vm._v(" "), _vm.$attrs.type === "radio" ? _c("el-radio", {
             attrs: {
               label: true,
               value: _vm.virtualScroll.curRow === scope.row
@@ -3312,7 +3290,7 @@
                 return _vm.onRadioChange(scope.row);
               }
             }
-          }, [_c("span")]) : scope.column.type === "v-index" ? _c("span", [_vm._v("\n        " + _vm._s(_vm.getIndex(scope)) + "\n      ")]) : scope.column.formatter ? [_vm.isVNode(_vm.getFormatterResult(scope)) ? _c("el-table-virtual-column-formatter", {
+          }, [_c("span")]) : _vm.$attrs.type === "index" ? _c("span", [_vm._v("\n        " + _vm._s(_vm.getIndex(scope)) + "\n      ")]) : scope.column.formatter ? [_vm.isVNode(_vm.getFormatterResult(scope)) ? _c("el-table-virtual-column-formatter", {
             attrs: {
               "v-node": _vm.getFormatterResult(scope)
             }
@@ -3327,7 +3305,7 @@
   /* style */
   var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-77c884a6_0", {
+    inject("data-v-4703507b_0", {
       source: ".el-table-virtual-scroll .virtual-column__fixed-left,\n.el-table-virtual-scroll .virtual-column__fixed-right {\n  position: sticky !important;\n  z-index: 2 !important;\n  background: #fff;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-last-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-last-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-last-column {\n  border-right: none;\n}\n.el-table-virtual-scroll.is-scrolling-right .is-first-column:before {\n  box-shadow: none;\n}\n.el-table-virtual-scroll.is-scrolling-left .is-first-column,\n.el-table-virtual-scroll.is-scrolling-middle .is-first-column {\n  border-left: none;\n}\n.el-table-virtual-scroll .is-last-column,\n.el-table-virtual-scroll .is-first-column {\n  overflow: visible !important;\n}\n.el-table-virtual-scroll .is-last-column:before,\n.el-table-virtual-scroll .is-first-column:before {\n  content: \"\";\n  position: absolute;\n  top: 0px;\n  width: 10px;\n  bottom: -1px;\n  overflow-x: hidden;\n  overflow-y: hidden;\n  touch-action: none;\n  pointer-events: none;\n}\n.el-table-virtual-scroll .is-last-column:before {\n  right: -10px;\n  box-shadow: inset 10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll .is-first-column:before {\n  left: -10px;\n  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.12);\n}\n.el-table-virtual-scroll.is-scrolling-none .is-last-column:before,\n.el-table-virtual-scroll.is-scrolling-none .is-first-column:before {\n  content: none;\n}\n",
       map: {
         "version": 3,

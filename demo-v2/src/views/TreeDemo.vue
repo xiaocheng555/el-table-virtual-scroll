@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-alert type="warning" title="树结构虚拟滚动只计算一级节点渲染的数据，如果某个一级节点下的子孙节点超级多，仍然会卡顿。（可以模拟树结构懒加载）" show-icon></el-alert>
+    <el-alert type="warning" title="virtual-column组件设type属性为selection" show-icon></el-alert>
     <virtual-scroll
       ref="virtualScroll"
       :data="list"
@@ -13,11 +13,12 @@
         height="500px"
         style="width: 100%"
         border
-        row-key="id"
         lazy
+        row-key="id"
         :load="onload"
-        :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
-        <el-table-column label="id" prop="id"></el-table-column>
+        :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
+        @expand-change="handleExpandChange">
+        <virtual-column label="id" prop="id" type="tree"></virtual-column>
         <el-table-column label="内容" prop="text"></el-table-column>
         <el-table-column label="内容省略" prop="text" show-overflow-tooltip></el-table-column>
       </el-table>
@@ -26,11 +27,12 @@
 </template>
 
 <script>
-import VirtualScroll from 'el-table-virtual-scroll'
+import VirtualScroll, { VirtualColumn } from 'el-table-virtual-scroll'
 
 export default {
   components: {
-    VirtualScroll
+    VirtualScroll,
+    VirtualColumn
   },
   data () {
     return {
@@ -45,7 +47,7 @@ export default {
       this.list = []
       setTimeout(() => {
         this.list = []
-        for (let i = 1; i < 2000; i++) {
+        for (let i = 1; i < 1000; i++) {
           const text = this.getRandomContent()
           const text2 = this.getRandomContent()
           this.list.push({
@@ -76,6 +78,7 @@ export default {
       return content[i]
     },
     onload (tree, treeNode, resolve) {
+      console.log('onload')
       if (!this.count) this.count = 3000
       setTimeout(() => {
         if (Math.random() > 0.5) {
@@ -84,7 +87,7 @@ export default {
         }
 
         const data = []
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 2; i++) {
           data.push({
             id: this.count++,
             show: false,
@@ -95,6 +98,9 @@ export default {
         }
         resolve(data)
       }, 1000)
+    },
+    handleExpandChange (row, expanded) {
+      console.log('handleExpandChange', row, expanded)
     }
   },
   created () {

@@ -1,9 +1,7 @@
 <template>
   <div id="app">
     <layout>
-      <KeepAlive :include="['Keepalive']">
-        <router-view></router-view>
-      </KeepAlive>
+      <router-view></router-view>
     </layout>
     <Preview class="code-preview" v-if="false"></Preview>
   </div>

@@ -153,3 +153,8 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 ## 更新内容
 
+### 2024-9-2
+
+* 重构：兼容树形表格；兼容扩展行、多选原生事件、属性、方法；
+
+* npm 2.0.0 版本发包

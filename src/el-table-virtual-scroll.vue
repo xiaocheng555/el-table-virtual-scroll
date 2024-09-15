@@ -866,7 +866,12 @@ export default {
       this.syncSelectionStatus()
 
       if (data !== oldData) {
-        this.oldSelection = []
+        if (this.oldSelection.length > 0) {
+          // 修复多选select-change事件在表格数据更新后未触发，导致旧数据未清除 #100
+          this.$emit('selection-change', [], [...this.oldSelection])
+          this.elTable.$emit('selection-change', [], [...this.oldSelection])
+          this.oldSelection = []
+        }
         return
       }
 

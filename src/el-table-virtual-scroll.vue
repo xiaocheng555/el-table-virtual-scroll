@@ -591,6 +591,7 @@ export default {
     renderAllData () {
       this.renderData = this.listData
       this.$emit('change', this.listData, 0, this.listData.length - 1)
+      console.log('renderAllData', this.listData)
 
       this.$nextTick(() => {
         // 清除撑起的高度和位置
@@ -1198,6 +1199,9 @@ export default {
         }
         // 触发更新
         this.doUpdate()
+        if (!this.virtualized) {
+          this.renderAllData()
+        }
         this.$nextTick(() => {
           this.syncSelectionStatus()
         })
@@ -1472,12 +1476,8 @@ export default {
       if (this.list && data !== oldData) {
         this.list = data
       }
-      if (!this.virtualized) {
-        this.renderAllData()
-      } else {
-        // 筛选数据后会调用update更新视图
-        this.onFilterChange && this.onFilterChange()
-      }
+      // 筛选数据后会调用update更新视图
+      this.onFilterChange && this.onFilterChange()
       if (this.isReserveSelection()) {
         // 保留旧的选中值
         this.updateSelectionByRowKey(data, oldData)
@@ -1488,12 +1488,9 @@ export default {
     },
     virtualized: {
       immediate: true,
-      handler (val) {
-        if (!val) {
-          this.renderAllData()
-        } else {
-          this.doUpdate()
-        }
+      handler () {
+        // 筛选数据后会调用update更新视图
+        this.onFilterChange && this.onFilterChange()
       }
     },
     disabled () {

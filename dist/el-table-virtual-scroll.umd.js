@@ -1716,6 +1716,7 @@
         var _this7 = this;
         this.renderData = this.listData;
         this.$emit('change', this.listData, 0, this.listData.length - 1);
+        console.log('renderAllData', this.listData);
         this.$nextTick(function () {
           // 清除撑起的高度和位置
           TableBodyClassNames.forEach(function (className) {
@@ -1997,7 +1998,12 @@
         var _this14 = this;
         this.syncSelectionStatus();
         if (data !== oldData) {
-          this.oldSelection = [];
+          if (this.oldSelection.length > 0) {
+            // 修复多选select-change事件在表格数据更新后未触发，导致旧数据未清除 #100
+            this.$emit('selection-change', [], _toConsumableArray(this.oldSelection));
+            this.elTable.$emit('selection-change', [], _toConsumableArray(this.oldSelection));
+            this.oldSelection = [];
+          }
           return;
         }
 
@@ -2341,6 +2347,9 @@
           }
           // 触发更新
           _this22.doUpdate();
+          if (!_this22.virtualized) {
+            _this22.renderAllData();
+          }
           _this22.$nextTick(function () {
             _this22.syncSelectionStatus();
           });
@@ -2648,12 +2657,8 @@
         if (this.list && _data !== oldData) {
           this.list = _data;
         }
-        if (!this.virtualized) {
-          this.renderAllData();
-        } else {
-          // 筛选数据后会调用update更新视图
-          this.onFilterChange && this.onFilterChange();
-        }
+        // 筛选数据后会调用update更新视图
+        this.onFilterChange && this.onFilterChange();
         if (this.isReserveSelection()) {
           // 保留旧的选中值
           this.updateSelectionByRowKey(_data, oldData);
@@ -2664,12 +2669,9 @@
       },
       virtualized: {
         immediate: true,
-        handler: function handler(val) {
-          if (!val) {
-            this.renderAllData();
-          } else {
-            this.doUpdate();
-          }
+        handler: function handler() {
+          // 筛选数据后会调用update更新视图
+          this.onFilterChange && this.onFilterChange();
         }
       },
       disabled: function disabled() {
@@ -2848,7 +2850,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-9a2da248_0", {
+    inject("data-v-f7156cc6_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2859,8 +2861,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-9a2da248_1", {
-      source: ".is-expanding[data-v-9a2da248] .el-table__expand-icon {\n  transition: none;\n}\n.hide-append[data-v-9a2da248] .el-table__append-wrapper {\n  display: none;\n}\n",
+    }), inject("data-v-f7156cc6_1", {
+      source: ".is-expanding[data-v-f7156cc6] .el-table__expand-icon {\n  transition: none;\n}\n.hide-append[data-v-f7156cc6] .el-table__append-wrapper {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2873,7 +2875,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-9a2da248";
+  var __vue_scope_id__$2 = "data-v-f7156cc6";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */

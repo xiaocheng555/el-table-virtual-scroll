@@ -153,8 +153,18 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 
 ## 更新内容
 
+
 ### 2024-9-2
 
 * 重构：兼容树形表格；兼容扩展行、多选原生事件、属性、方法；
 
 * npm 2.0.0 版本发包
+
+
+### 2024-9-16
+
+* 修复virtualized更改在筛选和树形表格上会有问题
+
+* 修复多选select-change事件在表格数据更新后未触发，导致旧数据未清除 #100
+
+* npm 2.0.1 版本发包

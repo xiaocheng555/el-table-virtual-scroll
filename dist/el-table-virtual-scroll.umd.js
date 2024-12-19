@@ -2165,8 +2165,10 @@
         var onHeaderDragend = function onHeaderDragend() {
           // 设置状态，用于自定义固定列
           _this19.hasHeadDrag = true;
-          // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
-          _this19.elTable.doLayout();
+          setTimeout(function () {
+            // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
+            _this19.elTable.doLayout();
+          });
           // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
           _this19.update();
         };
@@ -2850,7 +2852,7 @@
   /* style */
   var __vue_inject_styles__$2 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-f7156cc6_0", {
+    inject("data-v-5cf6e4f7_0", {
       source: ".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n",
       map: {
         "version": 3,
@@ -2861,8 +2863,8 @@
         "sourcesContent": [".el-table-virtual-scroll.has-custom-fixed-right .el-table__cell.gutter {\n  position: sticky;\n  right: 0;\n}\n"]
       },
       media: undefined
-    }), inject("data-v-f7156cc6_1", {
-      source: ".is-expanding[data-v-f7156cc6] .el-table__expand-icon {\n  transition: none;\n}\n.hide-append[data-v-f7156cc6] .el-table__append-wrapper {\n  display: none;\n}\n",
+    }), inject("data-v-5cf6e4f7_1", {
+      source: ".is-expanding[data-v-5cf6e4f7] .el-table__expand-icon {\n  transition: none;\n}\n.hide-append[data-v-5cf6e4f7] .el-table__append-wrapper {\n  display: none;\n}\n",
       map: {
         "version": 3,
         "sources": ["el-table-virtual-scroll.vue"],
@@ -2875,7 +2877,7 @@
     });
   };
   /* scoped */
-  var __vue_scope_id__$2 = "data-v-f7156cc6";
+  var __vue_scope_id__$2 = "data-v-5cf6e4f7";
   /* module identifier */
   var __vue_module_identifier__$2 = undefined;
   /* functional template */

@@ -168,3 +168,11 @@ import { VirtualColumn } from 'el-table-virtual-scroll'
 * 修复多选select-change事件在表格数据更新后未触发，导致旧数据未清除 #100
 
 * npm 2.0.1 版本发包
+
+
+
+### 2024-12-19
+
+* 修复el-table-column使用min-width+show-overflow-tooltip属性时拖动表头修改列宽度 单元格宽度未刷新
+
+* npm 2.0.2 版本发包

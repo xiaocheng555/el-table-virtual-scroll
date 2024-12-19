@@ -19,10 +19,10 @@
         height="500px"
         style="width: 100%"
         :row-class-name="tableRowClassName">
-        <el-table-column label="id" prop="id" width="180" fixed></el-table-column>
-        <el-table-column label="日期" width="260" prop="date"></el-table-column>
-        <el-table-column label="内容省略" width="800" prop="text" show-overflow-tooltip></el-table-column>
-        <el-table-column label="内容" prop="text" width="800"></el-table-column>
+        <el-table-column sortable label="内容省略" min-width="100" prop="text" show-overflow-tooltip fixed></el-table-column>
+        <el-table-column label="id" prop="id" width="180"></el-table-column>
+        <el-table-column label="日期" min-width="260" prop="date"></el-table-column>
+        <el-table-column label="内容" prop="text" min-width="800"></el-table-column>
       </el-table>
     </virtual-scroll>
   </div>
@@ -41,7 +41,7 @@ export default {
       list: mockData(0, 2000),
       tableData: [],
       stripe: false,
-      border: false,
+      border: true,
       status: false,
       tableKey: 0
     }

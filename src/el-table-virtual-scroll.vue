@@ -1021,8 +1021,10 @@ export default {
       const onHeaderDragend = () => {
         // 设置状态，用于自定义固定列
         this.hasHeadDrag = true
-        // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
-        this.elTable.doLayout()
+        setTimeout(() => {
+          // #50 修复el-table原bug： 刷新布局，列放大缩小让高度变大，导致布局错乱
+          this.elTable.doLayout()
+        })
         // 修复某一行内容很多时，将该行宽度拖拽成很宽，内容坍塌导致空白行(需要立即更新，因为要获取新行变化的高度)
         this.update()
       }

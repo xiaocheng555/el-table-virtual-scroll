@@ -164,12 +164,12 @@ export default {
 
         '其他',
 
+        // {
+        //   title: '排序&过滤（旧）',
+        //   path: '/SortDemo'
+        // },
         {
-          title: '排序&过滤（旧）',
-          path: '/SortDemo'
-        },
-        {
-          title: '排序&过滤（新）',
+          title: '排序&过滤',
           path: '/SortDemo2'
         },
         {

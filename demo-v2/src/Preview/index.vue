@@ -48,7 +48,6 @@ export default {
     async onPreview () {
       this.preview = true
       const demoCode = this.demoCodes[this.curCode]
-      console.log(demoCode, 'demoCode')
       this.curDemoCode = hljs.highlight(demoCode, {
         language: 'html'
       }).value
